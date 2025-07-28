@@ -19,8 +19,8 @@ type VM interface {
 }
 
 type Disk interface {
-	MountDisk(ctx context.Context, diskURI string, vmURI string, devicePath string) error
-	UmountDisk(ctx context.Context, diskURI string, vmURI string) error
+	MountDisk(ctx context.Context, diskURI, vmURI, devicePath string) error
+	UnmountDisk(ctx context.Context, diskURI, vmURI string) error
 	DeleteDisk(ctx context.Context, diskURI string) error
 	ListDisks(ctx context.Context) ([]resource.Disk, error)           // TODO: return an iterator
 	ListUnattachedDisks(ctx context.Context) ([]resource.Disk, error) // TODO: return an iterator
