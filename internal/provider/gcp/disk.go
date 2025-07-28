@@ -33,7 +33,7 @@ func (p Provider) MountDisk(ctx context.Context, diskURI, vmURI, devicePath stri
 	return nil
 }
 
-func (p Provider) UmountDisk(ctx context.Context, diskURI, vmURI string) error {
+func (p Provider) UnmountDisk(ctx context.Context, diskURI, vmURI string) error {
 	i, err := p.instances.Get(ctx, &computepb.GetInstanceRequest{
 		Project:  p.project,
 		Zone:     zoneFromURI(vmURI),
