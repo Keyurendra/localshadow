@@ -1,15 +1,10 @@
 package parser
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"time"
 )
 
 type Result struct {
-	Platform       string          `json:"platform,omitempty"`
-	VMUri          string          `json:"vmURI,omitempty"`
 	Errors         []string        `json:"errors,omitempty"`
 	MaliciousFiles []MaliciousFile `json:"maliciousFiles"`
 	Summary        Summary         `json:"summary"`
@@ -30,18 +25,4 @@ type Summary struct {
 	DataRead           string    `json:"dataRead,omitempty"`
 	StartDate          time.Time `json:"startDate"`
 	EndDate            time.Time `json:"endDate"`
-}
-
-func (r Result) JSON() []byte {
-	payload, _ := json.Marshal(r)
-	return payload
-}
-
-func (r Result) JSONReader() io.Reader {
-	buf := bytes.NewBuffer(r.JSON())
-	return buf
-}
-
-func (r Result) DataType() string {
-	return "CLAMSCAN"
 }

@@ -11,19 +11,16 @@ import (
 )
 
 type Provider struct {
-	project string
-	zone    string
-
+	project   string
+	zone      string
 	instances *compute.InstancesClient
 	disks     *compute.DisksClient
 	snapshots *compute.SnapshotsClient
 	metadata  *metadata.Client
 }
 
-func NewProvider(project string) provider.Provider {
-	return &Provider{
-		project: project,
-	}
+func NewProvider() provider.Provider {
+	return &Provider{}
 }
 
 func (p Provider) GetName() string {
@@ -38,6 +35,12 @@ func (p *Provider) Init(ctx context.Context) error {
 	if !p.metadata.OnGCEWithContext(ctx) {
 		return fmt.Errorf("not running on GCP")
 	}
+
+	project, err := p.metadata.ProjectIDWithContext(ctx)
+	if err != nil {
+		return fmt.Errorf("querying GCP project id from metadata svc: %w", err)
+	}
+	p.project = project
 
 	zone, err := p.metadata.ZoneWithContext(ctx)
 	if err != nil {

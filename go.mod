@@ -12,6 +12,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/jaypipes/ghw v0.17.0
 	github.com/stretchr/testify v1.10.0
+	github.com/urfave/cli/v3 v3.3.8
 	golang.org/x/sys v0.34.0
 	google.golang.org/api v0.243.0
 )

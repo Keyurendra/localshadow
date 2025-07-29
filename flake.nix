@@ -11,6 +11,20 @@
       in
       {
         formatter = pkgs.nixpkgs-fmt;
+        packages.default = pkgs.buildGoModule {
+          pname = "omni";
+          version = "0.0.0";
+          src = ./.;
+          vendorHash = "sha256-QvdiQ+4+HNyaB1jQgxRQTUwxTqZi4pE/rvI7YhF7jbs=";
+          env.CGO_ENABLED = 0;
+          subPackages = [ "cmd/omni" ];
+          nativeBuildInputs = [ pkgs.installShellFiles ];
+          postInstall = ''
+            for shell in bash zsh; do
+              installShellCompletion --$shell ./completion/$shell/omni
+            done
+          '';
+        };
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             nixd

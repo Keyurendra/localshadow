@@ -5,11 +5,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/accuknox/omniscan/internal/artifact"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/parser.go"
+	"github.com/accuknox/omniscan/internal/scanner/clamscan/entropy"
+	"github.com/accuknox/omniscan/internal/scanner/clamscan/hash"
+	"github.com/accuknox/omniscan/internal/scanner/clamscan/metadata"
+	"github.com/accuknox/omniscan/internal/scanner/clamscan/parser"
 )
 
 func Scan(ctx context.Context, mountpoint, vmURI, platform string) (artifact.Findings, error) {
@@ -42,17 +47,65 @@ func Scan(ctx context.Context, mountpoint, vmURI, platform string) (artifact.Fin
 		return nil, fmt.Errorf("writing stdout to buffer: %w", err)
 	}
 
-	result, err := parser.New(buf).Parse()
+	parsed, err := parser.New(buf).Parse()
 	if err != nil {
 		return nil, fmt.Errorf("parsing clamscan output: %w", err)
 	}
 
-	for idx, file := range result.MaliciousFiles {
-		result.MaliciousFiles[idx].Path = strings.TrimPrefix(file.Path, mountpoint)
+	enriched := Result{
+		Platform:        platform,
+		VMUri:           vmURI,
+		MaliciousFiles:  make([]MaliciousFile, len(parsed.MaliciousFiles)),
+		ClamscanSummary: parsed.Summary,
+		ClamscanErrors:  parsed.Errors,
 	}
 
-	result.VMUri = vmURI
-	result.Platform = platform
+	for idx, file := range parsed.MaliciousFiles {
+		mal := MaliciousFile{
+			Path:            strings.TrimPrefix(file.Path, mountpoint),
+			ClamAVSignature: file.Signature,
+		}
 
-	return result, nil
+		f, err := os.Open(file.Path)
+		if err != nil {
+			mal.Errors = append(
+				mal.Errors,
+				fmt.Sprintf("opening file: %s", err.Error()),
+			)
+			enriched.MaliciousFiles[idx] = mal
+			continue
+		}
+
+		f.Seek(0, io.SeekStart)
+		mal.Hashes, err = hash.Calculate(f)
+		if err != nil {
+			mal.Errors = append(
+				mal.Errors,
+				fmt.Sprintf("calculating hashes: %s", err.Error()),
+			)
+		}
+
+		f.Seek(0, io.SeekStart)
+		mal.Metadata, err = metadata.Collect(f)
+		if err != nil {
+			mal.Errors = append(
+				mal.Errors,
+				fmt.Sprintf("collecting metadata: %s", err.Error()),
+			)
+		}
+
+		f.Seek(0, io.SeekStart)
+		mal.Entropy, err = entropy.Calculate(f)
+		if err != nil {
+			mal.Errors = append(
+				mal.Errors,
+				fmt.Sprintf("calculating Shanon entropy: %s", err.Error()),
+			)
+		}
+
+		f.Close()
+		enriched.MaliciousFiles[idx] = mal
+	}
+
+	return enriched, nil
 }
