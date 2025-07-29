@@ -25,6 +25,10 @@ func NewProvider(p provider.Provider, optFns ...OptFunc) provider.Provider {
 	}
 }
 
+func (r Retry) GetName() string {
+	return r.p.GetName()
+}
+
 func (r Retry) Init(ctx context.Context) error {
 	return retry.Do(func() error {
 		return r.p.Init(ctx)

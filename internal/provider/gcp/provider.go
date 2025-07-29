@@ -26,6 +26,10 @@ func NewProvider(project string) provider.Provider {
 	}
 }
 
+func (p Provider) GetName() string {
+	return "gcp"
+}
+
 func (p *Provider) Init(ctx context.Context) error {
 	var err error
 

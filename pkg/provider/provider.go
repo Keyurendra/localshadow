@@ -7,6 +7,7 @@ import (
 )
 
 type Provider interface {
+	GetName() string
 	Init(ctx context.Context) error
 	VM
 	Disk

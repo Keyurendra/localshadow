@@ -6,9 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os/exec"
 	"time"
 
+	"github.com/accuknox/omniscan/internal/artifact"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
 	"github.com/aquasecurity/trivy/pkg/types"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
@@ -40,7 +42,7 @@ type VMMetadata struct {
 	Platform string `json:"platform,omitempty"`
 }
 
-func Scan(ctx context.Context, mountpoint string) (*Result, error) {
+func Scan(ctx context.Context, mountpoint, vmURI, platform string) (artifact.Findings, error) {
 	path, err := exec.LookPath("trivy")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
@@ -88,9 +90,23 @@ func Scan(ctx context.Context, mountpoint string) (*Result, error) {
 			ImageConfig: report.Metadata.ImageConfig,
 			Layers:      report.Metadata.Layers,
 			VM: VMMetadata{
-				URI:      "",
-				Platform: "",
+				URI:      vmURI,
+				Platform: platform,
 			},
 		},
 	}, nil
+}
+
+func (r Result) JSON() []byte {
+	payload, _ := json.Marshal(r)
+	return payload
+}
+
+func (r Result) JSONReader() io.Reader {
+	buf := bytes.NewBuffer(r.JSON())
+	return buf
+}
+
+func (r Result) DataType() string {
+	return "TR"
 }

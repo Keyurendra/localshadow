@@ -7,6 +7,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.7.0
 	github.com/aquasecurity/trivy v0.64.1
 	github.com/avast/retry-go/v4 v4.6.1
+	github.com/go-co-op/gocron/v2 v2.16.2
 	github.com/google/go-containerregistry v0.20.6
 	github.com/h2non/filetype v1.1.3
 	github.com/jaypipes/ghw v0.17.0
@@ -30,10 +31,12 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/jaypipes/pcidb v1.0.1 // indirect
+	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/package-url/packageurl-go v0.1.3 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/samber/lo v1.51.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0 // indirect

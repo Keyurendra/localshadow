@@ -8,10 +8,11 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/accuknox/omniscan/internal/artifact"
 	"github.com/accuknox/omniscan/internal/scanner/clamscan/parser.go"
 )
 
-func Scan(ctx context.Context, mountpoint string) (*parser.Result, error) {
+func Scan(ctx context.Context, mountpoint, vmURI, platform string) (artifact.Findings, error) {
 	path, err := exec.LookPath("clamscan")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
@@ -49,6 +50,9 @@ func Scan(ctx context.Context, mountpoint string) (*parser.Result, error) {
 	for idx, file := range result.MaliciousFiles {
 		result.MaliciousFiles[idx].Path = strings.TrimPrefix(file.Path, mountpoint)
 	}
+
+	result.VMUri = vmURI
+	result.Platform = platform
 
 	return result, nil
 }
