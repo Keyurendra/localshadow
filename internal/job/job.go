@@ -3,6 +3,7 @@ package job
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -132,6 +133,12 @@ func (j Job) Schedule(ctx context.Context, crontab string, runImmediately bool) 
 
 func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult, error) {
 	if len(target.Disks) == 0 {
+		slog.LogAttrs(
+			ctx,
+			slog.LevelInfo,
+			"no disks attached to vm. Skipping...",
+			slog.String("vm_uri", target.URI),
+		)
 		return nil, nil
 	}
 	disk := target.Disks[0] // first disk is always the boot disk
@@ -142,11 +149,26 @@ func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult,
 	}
 	defer j.p.DeleteDisk(ctx, clone)
 
+	slog.LogAttrs(
+		ctx,
+		slog.LevelDebug,
+		"succesfully cloned disk",
+		slog.String("cloned_disk_uri", clone),
+	)
+
 	err = j.mountClonedDisk(ctx, clone, host.URI)
 	if err != nil {
 		return nil, err
 	}
 	defer j.p.UnmountDisk(ctx, clone, host.URI)
+
+	slog.LogAttrs(
+		ctx,
+		slog.LevelDebug,
+		"mounted cloned disk to host",
+		slog.String("cloned_disk_uri", clone),
+		slog.String("mount_point", j.opts.mountpoint),
+	)
 
 	return j.scanMountedDisk(ctx, clone, target.URI)
 }
@@ -192,6 +214,14 @@ func (j Job) scanMountedDisk(ctx context.Context, diskURI, targetURI string) (*e
 	}
 
 	for _, p := range parts {
+		slog.LogAttrs(
+			ctx,
+			slog.LevelDebug,
+			"attempting to scan disk partition",
+			slog.String("cloned_disk_uri", diskURI),
+			slog.String("partition", p.Name),
+		)
+
 		result, err := j.scanPartition(ctx, p, targetURI)
 		if err != nil {
 			return nil, fmt.Errorf(
@@ -208,10 +238,25 @@ func (j Job) scanMountedDisk(ctx context.Context, diskURI, targetURI string) (*e
 }
 
 func (j Job) scanPartition(ctx context.Context, p ghw.Partition, targetURI string) (*execResult, error) {
-	if p.Disk.Name != resource.DevicePathMagicString {
+	if p.Disk.SerialNumber != resource.DevicePathMagicString {
+		slog.LogAttrs(
+			ctx,
+			slog.LevelDebug,
+			"partition doesn not contain magic string. Skipping...",
+			slog.String("partition", p.Name),
+			slog.String("magic_string", resource.DevicePathMagicString),
+			slog.String("disk_name", p.Name),
+		)
 		return nil, nil
 	}
 	if p.Type == "unknown" {
+		slog.LogAttrs(
+			ctx,
+			slog.LevelInfo,
+			"partition filesystem unknown. Skipping...",
+			slog.String("partition", p.Name),
+			slog.String("disk_name", p.Disk.Name),
+		)
 		return nil, nil
 	}
 
@@ -222,10 +267,30 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, targetURI strin
 	}
 	defer util.Unmount(ctx, j.opts.mountpoint)
 
+	slog.LogAttrs(
+		ctx,
+		slog.LevelDebug,
+		"mounted partition to host",
+		slog.String("partition", p.Name),
+	)
+
 	osType := j.detectOS()
 	if osType == "unknown" {
+		slog.LogAttrs(
+			ctx,
+			slog.LevelDebug,
+			"could not determine OS. Skipping...",
+			slog.String("partition", p.Name),
+		)
 		return nil, nil
 	}
+	slog.LogAttrs(
+		ctx,
+		slog.LevelDebug,
+		"OS detected",
+		slog.String("partition", p.Name),
+		slog.String("os", osType),
+	)
 
 	return j.performScans(ctx, osType, targetURI)
 }
@@ -244,7 +309,7 @@ func (j Job) mountPartition(ctx context.Context, dev, fsType string) error {
 func (j Job) detectOS() string {
 	linuxProb := util.DetectLinuxRootFS(j.opts.mountpoint)
 	winProb := util.DetectWindowsRootFS(j.opts.mountpoint)
-	if linuxProb < 0.5 && winProb < 0.5 {
+	if linuxProb < .5 && winProb < .5 {
 		return "unknown"
 	}
 	if linuxProb > winProb {
@@ -264,6 +329,15 @@ func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execR
 			targetURI,
 			platform,
 		)
+		slog.LogAttrs(
+			ctx,
+			slog.LevelDebug,
+			"clamav scan completed",
+			slog.String("os", osType),
+			slog.String("mount_point", j.opts.mountpoint),
+			slog.String("target_uri", targetURI),
+			slog.String("platform", platform),
+		)
 	}
 
 	if osType == "windows" {
@@ -276,6 +350,15 @@ func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execR
 			j.opts.mountpoint,
 			targetURI,
 			platform,
+		)
+		slog.LogAttrs(
+			ctx,
+			slog.LevelDebug,
+			"trivy scan completed",
+			slog.String("os", osType),
+			slog.String("mount_point", j.opts.mountpoint),
+			slog.String("target_uri", targetURI),
+			slog.String("platform", platform),
 		)
 	}
 
