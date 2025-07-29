@@ -20,9 +20,10 @@ import (
 )
 
 type Job struct {
-	p              provider.Provider
+	prov           provider.Provider
+	pub            artifact.Publisher
 	opts           opts
-	artifactConfig artifact.Config
+	artifactConfig artifact.CSPMPublisherConfig
 }
 
 type ErrorSummary struct {
@@ -32,19 +33,16 @@ type ErrorSummary struct {
 	TrivyError     error
 }
 
-func NewScanJob(p provider.Provider, c artifact.Config, optFns ...OptFunc) (*Job, error) {
-	if err := c.Validate(); err != nil {
-		return nil, fmt.Errorf("validating provided artifact API config: %w", err)
-	}
+func NewScanJob(prov provider.Provider, pub artifact.Publisher, optFns ...OptFunc) Job {
 	o := defaultOpts()
 	for _, fn := range optFns {
 		fn(&o)
 	}
-	return &Job{
-		p:              p,
-		opts:           o,
-		artifactConfig: c,
-	}, nil
+	return Job{
+		prov: prov,
+		pub:  pub,
+		opts: o,
+	}
 }
 
 func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
@@ -55,16 +53,16 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 		)
 	}
 
-	if err := j.p.Init(ctx); err != nil {
+	if err := j.prov.Init(ctx); err != nil {
 		return nil, fmt.Errorf("initialization given provider: %w", err)
 	}
 
-	host, err := j.p.GetCurrentVM(ctx)
+	host, err := j.prov.GetCurrentVM(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("fetching current VM: %w", err)
 	}
 
-	vms, err := j.p.ListVMs(ctx)
+	vms, err := j.prov.ListVMs(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing all VMs: %w", err)
 	}
@@ -147,7 +145,7 @@ func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult,
 	if err != nil {
 		return nil, err
 	}
-	defer j.p.DeleteDisk(ctx, clone)
+	defer j.prov.DeleteDisk(ctx, clone)
 
 	slog.LogAttrs(
 		ctx,
@@ -160,7 +158,7 @@ func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult,
 	if err != nil {
 		return nil, err
 	}
-	defer j.p.UnmountDisk(ctx, clone, host.URI)
+	defer j.prov.UnmountDisk(ctx, clone, host.URI)
 
 	slog.LogAttrs(
 		ctx,
@@ -174,25 +172,25 @@ func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult,
 }
 
 func (j Job) createDiskClone(ctx context.Context, diskURI string) (string, error) {
-	snap, err := j.p.CreateSnapshot(ctx, diskURI)
+	snap, err := j.prov.CreateSnapshot(ctx, diskURI)
 	if err != nil {
 		return "", fmt.Errorf("creating snapshot of disk %q: %w", diskURI, err)
 	}
-	defer j.p.DeleteSnapshot(ctx, snap)
+	defer j.prov.DeleteSnapshot(ctx, snap)
 
-	err = j.p.WaitSnapshotReady(ctx, snap)
+	err = j.prov.WaitSnapshotReady(ctx, snap)
 	if err != nil {
 		return "", fmt.Errorf("waiting for snapshot %q: %w", snap, err)
 	}
 
-	clone, err := j.p.ConvertSnapshot2Disk(ctx, snap)
+	clone, err := j.prov.ConvertSnapshot2Disk(ctx, snap)
 	if err != nil {
 		return "", fmt.Errorf("converting snapshot %q to disk: %w", snap, err)
 	}
 
-	err = j.p.WaitDiskReady(ctx, clone)
+	err = j.prov.WaitDiskReady(ctx, clone)
 	if err != nil {
-		j.p.DeleteDisk(ctx, clone)
+		j.prov.DeleteDisk(ctx, clone)
 		return "", fmt.Errorf("waiting for cloned disk %q: %w", clone, err)
 	}
 
@@ -200,7 +198,7 @@ func (j Job) createDiskClone(ctx context.Context, diskURI string) (string, error
 }
 
 func (j Job) mountClonedDisk(ctx context.Context, diskURI, hostURI string) error {
-	err := j.p.MountDisk(ctx, diskURI, hostURI, resource.DevicePathMagicString)
+	err := j.prov.MountDisk(ctx, diskURI, hostURI, resource.DevicePathMagicString)
 	if err != nil {
 		return fmt.Errorf("mounting disk %q to host: %w", diskURI, err)
 	}
@@ -320,7 +318,7 @@ func (j Job) detectOS() string {
 
 func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execResult, error) {
 	f := execResult{OS: osType}
-	platform := j.p.GetName()
+	platform := j.prov.GetName()
 
 	if j.opts.clamscanEnabled {
 		f.Clamscan, f.ClamscanError = clamscan.Scan(
@@ -376,11 +374,5 @@ func (j Job) publish(ctx context.Context, raw *execResult) error {
 	if len(items) == 0 {
 		return nil
 	}
-
-	pub, err := artifact.NewPublisher(j.artifactConfig)
-	if err != nil {
-		return fmt.Errorf("creating artifact publisher: %w", err)
-	}
-
-	return pub.Publish(ctx, items)
+	return j.pub.Publish(ctx, items...)
 }

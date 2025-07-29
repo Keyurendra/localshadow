@@ -3,26 +3,88 @@ package artifact
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
-type Pubisher struct {
-	c Config
+type CSPMPublisherConfig struct {
+	Endpoint string
+	TenantID uint
+	LabelID  string
+	Token    string
 }
 
-func NewPublisher(c Config) (*Pubisher, error) {
+func (c CSPMPublisherConfig) Validate() error {
+	if c.TenantID == 0 {
+		return fmt.Errorf("missing `TenantID`")
+	}
+	if c.LabelID == "" {
+		return fmt.Errorf("missing `LabelID`")
+	}
+	if c.Endpoint == "" {
+		return fmt.Errorf("missing `Endpoint`")
+	}
+	if !c.isValidEndpoint() {
+		return fmt.Errorf("invalid `Endpoint`")
+	}
+	if c.Token == "" {
+		return fmt.Errorf("missing `Token`")
+	}
+	if !c.isValidJWT() {
+		return fmt.Errorf("invalid `Token`")
+	}
+	return nil
+}
+
+func (c CSPMPublisherConfig) isValidEndpoint() bool {
+	parsed, err := url.ParseRequestURI(c.Endpoint)
+	if err != nil {
+		return false
+	}
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return false
+	}
+	if parsed.Host == "" {
+		return false
+	}
+	// reject non-ASCII or space characters in host
+	if strings.ContainsAny(parsed.Host, " \t\n\r") {
+		return false
+	}
+	return true
+}
+
+func (c CSPMPublisherConfig) isValidJWT() bool {
+	parts := strings.Split(c.Token, ".")
+	if len(parts) != 3 {
+		return false
+	}
+	for _, part := range parts[:2] {
+		if _, err := base64.RawURLEncoding.DecodeString(part); err != nil {
+			return false
+		}
+	}
+	return true
+}
+
+type CSPMPubisher struct {
+	c CSPMPublisherConfig
+}
+
+func NewCSPMPublisher(c CSPMPublisherConfig) (Publisher, error) {
 	if err := c.Validate(); err != nil {
 		return nil, fmt.Errorf("validating provided config: %w", err)
 	}
-	return &Pubisher{c: c}, nil
+	return &CSPMPubisher{c: c}, nil
 }
 
-func (p Pubisher) Publish(ctx context.Context, findings []Findings) error {
+func (p CSPMPubisher) Publish(ctx context.Context, findings ...Findings) error {
 	for _, f := range findings {
 		err := p.uploadFinding(ctx, f)
 		if err != nil {
@@ -33,7 +95,7 @@ func (p Pubisher) Publish(ctx context.Context, findings []Findings) error {
 	return nil
 }
 
-func (p Pubisher) buildArtifactURL(dataType string) (*url.URL, error) {
+func (p CSPMPubisher) buildArtifactURL(dataType string) (*url.URL, error) {
 	u, err := url.Parse(p.c.Endpoint)
 	if err != nil {
 		return nil, fmt.Errorf("parsing endpoint %q: %w", p.c.Endpoint, err)
@@ -49,7 +111,7 @@ func (p Pubisher) buildArtifactURL(dataType string) (*url.URL, error) {
 	return u, nil
 }
 
-func (p Pubisher) uploadFinding(ctx context.Context, f Findings) error {
+func (p CSPMPubisher) uploadFinding(ctx context.Context, f Findings) error {
 	body, contentType, err := p.createMultipartBody(f)
 	if err != nil {
 		return fmt.Errorf("creating multipart form: %w", err)
@@ -81,7 +143,7 @@ func (p Pubisher) uploadFinding(ctx context.Context, f Findings) error {
 	return nil
 }
 
-func (p Pubisher) createMultipartBody(f Findings) (io.Reader, string, error) {
+func (p CSPMPubisher) createMultipartBody(f Findings) (io.Reader, string, error) {
 	buf := new(bytes.Buffer)
 	w := multipart.NewWriter(buf)
 
