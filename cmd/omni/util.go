@@ -1,58 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/accuknox/omniscan/internal/artifact"
 
 	"github.com/urfave/cli/v3"
 )
-
-func jsonMarshalWithError(v any) ([]byte, error) {
-	val := reflect.ValueOf(v)
-	typ := reflect.TypeOf(v)
-
-	if val.Kind() == reflect.Ptr {
-		val = val.Elem()
-		typ = typ.Elem()
-	}
-
-	if val.Kind() != reflect.Struct {
-		return json.MarshalIndent(v, "", "  ")
-	}
-
-	out := make(map[string]any)
-	errType := reflect.TypeOf((*error)(nil)).Elem()
-
-	for i := 0; i < val.NumField(); i++ {
-		field := val.Field(i)
-		fieldType := typ.Field(i)
-
-		name := fieldType.Tag.Get("json")
-		if name == "" {
-			name = fieldType.Name
-		}
-		if idx := strings.Index(name, ","); idx != -1 {
-			name = name[:idx]
-		}
-
-		if !field.CanInterface() {
-			continue
-		}
-
-		if fieldType.Type.Implements(errType) && !field.IsNil() {
-			out[name] = field.Interface().(error).Error()
-			continue
-		}
-		out[name] = field.Interface()
-	}
-
-	return json.MarshalIndent(out, "", "  ")
-}
 
 func cspmPubisher(c *cli.Command) (artifact.Publisher, error) {
 	endpoint := c.String("endpoint")

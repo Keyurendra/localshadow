@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -115,7 +116,7 @@ var scanCmd = &cli.Command{
 			return fmt.Errorf("executing scan job: %w", err)
 		}
 
-		output, err := jsonMarshalWithError(summary)
+		output, err := json.MarshalIndent(summary, "", "  ")
 		if err != nil {
 			return fmt.Errorf("marshalling execution summary to json: %w", err)
 		}
@@ -128,7 +129,13 @@ var scanCmd = &cli.Command{
 var scheduleCmd = &cli.Command{
 	Name:      "schedule",
 	Arguments: scanCmd.Arguments,
-	Flags:     scanCmd.Flags,
+	Flags: append(scanCmd.Flags, []cli.Flag{
+		&cli.StringFlag{
+			Name:  "crontab",
+			Value: "@daily",
+			Usage: "CronJob schedule",
+		},
+	}...),
 	Action: func(ctx context.Context, c *cli.Command) error {
 		var provider provider.Provider
 
@@ -157,6 +164,6 @@ var scheduleCmd = &cli.Command{
 		}
 
 		j := job.NewScanJob(provider, publisher, opts...)
-		return j.Schedule(ctx, "0 */8 * * *", true)
+		return j.Schedule(ctx, c.String("crontab"), true)
 	},
 }

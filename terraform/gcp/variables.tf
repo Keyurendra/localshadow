@@ -1,0 +1,53 @@
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "region" {
+  description = "GCP Region"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "zone" {
+  description = "GCP Zone"
+  type        = string
+  default     = "us-central1-a"
+}
+
+variable "machine_type" {
+  description = "GCP Compute Instance Machine Type"
+  type        = string
+  default     = "e2-medium"
+}
+
+variable "artifact_token" {
+  description = "AccuKnox Artifact API JWT Token"
+  type        = string
+  sensitive   = true
+  nullable    = false
+}
+
+variable "artifact_endpoint" {
+  description = "AccuKnox Artifact API Endpoint"
+  type        = string
+  default     = "https://cspm.accuknox.com/api/v1/artifact/"
+}
+
+variable "artifact_label" {
+  description = "AccuKnox Artifact Label"
+  type        = string
+  nullable    = false
+}
+
+variable "artifact_tenant_id" {
+  description = "AccuKnox Artifact Tenant ID"
+  type        = number
+  nullable    = false
+}
+
+variable "omni_additional_flags" {
+  description = "Additional flags for omni service"
+  type        = map(string)
+  default     = {}
+}

@@ -26,13 +26,6 @@ type Job struct {
 	artifactConfig artifact.CSPMPublisherConfig
 }
 
-type ErrorSummary struct {
-	OS             string
-	ExecutionError error
-	ClamscanError  error
-	TrivyError     error
-}
-
 func NewScanJob(prov provider.Provider, pub artifact.Publisher, optFns ...OptFunc) Job {
 	o := defaultOpts()
 	for _, fn := range optFns {

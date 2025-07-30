@@ -7,7 +7,12 @@
   outputs = { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfreePredicate = p: builtins.elem (pkgs.lib.getName p) [
+            "terraform"
+          ];
+        };
       in
       {
         formatter = pkgs.nixpkgs-fmt;
@@ -34,6 +39,8 @@
             gopls
             awscli2
             google-cloud-sdk
+            terraform-ls
+            terraform
           ];
         };
       });
