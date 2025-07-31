@@ -11,9 +11,9 @@ import (
 )
 
 func cspmPubisher(c *cli.Command) (artifact.Publisher, error) {
-	endpoint := c.String("endpoint")
+	endpoint := c.String("artifact-endpoint")
 	if endpoint == "" {
-		return nil, fmt.Errorf("missing `--endpoint`")
+		return nil, fmt.Errorf("missing `--artifact-endpoint`")
 	}
 
 	tenantID := c.Uint("tenant-id")
@@ -21,14 +21,14 @@ func cspmPubisher(c *cli.Command) (artifact.Publisher, error) {
 		return nil, fmt.Errorf("missing `--tenant-id`")
 	}
 
-	label := c.String("label")
+	label := c.String("artifact-label")
 	if label == "" {
-		return nil, fmt.Errorf("missing `--label`")
+		return nil, fmt.Errorf("missing `--artifact-label`")
 	}
 
-	tokenFile := c.String("token-file")
+	tokenFile := c.String("artifact-token-file")
 	if tokenFile == "" {
-		return nil, fmt.Errorf("missing `--token-file`")
+		return nil, fmt.Errorf("missing `--artifact-token-file`")
 	}
 
 	tkn, err := os.ReadFile(tokenFile)

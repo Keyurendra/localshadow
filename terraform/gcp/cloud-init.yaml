@@ -56,10 +56,10 @@ write_files:
       Type=simple
       User=root
       ExecStart=/usr/local/bin/omni schedule gcp \
-                  --token-file /etc/accuknox-omni/artifact.token \
-                  --endpoint "${artifact_endpoint}" \
+                  --artifact-token-file /etc/accuknox-omni/artifact.token \
+                  --artifact-endpoint "${artifact_endpoint}" \
                   --tenant-id "${artifact_tenant_id}" \
-                  --label "${artifact_label}" %{for key, value in omni_additional_flags}--${key}="${value}" %{endfor}
+                  --artifact-label "${artifact_label}" %{for key, value in omni_additional_flags}--${key}="${value}" %{endfor}
       Restart=always
       RestartSec=10
       StandardOutput=journal

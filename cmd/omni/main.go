@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 
@@ -13,17 +14,21 @@ import (
 	"github.com/accuknox/omniscan/internal/provider/retry"
 	"github.com/accuknox/omniscan/internal/util"
 	"github.com/accuknox/omniscan/pkg/provider"
+	"github.com/accuknox/omniscan/pkg/resource"
 
 	"github.com/urfave/cli/v3"
 )
 
 func main() {
-	cmd.Run(context.Background(), os.Args)
+	err := cmd.Run(context.Background(), os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 var cmd = &cli.Command{
 	Name:                  "omni",
-	Description:           "Multi-platform VM scanner",
+	Usage:                 "Multi-platform VM scanner",
 	EnableShellCompletion: true,
 	Authors:               []any{"AccuKnox Inc."},
 	Flags: []cli.Flag{
@@ -52,47 +57,69 @@ var scanCmd = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:      "local-publisher-store-path",
-			Usage:     "Path to store directory",
+			Usage:     "Path to local publisher's store directory",
 			TakesFile: true,
 			Value:     "/var/lib/accuknox",
 		},
 		&cli.StringFlag{
-			Name:  "endpoint",
+			Name:  "artifact-endpoint",
 			Usage: "AccuKnox artifact API endpoint",
-			Value: "https://cspm.accuknox.com//api/v1/artifact/",
+			Value: "https://cspm.accuknox.com/api/v1/artifact/",
 		},
 		&cli.UintFlag{
-			Name:  "tenant-id",
-			Usage: "AccuKnox tenant ID",
+			Name:        "tenant-id",
+			Usage:       "AccuKnox tenant ID",
+			HideDefault: true,
 		},
 		&cli.StringFlag{
-			Name:  "label",
-			Usage: "AccuKnox associated label at the CP",
+			Name:  "artifact-label",
+			Usage: "Label to associate with the artifact",
 		},
 		&cli.StringFlag{
-			Name:      "token-file",
+			Name:      "artifact-token-file",
 			Usage:     "Path to AccuKnox artifact API JWT auth token",
 			TakesFile: true,
 		},
 		&cli.BoolFlag{
-			Name:  "disable-malware-scan",
+			Name:  "skip-malware-scan",
 			Usage: "Scan only for vulnerabilities",
+		},
+		&cli.StringFlag{
+			Name:  "vm-name-regex",
+			Usage: "filter VMs by name using regex",
+		},
+		&cli.StringMapFlag{
+			Name:  "vm-label-regex",
+			Usage: "filter VMs by label using regex",
 		},
 	},
 	Arguments: []cli.Argument{
 		&cli.StringArg{
-			Name: "provider",
+			Name:      "provider",
+			UsageText: "gcp",
 		},
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
-		var provider provider.Provider
-
 		arg := c.StringArg("provider")
+		if arg == "" {
+			return fmt.Errorf("missing `provider`")
+		}
+
+		var provider provider.Provider
+		var err error
+
 		switch arg {
 		case "gcp":
-			provider = gcp.NewProvider()
+			provider, err = gcp.NewProvider(&resource.Filter{
+				Name:   c.String("vm-name-regex"),
+				Labels: c.StringMap("vm-label-regex"),
+			})
 		default:
 			return fmt.Errorf("unsupported or unknown provider %q", arg)
+		}
+
+		if err != nil {
+			return fmt.Errorf("setting up %s provider: %w", arg, err)
 		}
 
 		provider = retry.NewProvider(provider)
@@ -107,7 +134,7 @@ var scanCmd = &cli.Command{
 		}
 
 		var opts []job.OptFunc
-		if c.Bool("disable-malware-scan") {
+		if c.Bool("skip-malware-scan") {
 			opts = append(opts, job.WithClamscanDisabled())
 		}
 
@@ -138,13 +165,21 @@ var scheduleCmd = &cli.Command{
 	}...),
 	Action: func(ctx context.Context, c *cli.Command) error {
 		var provider provider.Provider
-
+		var err error
 		arg := c.StringArg("provider")
+
 		switch arg {
 		case "gcp":
-			provider = gcp.NewProvider()
+			provider, err = gcp.NewProvider(&resource.Filter{
+				Name:   c.String("vm-name-filter"),
+				Labels: c.StringMap("vm-label-filter"),
+			})
 		default:
 			return fmt.Errorf("unsupported or unknown provider %q", arg)
+		}
+
+		if err != nil {
+			return fmt.Errorf("setting up %s provider: %w", arg, err)
 		}
 
 		provider = retry.NewProvider(provider)

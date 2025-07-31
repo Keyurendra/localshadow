@@ -26,13 +26,39 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 			}
 			return nil, fmt.Errorf("fetching compute instances: %w", err)
 		}
+
 		for _, i := range page.Value.GetInstances() {
+			if r := p.filter.Name; r != nil && !r.MatchString(i.GetName()) {
+				continue
+			}
+
+			var match bool
+
+		NextLabel:
+			for k, v := range i.GetLabels() {
+				for _, r := range p.filter.Labels {
+					if r.Key != nil && !r.Key.MatchString(k) {
+						continue
+					}
+					if r.Value != nil && !r.Value.MatchString(v) {
+						continue
+					}
+					match = true
+					break NextLabel
+				}
+			}
+
+			if !match && len(i.GetLabels()) != 0 && len(p.filter.Labels) != 0 {
+				continue
+			}
+
 			disks := make([]resource.Disk, len(i.Disks))
 			for idx, disk := range i.Disks {
 				disks[idx] = resource.Disk{
 					URI: disk.GetSource(),
 				}
 			}
+
 			vms = append(vms, resource.VM{
 				URI:   i.GetSelfLink(),
 				Disks: disks,

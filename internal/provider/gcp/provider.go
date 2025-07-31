@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/accuknox/omniscan/pkg/provider"
+	"github.com/accuknox/omniscan/pkg/resource"
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/metadata"
@@ -13,14 +14,24 @@ import (
 type Provider struct {
 	project   string
 	zone      string
+	filter    resource.PrecompiledFilter
 	instances *compute.InstancesClient
 	disks     *compute.DisksClient
 	snapshots *compute.SnapshotsClient
 	metadata  *metadata.Client
 }
 
-func NewProvider() provider.Provider {
-	return &Provider{}
+func NewProvider(vmFilter *resource.Filter) (provider.Provider, error) {
+	if vmFilter == nil {
+		return &Provider{}, nil
+	}
+	regFilter, err := vmFilter.Precompile()
+	if err != nil {
+		return nil, fmt.Errorf("precompiled provided filter: %w", err)
+	}
+	return &Provider{
+		filter: *regFilter,
+	}, nil
 }
 
 func (p Provider) GetName() string {
