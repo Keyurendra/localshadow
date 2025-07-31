@@ -7,12 +7,20 @@ variable "region" {
   description = "GCP Region"
   type        = string
   default     = "us-central1"
+  validation {
+    condition     = can(regex("^[a-z]+-[a-z]+[0-9]+$", var.region))
+    error_message = "Region must be in the format like us-central1."
+  }
 }
 
 variable "zone" {
   description = "GCP Zone"
   type        = string
   default     = "us-central1-a"
+  validation {
+    condition     = can(regex("^[a-z]+-[a-z]+[0-9]+-[a-z]$", var.zone))
+    error_message = "zone must be in the format like us-central1-a."
+  }
 }
 
 variable "machine_type" {
@@ -32,6 +40,10 @@ variable "artifact_endpoint" {
   description = "AccuKnox Artifact API Endpoint"
   type        = string
   default     = "https://cspm.accuknox.com/api/v1/artifact/"
+  validation {
+    condition     = can(regex("^https?://", var.artifact_endpoint))
+    error_message = "artifact_endpoint must start with https:// or http://"
+  }
 }
 
 variable "artifact_label" {
