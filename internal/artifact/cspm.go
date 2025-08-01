@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
 type CSPMPublisherConfig struct {
@@ -84,7 +86,7 @@ func NewCSPMPublisher(c CSPMPublisherConfig) (Publisher, error) {
 	return &CSPMPubisher{c: c}, nil
 }
 
-func (p CSPMPubisher) Publish(ctx context.Context, findings ...Findings) error {
+func (p CSPMPubisher) Publish(ctx context.Context, findings ...scanner.Findings) error {
 	for _, f := range findings {
 		err := p.uploadFinding(ctx, f)
 		if err != nil {
@@ -111,7 +113,7 @@ func (p CSPMPubisher) buildArtifactURL(dataType string) (*url.URL, error) {
 	return u, nil
 }
 
-func (p CSPMPubisher) uploadFinding(ctx context.Context, f Findings) error {
+func (p CSPMPubisher) uploadFinding(ctx context.Context, f scanner.Findings) error {
 	body, contentType, err := p.createMultipartBody(f)
 	if err != nil {
 		return fmt.Errorf("creating multipart form: %w", err)
@@ -143,7 +145,7 @@ func (p CSPMPubisher) uploadFinding(ctx context.Context, f Findings) error {
 	return nil
 }
 
-func (p CSPMPubisher) createMultipartBody(f Findings) (io.Reader, string, error) {
+func (p CSPMPubisher) createMultipartBody(f scanner.Findings) (io.Reader, string, error) {
 	buf := new(bytes.Buffer)
 	w := multipart.NewWriter(buf)
 

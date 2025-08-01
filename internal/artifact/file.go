@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
 const isosecLayout = "20060102150405"
@@ -20,7 +22,7 @@ func NewFilePublisher(storePath string) Publisher {
 	}
 }
 
-func (p FilePublisher) Publish(ctx context.Context, findings ...Findings) error {
+func (p FilePublisher) Publish(ctx context.Context, findings ...scanner.Findings) error {
 	if err := os.MkdirAll(p.storePath, 0o755); err != nil {
 		return fmt.Errorf("creating store directory %q: %w", p.storePath, err)
 	}

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/hash"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/hash"
 )
 
 func TestCalculate(t *testing.T) {

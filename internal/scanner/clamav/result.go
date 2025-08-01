@@ -1,13 +1,13 @@
-package clamscan
+package clamav
 
 import (
 	"bytes"
 	"encoding/json"
 	"io"
 
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/hash"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/metadata"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/parser"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/hash"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/metadata"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/parser"
 )
 
 type Result struct {

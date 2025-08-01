@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/parser"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/parser"
 )
 
 const log = `

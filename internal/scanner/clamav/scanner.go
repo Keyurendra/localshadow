@@ -1,4 +1,4 @@
-package clamscan
+package clamav
 
 import (
 	"bytes"
@@ -10,14 +10,20 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/accuknox/omniscan/internal/artifact"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/entropy"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/hash"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/metadata"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/parser"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/entropy"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/hash"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/metadata"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/parser"
+	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
-func Scan(ctx context.Context, mountpoint, vmURI, platform string) (artifact.Findings, error) {
+type s struct{}
+
+func NewScanner() scanner.Scanner {
+	return s{}
+}
+
+func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.Findings, error) {
 	path, err := exec.LookPath("clamscan")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {

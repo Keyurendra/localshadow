@@ -6,43 +6,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os/exec"
-	"time"
 
-	"github.com/accuknox/omniscan/internal/artifact"
-	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
+	"github.com/accuknox/omniscan/pkg/scanner"
 	"github.com/aquasecurity/trivy/pkg/types"
-	v1 "github.com/google/go-containerregistry/pkg/v1"
 )
 
-type Result struct {
-	SchemaVersion int
-	CreatedAt     time.Time
-	ArtifactName  string
-	ArtifactType  string
-	Metadata      Metadata
-	Results       types.Results
+type s struct{}
+
+func NewScanner() scanner.Scanner {
+	return s{}
 }
 
-type Metadata struct {
-	Size        int64
-	OS          *ftypes.OS
-	VM          VMMetadata
-	ImageID     string
-	DiffIDs     []string
-	RepoTags    []string
-	RepoDigests []string
-	ImageConfig v1.ConfigFile
-	Layers      ftypes.Layers
-}
-
-type VMMetadata struct {
-	URI      string `json:"uri,omitempty"`
-	Platform string `json:"platform,omitempty"`
-}
-
-func Scan(ctx context.Context, mountpoint, vmURI, platform string) (artifact.Findings, error) {
+func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.Findings, error) {
 	path, err := exec.LookPath("trivy")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
@@ -95,18 +71,4 @@ func Scan(ctx context.Context, mountpoint, vmURI, platform string) (artifact.Fin
 			},
 		},
 	}, nil
-}
-
-func (r Result) JSON() []byte {
-	payload, _ := json.Marshal(r)
-	return payload
-}
-
-func (r Result) JSONReader() io.Reader {
-	buf := bytes.NewBuffer(r.JSON())
-	return buf
-}
-
-func (r Result) DataType() string {
-	return "TR"
 }

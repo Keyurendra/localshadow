@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/accuknox/omniscan/internal/scanner/clamscan/metadata"
+	"github.com/accuknox/omniscan/internal/scanner/clamav/metadata"
 
 	"github.com/stretchr/testify/assert"
 )

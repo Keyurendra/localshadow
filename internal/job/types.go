@@ -3,13 +3,13 @@ package job
 import (
 	"encoding/json"
 
-	"github.com/accuknox/omniscan/internal/artifact"
+	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
 type execResult struct {
 	OS            string
-	Clamscan      artifact.Findings
-	Trivy         artifact.Findings
+	Clamscan      scanner.Findings
+	Trivy         scanner.Findings
 	ClamscanError error
 	TrivyError    error
 }

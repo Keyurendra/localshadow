@@ -9,11 +9,12 @@ import (
 	"syscall"
 
 	"github.com/accuknox/omniscan/internal/artifact"
-	"github.com/accuknox/omniscan/internal/scanner/clamscan"
+	"github.com/accuknox/omniscan/internal/scanner/clamav"
 	"github.com/accuknox/omniscan/internal/scanner/trivy"
 	"github.com/accuknox/omniscan/internal/util"
 	"github.com/accuknox/omniscan/pkg/provider"
 	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/scanner"
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/jaypipes/ghw"
@@ -314,7 +315,7 @@ func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execR
 	platform := j.prov.GetName()
 
 	if j.opts.clamscanEnabled {
-		f.Clamscan, f.ClamscanError = clamscan.Scan(
+		f.Clamscan, f.ClamscanError = clamav.NewScanner().Scan(
 			ctx,
 			j.opts.mountpoint,
 			targetURI,
@@ -336,7 +337,7 @@ func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execR
 	}
 
 	if j.opts.trivyEnabled {
-		f.Trivy, f.TrivyError = trivy.Scan(
+		f.Trivy, f.TrivyError = trivy.NewScanner().Scan(
 			ctx,
 			j.opts.mountpoint,
 			targetURI,
@@ -357,7 +358,7 @@ func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execR
 }
 
 func (j Job) publish(ctx context.Context, raw *execResult) error {
-	var items []artifact.Findings
+	var items []scanner.Findings
 	if raw.ClamscanError == nil && raw.Clamscan != nil {
 		items = append(items, raw.Clamscan)
 	}
