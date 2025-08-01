@@ -6,11 +6,12 @@ import (
 	"strings"
 
 	"github.com/accuknox/omniscan/internal/artifact"
+	"github.com/accuknox/omniscan/pkg/publisher"
 
 	"github.com/urfave/cli/v3"
 )
 
-func cspmPubisher(c *cli.Command) (artifact.Publisher, error) {
+func cspmPubisher(c *cli.Command) (publisher.Publisher, error) {
 	endpoint := c.String("artifact-endpoint")
 	if endpoint == "" {
 		return nil, fmt.Errorf("missing `--artifact-endpoint`")

@@ -13,6 +13,7 @@ import (
 	"github.com/accuknox/omniscan/internal/scanner/trivy"
 	"github.com/accuknox/omniscan/internal/util"
 	"github.com/accuknox/omniscan/pkg/provider"
+	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/resource"
 	"github.com/accuknox/omniscan/pkg/scanner"
 
@@ -22,12 +23,12 @@ import (
 
 type Job struct {
 	prov           provider.Provider
-	pub            artifact.Publisher
+	pub            publisher.Publisher
 	opts           opts
 	artifactConfig artifact.CSPMPublisherConfig
 }
 
-func NewScanJob(prov provider.Provider, pub artifact.Publisher, optFns ...OptFunc) Job {
+func NewScanJob(prov provider.Provider, pub publisher.Publisher, optFns ...OptFunc) Job {
 	o := defaultOpts()
 	for _, fn := range optFns {
 		fn(&o)

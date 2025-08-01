@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
@@ -16,7 +17,7 @@ type FilePublisher struct {
 	storePath string
 }
 
-func NewFilePublisher(storePath string) Publisher {
+func NewFilePublisher(storePath string) publisher.Publisher {
 	return FilePublisher{
 		storePath: storePath,
 	}

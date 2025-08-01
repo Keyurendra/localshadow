@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
@@ -79,7 +80,7 @@ type CSPMPubisher struct {
 	c CSPMPublisherConfig
 }
 
-func NewCSPMPublisher(c CSPMPublisherConfig) (Publisher, error) {
+func NewCSPMPublisher(c CSPMPublisherConfig) (publisher.Publisher, error) {
 	if err := c.Validate(); err != nil {
 		return nil, fmt.Errorf("validating provided config: %w", err)
 	}
