@@ -37,6 +37,7 @@ packages:
   - curl
   - trivy
   - clamav
+  - clamav-daemon
   - libclamunrar
 
 write_files:
@@ -75,9 +76,19 @@ runcmd:
   - |
     /bin/bash -c '
       set -euo pipefail
+
+      # update clamav database
+      systemctl stop clamav-freshclam.service
+      freshclam
+      systemctl start clamav-freshclam.service
+      systemctl start clamav-daemon.service
+
+      # install omni
       mkdir -p /etc/accuknox-omni /usr/local/bin
       curl -L https://accuknox-omni.s3.us-east-1.amazonaws.com/latest/omni-linux-amd64 -o /usr/local/bin/omni
       chmod +x /usr/local/bin/omni
+
+      # start omni service
       systemctl daemon-reload
       systemctl enable omni.service --now
       systemctl status omni.service
@@ -85,6 +96,6 @@ runcmd:
 
 final_message: |
   Cloud-init setup complete!
-  AccuKnox Omni service should be running.
+  If everything went well, the AccuKnox Omni service should be running.
   Check status with: systemctl status omni
   View logs with: journalctl -u omni -f

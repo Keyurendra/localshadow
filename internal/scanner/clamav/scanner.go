@@ -24,7 +24,7 @@ func NewScanner() scanner.Scanner {
 }
 
 func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.Findings, error) {
-	path, err := exec.LookPath("clamscan")
+	path, err := exec.LookPath("clamdscan")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return nil, fmt.Errorf("`clamscan` executable not found in PATH")
@@ -39,7 +39,8 @@ func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.
 		path,
 		mountpoint,
 		"--infected",
-		"--recursive",
+		"--multiscan",
+		"--fdpass",
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
