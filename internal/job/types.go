@@ -16,10 +16,10 @@ type execResult struct {
 }
 
 type ErrorSummary struct {
-	OS             string
-	ExecutionError error
-	ClamscanError  error
-	TrivyError     error
+	OS             string `json:"os,omitempty"`
+	ExecutionError error  `json:"executionError,omitempty"`
+	ClamscanError  error  `json:"clamscanError,omitempty"`
+	TrivyError     error  `json:"trivyError,omitempty"`
 }
 
 func (s ErrorSummary) MarshalJSON() ([]byte, error) {

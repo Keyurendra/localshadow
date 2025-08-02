@@ -32,7 +32,7 @@ func WithTrivyDisabled() OptFunc {
 func WithConcurrency(concurrency uint) OptFunc {
 	return func(o *opts) {
 		if concurrency == 0 {
-			concurrency = 1
+			concurrency = uint(runtime.NumCPU())
 		}
 		o.concurrency = concurrency
 	}
