@@ -41,6 +41,15 @@ packages:
   - libclamunrar
 
 write_files:
+  - path: /etc/cron.daily/trivy-update-db
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/bin/bash
+      export TRIVY_CACHE_DIR=/root/.cache/trivy
+      /usr/bin/trivy rootfs --no-progress --download-db-only
+      /usr/bin/trivy rootfs --no-progress --download-java-db-only
+
   - path: /etc/accuknox-omni/artifact.token
     content: ${artifact_token}
     owner: root:root
@@ -82,6 +91,12 @@ runcmd:
       freshclam
       systemctl start clamav-freshclam.service
       systemctl start clamav-daemon.service
+
+      # download trivy databases
+      chmod +x /etc/cron.daily/trivy-update-db
+      export TRIVY_CACHE_DIR=/root/.cache/trivy
+      trivy rootfs --no-progress --download-db-only
+      trivy rootfs --no-progress --download-java-db-only
 
       # install omni
       mkdir -p /etc/accuknox-omni /usr/local/bin

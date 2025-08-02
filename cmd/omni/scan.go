@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime"
 
 	"github.com/accuknox/omniscan/internal/artifact"
 	"github.com/accuknox/omniscan/internal/job"
@@ -20,7 +21,7 @@ var scanCmd = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.BoolFlag{
 			Name:  "local-publisher",
-			Usage: "Store artifacts locally",
+			Usage: "Store artifacts locally only",
 		},
 		&cli.StringFlag{
 			Name:      "local-publisher-store-path",
@@ -53,11 +54,16 @@ var scanCmd = &cli.Command{
 		},
 		&cli.StringFlag{
 			Name:  "vm-name-regex",
-			Usage: "filter VMs by name using regex",
+			Usage: "Filter VMs by name using regex",
 		},
 		&cli.StringMapFlag{
 			Name:  "vm-label-regex",
-			Usage: "filter VMs by label using regex",
+			Usage: "Filter VMs by label using regex",
+		},
+		&cli.UintFlag{
+			Name:  "concurrency",
+			Usage: "Number of concurrent scans",
+			Value: uint(runtime.NumCPU()),
 		},
 	},
 	Arguments: []cli.Argument{
@@ -100,7 +106,7 @@ var scanCmd = &cli.Command{
 			}
 		}
 
-		var opts []job.OptFunc
+		opts := []job.OptFunc{job.WithConcurrency(c.Uint("concurrency"))}
 		if c.Bool("skip-malware-scan") {
 			opts = append(opts, job.WithClamscanDisabled())
 		}

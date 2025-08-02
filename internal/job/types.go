@@ -2,6 +2,7 @@ package job
 
 import (
 	"encoding/json"
+	"sync"
 
 	"github.com/accuknox/omniscan/pkg/scanner"
 )
@@ -42,4 +43,27 @@ func errorToString(err error) string {
 		return err.Error()
 	}
 	return "null"
+}
+
+type summary struct {
+	mu sync.Mutex
+	M  map[string]ErrorSummary
+}
+
+func newSummary() summary {
+	return summary{
+		M: make(map[string]ErrorSummary),
+	}
+}
+
+func (s *summary) Write(uri string, errors ErrorSummary) {
+	s.mu.Lock()
+	s.M[uri] = errors
+	s.mu.Unlock()
+}
+
+func (s *summary) Read() map[string]ErrorSummary {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.M
 }

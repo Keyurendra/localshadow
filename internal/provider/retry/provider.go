@@ -35,6 +35,12 @@ func (r Retry) Init(ctx context.Context) error {
 	}, r.opts(ctx)...)
 }
 
+func (r Retry) PruneDangling(ctx context.Context) error {
+	return retry.Do(func() error {
+		return r.p.PruneDangling(ctx)
+	}, r.opts(ctx)...)
+}
+
 func (r Retry) ListVMs(ctx context.Context) ([]resource.VM, error) {
 	return retry.DoWithData(func() ([]resource.VM, error) {
 		return r.p.ListVMs(ctx)

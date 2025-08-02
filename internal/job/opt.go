@@ -1,16 +1,19 @@
 package job
 
+import "runtime"
+
 type OptFunc func(*opts)
 
 type opts struct {
-	mountpoint      string
+	baseMountPoint  string
 	trivyEnabled    bool
 	clamscanEnabled bool
+	concurrency     uint
 }
 
-func WithMountPoint(mountpoint string) OptFunc {
+func WithBaseMountPoint(baseMountPoint string) OptFunc {
 	return func(o *opts) {
-		o.mountpoint = mountpoint
+		o.baseMountPoint = baseMountPoint
 	}
 }
 
@@ -26,10 +29,20 @@ func WithTrivyDisabled() OptFunc {
 	}
 }
 
+func WithConcurrency(concurrency uint) OptFunc {
+	return func(o *opts) {
+		if concurrency == 0 {
+			concurrency = 1
+		}
+		o.concurrency = concurrency
+	}
+}
+
 func defaultOpts() opts {
 	return opts{
-		mountpoint:      "/mnt/accuknox",
+		baseMountPoint:  "/mnt/accuknox",
 		clamscanEnabled: true,
 		trivyEnabled:    true,
+		concurrency:     uint(runtime.NumCPU()),
 	}
 }

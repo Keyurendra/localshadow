@@ -9,6 +9,7 @@ import (
 type Provider interface {
 	GetName() string
 	Init(ctx context.Context) error
+	PruneDangling(ctx context.Context) error
 	VM
 	Disk
 	Snapshot

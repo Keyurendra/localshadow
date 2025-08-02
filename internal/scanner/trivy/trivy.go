@@ -37,6 +37,8 @@ func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.
 		"--quiet",
 		"--format=json",
 		"--scanners=vuln",
+		"--skip-db-update",
+		"--skip-java-db-update",
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

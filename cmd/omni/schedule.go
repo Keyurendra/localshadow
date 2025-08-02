@@ -54,8 +54,8 @@ var scheduleCmd = &cli.Command{
 			}
 		}
 
-		var opts []job.OptFunc
-		if c.Bool("disable-malware-scan") {
+		opts := []job.OptFunc{job.WithConcurrency(c.Uint("concurrency"))}
+		if c.Bool("skip-malware-scan") {
 			opts = append(opts, job.WithClamscanDisabled())
 		}
 

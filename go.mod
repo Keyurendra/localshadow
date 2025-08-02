@@ -9,6 +9,7 @@ require (
 	github.com/avast/retry-go/v4 v4.6.1
 	github.com/go-co-op/gocron/v2 v2.16.2
 	github.com/google/go-containerregistry v0.20.6
+	github.com/google/uuid v1.6.0
 	github.com/h2non/filetype v1.1.3
 	github.com/jaypipes/ghw v0.17.0
 	github.com/stretchr/testify v1.10.0
@@ -28,7 +29,6 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
 	github.com/jaypipes/pcidb v1.0.1 // indirect

@@ -3,6 +3,7 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/accuknox/omniscan/pkg/provider"
 	"github.com/accuknox/omniscan/pkg/resource"
@@ -10,6 +11,8 @@ import (
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/metadata"
 )
+
+const identifierPrefix = "accuknox-omni-993fa8af46"
 
 type Provider struct {
 	project   string
@@ -72,6 +75,53 @@ func (p *Provider) Init(ctx context.Context) error {
 	p.snapshots, err = compute.NewSnapshotsRESTClient(ctx)
 	if err != nil {
 		return fmt.Errorf("creating gcp compute snapshot client: %w", err)
+	}
+
+	return nil
+}
+
+func (p Provider) PruneDangling(ctx context.Context) error {
+	host, err := p.GetCurrentVM(ctx)
+	if err != nil {
+		return fmt.Errorf("fetching host: %w", err)
+	}
+	for idx := 1; idx < len(host.Disks); idx++ {
+		disk := host.Disks[idx]
+		err := p.UnmountDisk(ctx, disk.URI, host.URI)
+		if err != nil {
+			return fmt.Errorf(
+				"unmounting disk %q from host %q: %w",
+				host.URI, disk.URI, err,
+			)
+		}
+	}
+
+	snaps, err := p.ListSnapshots(ctx)
+	if err != nil {
+		return fmt.Errorf("listing snapshots: %w", err)
+	}
+	for _, s := range snaps {
+		if !strings.HasPrefix(nameFromURI(s.URI), identifierPrefix+"-") {
+			continue
+		}
+		err := p.DeleteSnapshot(ctx, s.URI)
+		if err != nil {
+			return fmt.Errorf("deleting snapshot %q: %w", s.URI, err)
+		}
+	}
+
+	disks, err := p.ListUnattachedDisks(ctx)
+	if err != nil {
+		return fmt.Errorf("listing unattached disks: %w", err)
+	}
+	for _, d := range disks {
+		if !strings.HasPrefix(nameFromURI(d.URI), identifierPrefix+"-") {
+			continue
+		}
+		err := p.DeleteDisk(ctx, d.URI)
+		if err != nil {
+			return fmt.Errorf("deleting snapshot %q: %w", d.URI, err)
+		}
 	}
 
 	return nil

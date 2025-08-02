@@ -36,7 +36,7 @@ func (p Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, error
 }
 
 func (p Provider) CreateSnapshot(ctx context.Context, diskURI string) (string, error) {
-	name := "snap-" + time.Now().Format("20060102-150405")
+	name := identifierPrefix + "-" + time.Now().Format("20060102-150405")
 	op, err := p.snapshots.Insert(ctx, &computepb.InsertSnapshotRequest{
 		Project: p.project,
 		SnapshotResource: &computepb.Snapshot{
@@ -81,7 +81,7 @@ func (p Provider) WaitSnapshotReady(ctx context.Context, snapshotURI string) err
 }
 
 func (p Provider) ConvertSnapshot2Disk(ctx context.Context, snapshotURI string) (string, error) {
-	name := "disk-" + time.Now().Format("20060102-150405")
+	name := identifierPrefix + "-" + time.Now().Format("20060102-150405")
 	op, err := p.disks.Insert(ctx, &computepb.InsertDiskRequest{
 		Project: p.project,
 		Zone:    p.zone,

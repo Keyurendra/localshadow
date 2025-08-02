@@ -2,10 +2,11 @@ package job
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"github.com/accuknox/omniscan/internal/artifact"
@@ -41,15 +42,12 @@ func NewScanJob(prov provider.Provider, pub publisher.Publisher, optFns ...OptFu
 }
 
 func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
-	if err := os.MkdirAll(j.opts.mountpoint, 0o755); err != nil {
-		return nil, fmt.Errorf(
-			"creating mount directory %q: %w",
-			j.opts.mountpoint, err,
-		)
-	}
-
 	if err := j.prov.Init(ctx); err != nil {
 		return nil, fmt.Errorf("initialization given provider: %w", err)
+	}
+
+	if err := j.pruneDangling(ctx); err != nil {
+		return nil, fmt.Errorf("cleaning dangling resources: %w", err)
 	}
 
 	host, err := j.prov.GetCurrentVM(ctx)
@@ -62,32 +60,42 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 		return nil, fmt.Errorf("listing all VMs: %w", err)
 	}
 
-	result := make(map[string]ErrorSummary)
+	queue := newQueue(j.opts.concurrency)
 
 	for _, target := range vms {
-		var summary ErrorSummary
+		err = queue.Enqueue(ctx, func() (string, *ErrorSummary) {
+			var errors ErrorSummary
 
-		res, err := j.scanVM(ctx, *host, target)
-		if res == nil && err == nil {
-			continue
-		}
-		if err != nil {
-			summary.ExecutionError = err
-		}
-		if res != nil {
-			summary.OS = res.OS
-			summary.ClamscanError = res.ClamscanError
-			summary.TrivyError = res.TrivyError
-			err := j.publish(ctx, res)
-			if err != nil {
-				summary.ExecutionError = fmt.Errorf("publishing artifact: %w", err)
+			res, err := j.scanVM(ctx, *host, target)
+			if res == nil && err == nil {
+				return target.URI, nil
 			}
-		}
 
-		result[target.URI] = summary
+			if err != nil {
+				errors.ExecutionError = err
+			}
+
+			if res != nil {
+				errors.OS = res.OS
+				errors.ClamscanError = res.ClamscanError
+				errors.TrivyError = res.TrivyError
+				err := j.publish(ctx, res)
+				if err != nil {
+					errors.ExecutionError = fmt.Errorf(
+						"publishing artifact: %w",
+						err,
+					)
+				}
+			}
+
+			return target.URI, &errors
+		})
+		if err != nil {
+			break
+		}
 	}
 
-	return result, nil
+	return queue.Wait(), err
 }
 
 func (j Job) Schedule(ctx context.Context, crontab string, runImmediately bool) error {
@@ -124,14 +132,35 @@ func (j Job) Schedule(ctx context.Context, crontab string, runImmediately bool) 
 	return s.Shutdown()
 }
 
+func (j Job) pruneDangling(ctx context.Context) error {
+	entries, err := os.ReadDir(j.opts.baseMountPoint)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf(
+			"listing directories at mountpoint %q: %w",
+			j.opts.baseMountPoint, err,
+		)
+	}
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		path := filepath.Join(j.opts.baseMountPoint, entry.Name())
+		util.Unmount(ctx, path)
+		if err := os.RemoveAll(path); err != nil {
+			return fmt.Errorf("removing dangling directory %q: %w", path, err)
+		}
+	}
+
+	if err := j.prov.PruneDangling(ctx); err != nil {
+		return nil
+	}
+
+	return nil
+}
+
 func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult, error) {
 	if len(target.Disks) == 0 {
-		slog.LogAttrs(
-			ctx,
-			slog.LevelInfo,
-			"no disks attached to vm. Skipping...",
-			slog.String("vm_uri", target.URI),
-		)
 		return nil, nil
 	}
 	disk := target.Disks[0] // first disk is always the boot disk
@@ -142,26 +171,11 @@ func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult,
 	}
 	defer j.prov.DeleteDisk(ctx, clone)
 
-	slog.LogAttrs(
-		ctx,
-		slog.LevelDebug,
-		"succesfully cloned disk",
-		slog.String("cloned_disk_uri", clone),
-	)
-
 	err = j.mountClonedDisk(ctx, clone, host.URI)
 	if err != nil {
 		return nil, err
 	}
 	defer j.prov.UnmountDisk(ctx, clone, host.URI)
-
-	slog.LogAttrs(
-		ctx,
-		slog.LevelDebug,
-		"mounted cloned disk to host",
-		slog.String("cloned_disk_uri", clone),
-		slog.String("mount_point", j.opts.mountpoint),
-	)
 
 	return j.scanMountedDisk(ctx, clone, target.URI)
 }
@@ -193,29 +207,21 @@ func (j Job) createDiskClone(ctx context.Context, diskURI string) (string, error
 }
 
 func (j Job) mountClonedDisk(ctx context.Context, diskURI, hostURI string) error {
-	err := j.prov.MountDisk(ctx, diskURI, hostURI, resource.DevicePathMagicString)
+	err := j.prov.MountDisk(ctx, diskURI, hostURI, util.Sha256Hash(diskURI))
 	if err != nil {
 		return fmt.Errorf("mounting disk %q to host: %w", diskURI, err)
 	}
 	return nil
 }
 
-func (j Job) scanMountedDisk(ctx context.Context, diskURI, targetURI string) (*execResult, error) {
+func (j Job) scanMountedDisk(ctx context.Context, diskURI, targetVMURI string) (*execResult, error) {
 	parts, err := util.ListUnmountedPartitions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing unmounted partitions: %w", err)
 	}
 
 	for _, p := range parts {
-		slog.LogAttrs(
-			ctx,
-			slog.LevelDebug,
-			"attempting to scan disk partition",
-			slog.String("cloned_disk_uri", diskURI),
-			slog.String("partition", p.Name),
-		)
-
-		result, err := j.scanPartition(ctx, p, targetURI)
+		result, err := j.scanPartition(ctx, p, diskURI, targetVMURI)
 		if err != nil {
 			return nil, fmt.Errorf(
 				"scanning partition %q on disk %q: %w",
@@ -230,78 +236,43 @@ func (j Job) scanMountedDisk(ctx context.Context, diskURI, targetURI string) (*e
 	return nil, nil
 }
 
-func (j Job) scanPartition(ctx context.Context, p ghw.Partition, targetURI string) (*execResult, error) {
-	if p.Disk.SerialNumber != resource.DevicePathMagicString {
-		slog.LogAttrs(
-			ctx,
-			slog.LevelDebug,
-			"partition doesn not contain magic string. Skipping...",
-			slog.String("partition", p.Name),
-			slog.String("magic_string", resource.DevicePathMagicString),
-			slog.String("disk_name", p.Name),
-		)
+func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, targetVMURI string) (*execResult, error) {
+	if p.Disk.SerialNumber != util.Sha256Hash(diskURI) {
 		return nil, nil
 	}
 	if p.Type == "unknown" {
-		slog.LogAttrs(
-			ctx,
-			slog.LevelInfo,
-			"partition filesystem unknown. Skipping...",
-			slog.String("partition", p.Name),
-			slog.String("disk_name", p.Disk.Name),
-		)
 		return nil, nil
 	}
 
 	dev := "/dev/" + p.Name
-	err := j.mountPartition(ctx, dev, p.Type)
+	mountPoint, err := j.mountPartition(ctx, dev, p.Type)
 	if err != nil {
 		return nil, err
 	}
-	defer util.Unmount(ctx, j.opts.mountpoint)
+	defer util.Unmount(ctx, mountPoint)
 
-	slog.LogAttrs(
-		ctx,
-		slog.LevelDebug,
-		"mounted partition to host",
-		slog.String("partition", p.Name),
-	)
-
-	osType := j.detectOS()
+	osType := j.detectOS(mountPoint)
 	if osType == "unknown" {
-		slog.LogAttrs(
-			ctx,
-			slog.LevelDebug,
-			"could not determine OS. Skipping...",
-			slog.String("partition", p.Name),
-		)
 		return nil, nil
 	}
-	slog.LogAttrs(
-		ctx,
-		slog.LevelDebug,
-		"OS detected",
-		slog.String("partition", p.Name),
-		slog.String("os", osType),
-	)
 
-	return j.performScans(ctx, osType, targetURI)
+	return j.performScans(ctx, mountPoint, osType, targetVMURI)
 }
 
-func (j Job) mountPartition(ctx context.Context, dev, fsType string) error {
-	err := util.MountRO(ctx, dev, j.opts.mountpoint, fsType)
+func (j Job) mountPartition(ctx context.Context, dev, fsType string) (string, error) {
+	at, err := util.MountRO(ctx, dev, j.opts.baseMountPoint, fsType)
 	if err != nil {
-		return fmt.Errorf(
+		return "", fmt.Errorf(
 			"mounting partition %q to %q: %w",
-			dev, j.opts.mountpoint, err,
+			dev, j.opts.baseMountPoint, err,
 		)
 	}
-	return nil
+	return at, nil
 }
 
-func (j Job) detectOS() string {
-	linuxProb := util.DetectLinuxRootFS(j.opts.mountpoint)
-	winProb := util.DetectWindowsRootFS(j.opts.mountpoint)
+func (j Job) detectOS(mountPoint string) string {
+	linuxProb := util.DetectLinuxRootFS(mountPoint)
+	winProb := util.DetectWindowsRootFS(mountPoint)
 	if linuxProb < .5 && winProb < .5 {
 		return "unknown"
 	}
@@ -311,25 +282,16 @@ func (j Job) detectOS() string {
 	return "windows"
 }
 
-func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execResult, error) {
+func (j Job) performScans(ctx context.Context, mountPoint, osType, targetURI string) (*execResult, error) {
 	f := execResult{OS: osType}
 	platform := j.prov.GetName()
 
 	if j.opts.clamscanEnabled {
 		f.Clamscan, f.ClamscanError = clamav.NewScanner().Scan(
 			ctx,
-			j.opts.mountpoint,
+			mountPoint,
 			targetURI,
 			platform,
-		)
-		slog.LogAttrs(
-			ctx,
-			slog.LevelDebug,
-			"clamav scan completed",
-			slog.String("os", osType),
-			slog.String("mount_point", j.opts.mountpoint),
-			slog.String("target_uri", targetURI),
-			slog.String("platform", platform),
 		)
 	}
 
@@ -340,18 +302,9 @@ func (j Job) performScans(ctx context.Context, osType, targetURI string) (*execR
 	if j.opts.trivyEnabled {
 		f.Trivy, f.TrivyError = trivy.NewScanner().Scan(
 			ctx,
-			j.opts.mountpoint,
+			mountPoint,
 			targetURI,
 			platform,
-		)
-		slog.LogAttrs(
-			ctx,
-			slog.LevelDebug,
-			"trivy scan completed",
-			slog.String("os", osType),
-			slog.String("mount_point", j.opts.mountpoint),
-			slog.String("target_uri", targetURI),
-			slog.String("platform", platform),
 		)
 	}
 
