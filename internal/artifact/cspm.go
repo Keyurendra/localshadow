@@ -161,7 +161,7 @@ func (p CSPMPubisher) uploadFinding(ctx context.Context, f scanner.Findings) err
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode == http.StatusCreated {
+		if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			return nil
 		}
 
