@@ -24,13 +24,6 @@ func NewLogger(level, format string, withSource bool) *slog.Logger {
 		return slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
 			Level:     slogLvl,
 			AddSource: withSource,
-			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-				if a.Key != slog.TimeKey {
-					return a
-				}
-				a.Value = slog.TimeValue(a.Value.Time().UTC())
-				return a
-			},
 		}))
 	}
 	return slog.New(tint.NewHandler(os.Stderr, &tint.Options{
