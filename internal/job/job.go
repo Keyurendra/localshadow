@@ -15,8 +15,8 @@ import (
 	"github.com/accuknox/omniscan/internal/scanner/trivy"
 	"github.com/accuknox/omniscan/internal/util"
 	"github.com/accuknox/omniscan/pkg/provider"
+	"github.com/accuknox/omniscan/pkg/provider/resource"
 	"github.com/accuknox/omniscan/pkg/publisher"
-	"github.com/accuknox/omniscan/pkg/resource"
 	"github.com/accuknox/omniscan/pkg/scanner"
 
 	"github.com/go-co-op/gocron/v2"

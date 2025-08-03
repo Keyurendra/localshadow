@@ -15,7 +15,7 @@ import (
 	"github.com/accuknox/omniscan/internal/provider/retry"
 	"github.com/accuknox/omniscan/internal/util"
 	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/provider/resource"
 
 	"github.com/urfave/cli/v3"
 )

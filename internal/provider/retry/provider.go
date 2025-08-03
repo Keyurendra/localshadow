@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/provider/resource"
 
 	"github.com/avast/retry-go/v4"
 )

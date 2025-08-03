@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/accuknox/omniscan/internal/util"
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/provider/resource"
 
 	"cloud.google.com/go/compute/apiv1/computepb"
 	"google.golang.org/api/iterator"

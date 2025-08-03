@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/provider/resource"
 )
 
 type OptFunc func(*opts) error
