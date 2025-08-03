@@ -151,7 +151,7 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 	return queue.Wait(), err
 }
 
-func (j Job) Schedule(ctx context.Context, crontab string, runImmediately bool) error {
+func (j Job) Schedule(ctx context.Context, crontab string, triggerImmediately bool) error {
 	j.logger.LogAttrs(ctx, slog.LevelInfo, "creating scheduler")
 	s, err := gocron.NewScheduler()
 	if err != nil {
@@ -163,7 +163,7 @@ func (j Job) Schedule(ctx context.Context, crontab string, runImmediately bool) 
 		gocron.WithSingletonMode(gocron.LimitModeWait),
 		gocron.WithName("scan"),
 	}
-	if runImmediately {
+	if triggerImmediately {
 		opts = append(opts, gocron.WithStartAt(gocron.WithStartImmediately()))
 	}
 
@@ -172,7 +172,7 @@ func (j Job) Schedule(ctx context.Context, crontab string, runImmediately bool) 
 		slog.LevelInfo,
 		"creating scan job",
 		slog.String("crontab", crontab),
-		slog.Bool("run_immediately", runImmediately),
+		slog.Bool("trigger_immediately", triggerImmediately),
 	)
 	_, err = s.NewJob(
 		gocron.CronJob(crontab, false),

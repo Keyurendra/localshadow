@@ -35,18 +35,18 @@ var cmd = &cli.Command{
 	Flags: []cli.Flag{
 		&cli.StringFlag{
 			Name:  "log-level",
-			Value: "info",
 			Usage: "Set log level: debug, info, warn, error",
+			Value: "info",
 		},
 		&cli.StringFlag{
 			Name:  "log-format",
-			Value: "text",
 			Usage: "Set log format: text, json, pretty",
+			Value: "text",
 		},
 		&cli.BoolFlag{
 			Name:  "log-with-source",
-			Value: false,
 			Usage: "Include source file and line number in log messages",
+			Value: false,
 		},
 	},
 	Commands: subCommands(),
@@ -174,7 +174,7 @@ func subCommands() []*cli.Command {
 				return nil
 			case "schedule":
 				j := job.NewScanJob(provider, publisher, opts...)
-				return j.Schedule(ctx, c.String("crontab"), true)
+				return j.Schedule(ctx, c.String("crontab"), c.Bool("trigger-immediately"))
 			default:
 				return nil
 			}
@@ -184,16 +184,27 @@ func subCommands() []*cli.Command {
 		{
 			Name:      "scan",
 			Usage:     "Perform a one-time scan",
-			Flags:     flags,
-			Arguments: args,
 			Action:    action("scan"),
+			Arguments: args,
+			Flags:     flags,
 		},
 		{
 			Name:      "schedule",
 			Usage:     "Schedule recurring scans",
-			Flags:     flags,
-			Arguments: args,
 			Action:    action("schedule"),
+			Arguments: args,
+			Flags: append(flags,
+				&cli.StringFlag{
+					Name:  "crontab",
+					Value: "@daily",
+					Usage: "Cron expression for scheduling",
+				},
+				&cli.BoolFlag{
+					Name:  "trigger-immediately",
+					Value: false,
+					Usage: "Trigger the first scan right after scheduling",
+				},
+			),
 		},
 	}
 }
