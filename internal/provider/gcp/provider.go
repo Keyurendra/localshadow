@@ -3,38 +3,34 @@ package gcp
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/resource"
 
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/metadata"
 )
 
-const identifierPrefix = "accuknox-omni-993fa8af46"
-
 type Provider struct {
+	opts
 	project   string
 	zone      string
-	filter    resource.PrecompiledFilter
 	instances *compute.InstancesClient
 	disks     *compute.DisksClient
 	snapshots *compute.SnapshotsClient
 	metadata  *metadata.Client
 }
 
-func NewProvider(vmFilter *resource.Filter) (provider.Provider, error) {
-	if vmFilter == nil {
-		return &Provider{}, nil
+func NewProvider(fns ...OptFunc) (provider.Provider, error) {
+	o := defaultOpts()
+	for _, f := range fns {
+		err := f(&o)
+		if err != nil {
+			return nil, err
+		}
 	}
-	regFilter, err := vmFilter.Precompile()
-	if err != nil {
-		return nil, fmt.Errorf("precompiled provided filter: %w", err)
-	}
-	return &Provider{
-		filter: *regFilter,
-	}, nil
+	return &Provider{opts: o}, nil
 }
 
 func (p Provider) GetName() string {
@@ -55,12 +51,22 @@ func (p *Provider) Init(ctx context.Context) error {
 		return fmt.Errorf("querying GCP project id from metadata svc: %w", err)
 	}
 	p.project = project
+	p.logger.LogAttrs(
+		ctx,
+		slog.LevelInfo,
+		fmt.Sprintf("GCP project identified as %s", project),
+	)
 
 	zone, err := p.metadata.ZoneWithContext(ctx)
 	if err != nil {
 		return fmt.Errorf("querying GCP zone from metadata svc: %w", err)
 	}
 	p.zone = zone
+	p.logger.LogAttrs(
+		ctx,
+		slog.LevelInfo,
+		fmt.Sprintf("GCP zone as %s", zone),
+	)
 
 	p.instances, err = compute.NewInstancesRESTClient(ctx)
 	if err != nil {
@@ -87,6 +93,13 @@ func (p Provider) PruneDangling(ctx context.Context) error {
 	}
 	for idx := 1; idx < len(host.Disks); idx++ {
 		disk := host.Disks[idx]
+		p.logger.LogAttrs(
+			ctx,
+			slog.LevelInfo,
+			"unmounting dangling disk from host",
+			slog.String("disk_uri", disk.URI),
+			slog.String("host_uri", host.URI),
+		)
 		err := p.UnmountDisk(ctx, disk.URI, host.URI)
 		if err != nil {
 			return fmt.Errorf(
@@ -104,6 +117,12 @@ func (p Provider) PruneDangling(ctx context.Context) error {
 		if !strings.HasPrefix(nameFromURI(s.URI), identifierPrefix+"-") {
 			continue
 		}
+		p.logger.LogAttrs(
+			ctx,
+			slog.LevelInfo,
+			"deleting dangling snapshot",
+			slog.String("snapshot_uri", s.URI),
+		)
 		err := p.DeleteSnapshot(ctx, s.URI)
 		if err != nil {
 			return fmt.Errorf("deleting snapshot %q: %w", s.URI, err)
@@ -118,6 +137,12 @@ func (p Provider) PruneDangling(ctx context.Context) error {
 		if !strings.HasPrefix(nameFromURI(d.URI), identifierPrefix+"-") {
 			continue
 		}
+		p.logger.LogAttrs(
+			ctx,
+			slog.LevelInfo,
+			"deleting dangling disk",
+			slog.String("disk_uri", d.URI),
+		)
 		err := p.DeleteDisk(ctx, d.URI)
 		if err != nil {
 			return fmt.Errorf("deleting snapshot %q: %w", d.URI, err)

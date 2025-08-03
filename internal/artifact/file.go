@@ -5,13 +5,11 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
+	"github.com/accuknox/omniscan/internal/util"
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/scanner"
 )
-
-const isosecLayout = "20060102150405"
 
 type FilePublisher struct {
 	storePath string
@@ -31,10 +29,7 @@ func (p FilePublisher) Publish(ctx context.Context, findings ...scanner.Findings
 	for _, f := range findings {
 		path := filepath.Join(
 			p.storePath,
-			fmt.Sprintf(
-				"%s-%s.json",
-				time.Now().Format(isosecLayout), f.DataType(),
-			),
+			fmt.Sprintf("%s-%s.json", util.NewIsoNanoSecIdentifier(), f.DataType()),
 		)
 		err := os.WriteFile(path, f.JSON(), 0o644)
 		if err != nil {

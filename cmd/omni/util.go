@@ -42,5 +42,5 @@ func cspmPubisher(c *cli.Command) (publisher.Publisher, error) {
 		TenantID: tenantID,
 		LabelID:  label,
 		Token:    strings.TrimSpace(string(tkn)),
-	})
+	}, nil)
 }

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -14,6 +16,8 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/scanner"
+
+	"github.com/avast/retry-go/v4"
 )
 
 type CSPMPublisherConfig struct {
@@ -77,14 +81,18 @@ func (c CSPMPublisherConfig) isValidJWT() bool {
 }
 
 type CSPMPubisher struct {
-	c CSPMPublisherConfig
+	c      CSPMPublisherConfig
+	logger *slog.Logger
 }
 
-func NewCSPMPublisher(c CSPMPublisherConfig) (publisher.Publisher, error) {
+func NewCSPMPublisher(c CSPMPublisherConfig, l *slog.Logger) (publisher.Publisher, error) {
 	if err := c.Validate(); err != nil {
 		return nil, fmt.Errorf("validating provided config: %w", err)
 	}
-	return &CSPMPubisher{c: c}, nil
+	if l == nil {
+		l = slog.Default().With("publisher", `cspm`)
+	}
+	return &CSPMPubisher{c: c, logger: l}, nil
 }
 
 func (p CSPMPubisher) Publish(ctx context.Context, findings ...scanner.Findings) error {
@@ -133,17 +141,37 @@ func (p CSPMPubisher) uploadFinding(ctx context.Context, f scanner.Findings) err
 	req.Header.Set("Authorization", "Bearer "+p.c.Token)
 	req.Header.Set("Content-Type", contentType)
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("http request failed: %w", err)
+	retryOpts := []retry.Option{
+		retry.Context(ctx),
+		retry.DelayType(retry.BackOffDelay),
+		retry.OnRetry(func(attempt uint, err error) {
+			p.logger.LogAttrs(
+				ctx,
+				slog.LevelError,
+				fmt.Sprintf("publish retry attempt %d", attempt),
+				slog.Any("error", err),
+			)
+		}),
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("unexpected status %s", resp.Status)
-	}
+	return retry.Do(func() error {
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("http request failed: %w", err)
+		}
+		defer resp.Body.Close()
 
-	return nil
+		if resp.StatusCode == http.StatusCreated {
+			return nil
+		}
+
+		body, err := json.Marshal(resp.Body)
+		if err != nil {
+			return fmt.Errorf("unexpected status %s", resp.Status)
+		}
+
+		return fmt.Errorf("%s: %s", resp.Status, string(body))
+	}, retryOpts...)
 }
 
 func (p CSPMPubisher) createMultipartBody(f scanner.Findings) (io.Reader, string, error) {

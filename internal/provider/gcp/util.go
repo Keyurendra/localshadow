@@ -2,6 +2,8 @@ package gcp
 
 import "strings"
 
+const identifierPrefix = "accuknox-omni-993fa8af46"
+
 func nameFromURI(uri string) string {
 	parts := strings.Split(uri, "/")
 	return parts[len(parts)-1]

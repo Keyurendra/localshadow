@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/accuknox/omniscan/pkg/resource"
 
@@ -28,7 +29,14 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 		}
 
 		for _, i := range page.Value.GetInstances() {
-			if r := p.filter.Name; r != nil && !r.MatchString(i.GetName()) {
+			if r := p.vmFilter.Name; r != nil && !r.MatchString(i.GetName()) {
+				p.logger.LogAttrs(
+					ctx,
+					slog.LevelDebug,
+					"vm name did not match the provided filter. Skipping...",
+					slog.String("vm_uri", i.GetSelfLink()),
+					slog.String("vm_name", i.GetName()),
+				)
 				continue
 			}
 
@@ -36,7 +44,7 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 
 		NextLabel:
 			for k, v := range i.GetLabels() {
-				for _, r := range p.filter.Labels {
+				for _, r := range p.vmFilter.Labels {
 					if r.Key != nil && !r.Key.MatchString(k) {
 						continue
 					}
@@ -48,7 +56,14 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 				}
 			}
 
-			if !match && len(i.GetLabels()) != 0 && len(p.filter.Labels) != 0 {
+			if !match && len(p.vmFilter.Labels) != 0 {
+				p.logger.LogAttrs(
+					ctx,
+					slog.LevelDebug,
+					"vm labels did not match the provided filter. Skipping...",
+					slog.String("vm_uri", i.GetSelfLink()),
+					slog.Any("vm_labels", i.GetLabels()),
+				)
 				continue
 			}
 

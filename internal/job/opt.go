@@ -1,6 +1,9 @@
 package job
 
-import "runtime"
+import (
+	"log/slog"
+	"runtime"
+)
 
 type OptFunc func(*opts)
 
@@ -9,6 +12,7 @@ type opts struct {
 	trivyEnabled    bool
 	clamscanEnabled bool
 	concurrency     uint
+	logger          *slog.Logger
 }
 
 func WithBaseMountPoint(baseMountPoint string) OptFunc {
@@ -38,11 +42,21 @@ func WithConcurrency(concurrency uint) OptFunc {
 	}
 }
 
+func WithLogger(l *slog.Logger) OptFunc {
+	return func(o *opts) {
+		if l == nil {
+			return
+		}
+		o.logger = l
+	}
+}
+
 func defaultOpts() opts {
 	return opts{
 		baseMountPoint:  "/mnt/accuknox",
 		clamscanEnabled: true,
 		trivyEnabled:    true,
 		concurrency:     uint(runtime.NumCPU()),
+		logger:          slog.Default(),
 	}
 }
