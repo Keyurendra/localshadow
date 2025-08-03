@@ -20,7 +20,7 @@
           pname = "omni";
           version = "0.0.0";
           src = ./.;
-          vendorHash = "sha256-QvdiQ+4+HNyaB1jQgxRQTUwxTqZi4pE/rvI7YhF7jbs=";
+          vendorHash = "sha256-D6EqjnUFxookTLss4Xcva/jHilvtWMbIJajAQA4qaec=";
           env.CGO_ENABLED = 0;
           subPackages = [ "cmd/omni" ];
           nativeBuildInputs = [ pkgs.installShellFiles ];
