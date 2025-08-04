@@ -34,6 +34,7 @@ apt:
 package_update: true
 package_upgrade: true
 packages:
+  - unattended-upgrades
   - curl
   - trivy
   - clamav
@@ -41,11 +42,16 @@ packages:
   - libclamunrar
 
 write_files:
+  - path: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Automatic-Reboot "true";
+      Unattended-Upgrade::Automatic-Reboot-Time "23:45";
+
   - path: /etc/cron.daily/trivy-update-db
     permissions: '0755'
     owner: root:root
     content: |
-      #!/bin/bash
+      #!/bin/sh
       export TRIVY_CACHE_DIR=/root/.cache/trivy
       /usr/bin/trivy rootfs --no-progress --download-db-only
       /usr/bin/trivy rootfs --no-progress --download-java-db-only
@@ -107,6 +113,9 @@ runcmd:
       systemctl daemon-reload
       systemctl enable omni.service --now
       systemctl status omni.service
+
+      # unattended upgrades
+      dpkg-reconfigure -f noninteractive unattended-upgrades
     '
 
 final_message: |
