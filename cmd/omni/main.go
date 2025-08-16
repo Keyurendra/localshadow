@@ -11,6 +11,7 @@ import (
 
 	"github.com/accuknox/omniscan/internal/artifact"
 	"github.com/accuknox/omniscan/internal/job"
+	"github.com/accuknox/omniscan/internal/provider/aws"
 	"github.com/accuknox/omniscan/internal/provider/gcp"
 	"github.com/accuknox/omniscan/internal/provider/retry"
 	"github.com/accuknox/omniscan/internal/util"
@@ -117,7 +118,7 @@ func subCommands() []*cli.Command {
 	args := []cli.Argument{
 		&cli.StringArg{
 			Name:      "provider",
-			UsageText: "gcp",
+			UsageText: "gcp|aws",
 		},
 	}
 	action := func(name string) cli.ActionFunc {
@@ -133,6 +134,11 @@ func subCommands() []*cli.Command {
 			switch arg {
 			case "gcp":
 				provider, err = gcp.NewProvider(gcp.WithVMFilter(resource.Filter{
+					Name:   c.String("vm-name-regex"),
+					Labels: c.StringMap("vm-label-regex"),
+				}))
+			case "aws":
+				provider, err = aws.NewProvider(aws.WithVMFilter(resource.Filter{
 					Name:   c.String("vm-name-regex"),
 					Labels: c.StringMap("vm-label-regex"),
 				}))
