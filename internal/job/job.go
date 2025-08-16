@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/accuknox/omniscan/internal/artifact"
@@ -262,13 +263,13 @@ func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult,
 		slog.String("source_disk_uri", disk.URI),
 		slog.String("host_vm_uri", host.URI),
 	)
-	err = j.mountClonedDisk(ctx, clone, host.URI)
+	path, err := j.attachClonedDisk(ctx, clone, host.URI)
 	if err != nil {
 		return nil, err
 	}
-	defer j.prov.UnmountDisk(ctx, clone, host.URI)
+	defer j.prov.DetachDisk(ctx, clone, host.URI)
 
-	return j.scanMountedDisk(ctx, clone, target.URI)
+	return j.scanAttachedDisk(ctx, path, clone, target.URI)
 }
 
 func (j Job) createDiskClone(ctx context.Context, diskURI string) (string, error) {
@@ -325,21 +326,24 @@ func (j Job) createDiskClone(ctx context.Context, diskURI string) (string, error
 	return clone, nil
 }
 
-func (j Job) mountClonedDisk(ctx context.Context, diskURI, hostURI string) error {
-	err := j.prov.MountDisk(ctx, diskURI, hostURI, util.Sha256Hash(diskURI))
+func (j Job) attachClonedDisk(ctx context.Context, diskURI, hostURI string) (string, error) {
+	path, err := j.prov.AttachDisk(ctx, diskURI, hostURI)
 	if err != nil {
-		return fmt.Errorf("mounting disk %q to host: %w", diskURI, err)
+		return "", fmt.Errorf("mounting disk %q to host: %w", diskURI, err)
 	}
-	return nil
+	return path, nil
 }
 
-func (j Job) scanMountedDisk(ctx context.Context, diskURI, targetVMURI string) (*execResult, error) {
+func (j Job) scanAttachedDisk(ctx context.Context, path, diskURI, targetVMURI string) (*execResult, error) {
 	parts, err := util.ListUnmountedPartitions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing unmounted partitions: %w", err)
 	}
 
 	for _, p := range parts {
+		if p.Disk.Name != strings.TrimPrefix(path, "/dev/") {
+			continue
+		}
 		j.logger.LogAttrs(
 			ctx,
 			slog.LevelDebug,
@@ -364,19 +368,6 @@ func (j Job) scanMountedDisk(ctx context.Context, diskURI, targetVMURI string) (
 }
 
 func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, targetVMURI string) (*execResult, error) {
-	if p.Disk.SerialNumber != util.Sha256Hash(diskURI) {
-		j.logger.LogAttrs(
-			ctx,
-			slog.LevelDebug,
-			"partition disk's serial number does not match. Skipping...",
-			slog.String("expected_serial_number", util.Sha256Hash(diskURI)),
-			slog.String("got_serial_number", p.Disk.SerialNumber),
-			slog.String("cloned_disk_uri", diskURI),
-			slog.String("target_vm_uri", targetVMURI),
-			slog.String("partition_name", p.Name),
-		)
-		return nil, nil
-	}
 	if p.Type == "unknown" {
 		j.logger.LogAttrs(
 			ctx,

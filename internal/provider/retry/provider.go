@@ -53,15 +53,15 @@ func (r Retry) GetCurrentVM(ctx context.Context) (*resource.VM, error) {
 	}, r.getRetryOpts(ctx)...)
 }
 
-func (r Retry) MountDisk(ctx context.Context, diskURI, vmURI, devicePath string) error {
-	return retry.Do(func() error {
-		return r.p.MountDisk(ctx, diskURI, vmURI, devicePath)
+func (r Retry) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {
+	return retry.DoWithData(func() (string, error) {
+		return r.p.AttachDisk(ctx, diskURI, vmURI)
 	}, r.getRetryOpts(ctx)...)
 }
 
-func (r Retry) UnmountDisk(ctx context.Context, diskURI, vmURI string) error {
+func (r Retry) DetachDisk(ctx context.Context, diskURI, vmURI string) error {
 	return retry.Do(func() error {
-		return r.p.UnmountDisk(ctx, diskURI, vmURI)
+		return r.p.DetachDisk(ctx, diskURI, vmURI)
 	}, r.getRetryOpts(ctx)...)
 }
 

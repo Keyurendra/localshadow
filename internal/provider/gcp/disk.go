@@ -6,34 +6,47 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/accuknox/omniscan/internal/util"
 	"github.com/accuknox/omniscan/pkg/provider/resource"
 
 	"cloud.google.com/go/compute/apiv1/computepb"
 	"google.golang.org/api/iterator"
 )
 
-func (p Provider) MountDisk(ctx context.Context, diskURI, vmURI, devicePath string) error {
+func (p Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {
+	name := util.Sha256Hash(diskURI)
 	op, err := p.instances.AttachDisk(ctx, &computepb.AttachDiskInstanceRequest{
 		Project:  p.project,
 		Zone:     zoneFromURI(vmURI),
 		Instance: nameFromURI(vmURI),
 		AttachedDiskResource: &computepb.AttachedDisk{
 			Source:     &diskURI,
-			DeviceName: &devicePath,
+			DeviceName: &name,
 		},
 	})
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if err := op.Wait(ctx); err != nil {
-		return fmt.Errorf("waiting for disk to be mounted: %w", err)
+		return "", fmt.Errorf("waiting for disk to be mounted: %w", err)
 	}
 
-	return nil
+	parts, err := util.ListUnmountedPartitions(ctx)
+	if err != nil {
+		return "", fmt.Errorf("listing unmounted partitions: %w", err)
+	}
+
+	for _, p := range parts {
+		if p.Disk.SerialNumber == name {
+			return "/dev/" + p.Disk.Name, nil
+		}
+	}
+
+	return "", fmt.Errorf("no attached disk matches the supplied gcp device name")
 }
 
-func (p Provider) UnmountDisk(ctx context.Context, diskURI, vmURI string) error {
+func (p Provider) DetachDisk(ctx context.Context, diskURI, vmURI string) error {
 	i, err := p.instances.Get(ctx, &computepb.GetInstanceRequest{
 		Project:  p.project,
 		Zone:     zoneFromURI(vmURI),

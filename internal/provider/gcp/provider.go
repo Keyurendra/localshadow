@@ -100,7 +100,7 @@ func (p Provider) PruneDangling(ctx context.Context) error {
 			slog.String("disk_uri", disk.URI),
 			slog.String("host_uri", host.URI),
 		)
-		err := p.UnmountDisk(ctx, disk.URI, host.URI)
+		err := p.DetachDisk(ctx, disk.URI, host.URI)
 		if err != nil {
 			return fmt.Errorf(
 				"unmounting disk %q from host %q: %w",
