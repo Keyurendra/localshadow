@@ -1,11 +1,14 @@
 package util
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/google/uuid"
@@ -37,9 +40,30 @@ func MountRO(ctx context.Context, partition, baseMountPoint, fsTyp string) (stri
 	if err := os.MkdirAll(mountPoint, 0o755); err != nil {
 		return "", fmt.Errorf("creating mountpoint %q: %w", mountPoint, err)
 	}
-	err := unix.Mount(partition, mountPoint, fsTyp, unix.MS_RDONLY, "")
-	if err != nil {
+
+	if fsTyp != "ntfs" {
+		err := unix.Mount(partition, mountPoint, fsTyp, unix.MS_RDONLY, "")
+		if err != nil {
+			return "", err
+		}
+		return mountPoint, nil
+	}
+
+	stderr := new(bytes.Buffer)
+	cmd := exec.CommandContext(
+		ctx,
+		"mount",
+		"-t", "ntfs",
+		"-o", "ro",
+		partition,
+		mountPoint,
+	)
+	cmd.Stderr = stderr
+	if err := cmd.Run(); err != nil {
 		return "", err
+	}
+	if stderr.Len() != 0 {
+		return "", errors.New(stderr.String())
 	}
 	return mountPoint, nil
 }
