@@ -19,6 +19,8 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	instanceID := p.extractInstanceID(vmURI)
+
 	usedFSDevices, err := util.ListBlockDevices(ctx)
 	if err != nil {
 		return "", fmt.Errorf("enumerating currently attached devices: %w", err)
@@ -28,12 +30,12 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("attachment.instance-id"),
-				Values: []string{vmURI},
+				Values: []string{instanceID},
 			},
 		},
 	})
 	if err != nil {
-		return "", fmt.Errorf("querying %s instance's attached volumes: %w", vmURI, err)
+		return "", fmt.Errorf("querying %s instance's attached volumes: %w", instanceID, err)
 	}
 
 	usedAWSDevices := make(map[string]bool)
@@ -51,13 +53,13 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 	}
 
 	out, err := p.ec2.DescribeInstances(ctx, &ec2.DescribeInstancesInput{
-		InstanceIds: []string{vmURI},
+		InstanceIds: []string{instanceID},
 	})
 	if err != nil {
-		return "", fmt.Errorf("querying instance %s: %w", vmURI, err)
+		return "", fmt.Errorf("querying instance %s: %w", instanceID, err)
 	}
 	if len(out.Reservations) == 0 || len(out.Reservations[0].Instances) == 0 {
-		return "", fmt.Errorf("could not find instance %s", vmURI)
+		return "", fmt.Errorf("could not find instance %s", instanceID)
 	}
 	instance := out.Reservations[0].Instances[0]
 
@@ -125,7 +127,7 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 func (p *Provider) DetachDisk(ctx context.Context, diskURI, vmURI string) error {
 	_, err := p.ec2.DetachVolume(ctx, &ec2.DetachVolumeInput{
 		VolumeId:   aws.String(diskURI),
-		InstanceId: aws.String(vmURI),
+		InstanceId: aws.String(p.extractInstanceID(vmURI)),
 	})
 	if err != nil {
 		return err
@@ -192,7 +194,7 @@ func (p *Provider) ListVMDisks(ctx context.Context, vmURI string) ([]resource.Di
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("attachment.instance-id"),
-				Values: []string{vmURI},
+				Values: []string{p.extractInstanceID(vmURI)},
 			},
 		},
 	})

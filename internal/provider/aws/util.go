@@ -1,6 +1,11 @@
 package aws
 
-import "github.com/aws/aws-sdk-go-v2/service/ec2/types"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+)
 
 const identifierPrefix = "accuknox-omni-993fa8af46"
 
@@ -14,4 +19,19 @@ func resourceNameFromTags(tags []types.Tag) string {
 		}
 	}
 	return ""
+}
+
+func (p *Provider) buildInstanceARN(instanceID string) string {
+	return fmt.Sprintf(
+		"arn:aws:ec2:%s:%s:instance/%s",
+		p.region, p.accountID, instanceID,
+	)
+}
+
+func (p *Provider) extractInstanceID(arn string) string {
+	parts := strings.Split(arn, "/")
+	if len(parts) != 2 || !strings.Contains(arn, ":instance/") {
+		return ""
+	}
+	return parts[1]
 }

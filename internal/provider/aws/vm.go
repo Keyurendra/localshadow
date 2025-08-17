@@ -107,7 +107,7 @@ func (p *Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 				}
 
 				vms = append(vms, resource.VM{
-					URI:   instanceID,
+					URI:   p.buildInstanceARN(instanceID),
 					Disks: disks,
 				})
 			}
@@ -145,7 +145,7 @@ func (p *Provider) GetCurrentVM(ctx context.Context) (*resource.VM, error) {
 	}
 
 	return &resource.VM{
-		URI:   host.InstanceID,
+		URI:   p.buildInstanceARN(host.InstanceID),
 		Disks: disks,
 	}, nil
 }
