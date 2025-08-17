@@ -96,8 +96,7 @@ func (p *Provider) PruneDangling(ctx context.Context) error {
 		return fmt.Errorf("listing mounted partitions")
 	}
 	for _, part := range partitions {
-		disk := part.Disk.Name
-		if disk == "sda" || disk == "xvda" || disk == "nvme0n1" {
+		if isRootDevice(part.Disk.Name) {
 			continue
 		}
 		p.logger.LogAttrs(
@@ -116,7 +115,8 @@ func (p *Provider) PruneDangling(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("fetching host: %w", err)
 	}
-	for _, disk := range host.Disks {
+	for idx := 1; idx < len(host.Disks); idx++ {
+		disk := host.Disks[idx]
 		p.logger.LogAttrs(
 			ctx,
 			slog.LevelInfo,
@@ -124,7 +124,13 @@ func (p *Provider) PruneDangling(ctx context.Context) error {
 			slog.String("disk_uri", disk.URI),
 			slog.String("host_uri", host.URI),
 		)
-		p.DetachDisk(ctx, disk.URI, host.URI)
+		err := p.DetachDisk(ctx, disk.URI, host.URI)
+		if err != nil {
+			return fmt.Errorf(
+				"detaching disk %q from host %q: %w",
+				host.URI, disk.URI, err,
+			)
+		}
 	}
 
 	sIter := ec2.NewDescribeSnapshotsPaginator(p.ec2, &ec2.DescribeSnapshotsInput{})

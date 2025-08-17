@@ -21,6 +21,11 @@ func resourceNameFromTags(tags []types.Tag) string {
 	return ""
 }
 
+func isRootDevice(dev string) bool {
+	c := strings.Contains
+	return c(dev, "sda") || c(dev, "xvda") || c(dev, "nvme0n1")
+}
+
 func (p *Provider) buildInstanceARN(instanceID string) string {
 	return fmt.Sprintf(
 		"arn:aws:ec2:%s:%s:instance/%s",

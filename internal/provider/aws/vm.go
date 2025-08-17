@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 
 	"github.com/accuknox/omniscan/pkg/provider/resource"
 
@@ -96,15 +97,47 @@ func (p *Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 				}
 
 				var disks []resource.Disk
+				var rootDiskURI string
 
 				for _, vol := range volumes.Volumes {
 					if vol.State != types.VolumeStateInUse {
 						continue
 					}
+					for _, attachement := range vol.Attachments {
+						if attachement.InstanceId == nil || attachement.Device == nil {
+							continue
+						}
+						if *attachement.InstanceId != instanceID {
+							continue
+						}
+						if isRootDevice(*attachement.Device) {
+							rootDiskURI = *vol.VolumeId
+						}
+					}
 					disks = append(disks, resource.Disk{
 						URI: *vol.VolumeId,
 					})
 				}
+
+				if rootDiskURI == "" {
+					p.logger.LogAttrs(
+						ctx,
+						slog.LevelWarn,
+						"root disk not found. Skipping...",
+						slog.String("vm_uri", p.buildInstanceARN(instanceID)),
+					)
+					continue
+				}
+
+				slices.SortFunc(disks, func(a, b resource.Disk) int {
+					if a.URI == rootDiskURI {
+						return -1
+					}
+					if b.URI == rootDiskURI {
+						return 1
+					}
+					return 0
+				})
 
 				vms = append(vms, resource.VM{
 					URI:   p.buildInstanceARN(instanceID),
@@ -136,13 +169,41 @@ func (p *Provider) GetCurrentVM(ctx context.Context) (*resource.VM, error) {
 	}
 
 	var disks []resource.Disk
+	var rootDiskURI string
+
 	for _, vol := range volumes.Volumes {
-		if vol.State == types.VolumeStateInUse {
-			disks = append(disks, resource.Disk{
-				URI: *vol.VolumeId,
-			})
+		if vol.State != types.VolumeStateInUse {
+			continue
 		}
+		for _, attachement := range vol.Attachments {
+			if attachement.InstanceId == nil || attachement.Device == nil {
+				continue
+			}
+			if *attachement.InstanceId != host.InstanceID {
+				continue
+			}
+			if isRootDevice(*attachement.Device) {
+				rootDiskURI = *vol.VolumeId
+			}
+		}
+		disks = append(disks, resource.Disk{
+			URI: *vol.VolumeId,
+		})
 	}
+
+	if rootDiskURI == "" {
+		return nil, fmt.Errorf("root disk not found")
+	}
+
+	slices.SortFunc(disks, func(a, b resource.Disk) int {
+		if a.URI == rootDiskURI {
+			return -1
+		}
+		if b.URI == rootDiskURI {
+			return 1
+		}
+		return 0
+	})
 
 	return &resource.VM{
 		URI:   p.buildInstanceARN(host.InstanceID),

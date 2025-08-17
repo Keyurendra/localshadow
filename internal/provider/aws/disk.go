@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -202,12 +203,39 @@ func (p *Provider) ListVMDisks(ctx context.Context, vmURI string) ([]resource.Di
 		return nil, err
 	}
 
+	var rootDiskURI string
+
 	disks := make([]resource.Disk, len(volumes.Volumes))
 	for idx, vol := range volumes.Volumes {
+		for _, attachement := range vol.Attachments {
+			if attachement.InstanceId == nil || attachement.Device == nil {
+				continue
+			}
+			if *attachement.InstanceId != p.extractInstanceID(vmURI) {
+				continue
+			}
+			if isRootDevice(*attachement.Device) {
+				rootDiskURI = *vol.VolumeId
+			}
+		}
 		disks[idx] = resource.Disk{
 			URI: *vol.VolumeId,
 		}
 	}
+
+	if rootDiskURI == "" {
+		return nil, fmt.Errorf("root disk not found")
+	}
+
+	slices.SortFunc(disks, func(a, b resource.Disk) int {
+		if a.URI == rootDiskURI {
+			return -1
+		}
+		if b.URI == rootDiskURI {
+			return 1
+		}
+		return 0
+	})
 
 	return disks, nil
 }
