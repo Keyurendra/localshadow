@@ -96,14 +96,14 @@ func (p Provider) PruneDangling(ctx context.Context) error {
 		p.logger.LogAttrs(
 			ctx,
 			slog.LevelInfo,
-			"unmounting dangling disk from host",
+			"detaching dangling disk from host",
 			slog.String("disk_uri", disk.URI),
 			slog.String("host_uri", host.URI),
 		)
 		err := p.DetachDisk(ctx, disk.URI, host.URI)
 		if err != nil {
 			return fmt.Errorf(
-				"unmounting disk %q from host %q: %w",
+				"detaching disk %q from host %q: %w",
 				host.URI, disk.URI, err,
 			)
 		}

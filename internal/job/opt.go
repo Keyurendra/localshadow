@@ -53,7 +53,7 @@ func WithLogger(l *slog.Logger) OptFunc {
 
 func defaultOpts() opts {
 	return opts{
-		baseMountPoint:  "/mnt/accuknox",
+		baseMountPoint:  "/accuknox",
 		clamscanEnabled: true,
 		trivyEnabled:    true,
 		concurrency:     uint(runtime.NumCPU()),
