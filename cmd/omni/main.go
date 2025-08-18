@@ -9,15 +9,15 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/accuknox/omniscan/internal/artifact"
-	"github.com/accuknox/omniscan/internal/job"
-	"github.com/accuknox/omniscan/internal/provider/aws"
-	"github.com/accuknox/omniscan/internal/provider/azure"
-	"github.com/accuknox/omniscan/internal/provider/gcp"
-	"github.com/accuknox/omniscan/internal/provider/retry"
-	"github.com/accuknox/omniscan/internal/util"
+	"github.com/accuknox/omniscan/pkg/job"
 	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/provider/resource"
+	"github.com/accuknox/omniscan/pkg/provider/aws"
+	"github.com/accuknox/omniscan/pkg/provider/azure"
+	"github.com/accuknox/omniscan/pkg/provider/gcp"
+	"github.com/accuknox/omniscan/pkg/provider/retry"
+	"github.com/accuknox/omniscan/pkg/publisher/file"
+	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/util"
 
 	"github.com/urfave/cli/v3"
 )
@@ -158,7 +158,7 @@ func subCommands() []*cli.Command {
 
 			provider = retry.NewProvider(provider)
 
-			publisher := artifact.NewFilePublisher(c.String("local-publisher-store-path"))
+			publisher := file.NewPublisher(c.String("local-publisher-store-path"))
 			if !c.Bool("local-publisher") {
 				var err error
 				publisher, err = cspmPubisher(c)

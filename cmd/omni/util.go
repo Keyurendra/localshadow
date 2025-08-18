@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/accuknox/omniscan/internal/artifact"
 	"github.com/accuknox/omniscan/pkg/publisher"
+	"github.com/accuknox/omniscan/pkg/publisher/cspm"
 
 	"github.com/urfave/cli/v3"
 )
@@ -37,7 +37,7 @@ func cspmPubisher(c *cli.Command) (publisher.Publisher, error) {
 		return nil, fmt.Errorf("reading token file %q: %w", tokenFile, err)
 	}
 
-	return artifact.NewCSPMPublisher(artifact.CSPMPublisherConfig{
+	return cspm.NewPublisher(cspm.Config{
 		Endpoint: endpoint,
 		TenantID: tenantID,
 		LabelID:  label,
