@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/util"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"github.com/google/uuid"
 )
 
 func (p *Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, error) {
@@ -32,7 +32,7 @@ func (p *Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, erro
 }
 
 func (p *Provider) CreateSnapshot(ctx context.Context, diskURI string) (string, error) {
-	name := identifierPrefix + "-" + util.NewIsoNanoSecIdentifier()
+	name := identifierPrefix + "-" + uuid.NewString()
 	snap, err := p.ec2.CreateSnapshot(ctx, &ec2.CreateSnapshotInput{
 		VolumeId:    &diskURI,
 		Description: aws.String("Managed-by AccuKnox Omni"),
@@ -65,7 +65,7 @@ func (p *Provider) WaitSnapshotReady(ctx context.Context, snapshotURI string) er
 }
 
 func (p *Provider) ConvertSnapshot2Disk(ctx context.Context, snapshotURI string) (string, error) {
-	name := identifierPrefix + "-" + util.NewIsoNanoSecIdentifier()
+	name := identifierPrefix + "-" + uuid.NewString()
 	volume, err := p.ec2.CreateVolume(ctx, &ec2.CreateVolumeInput{
 		AvailabilityZone: &p.az,
 		ClientToken:      &snapshotURI,

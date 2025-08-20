@@ -8,7 +8,8 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/util"
+
+	"github.com/google/uuid"
 )
 
 type Publisher struct {
@@ -29,7 +30,7 @@ func (p Publisher) Publish(ctx context.Context, findings ...scanner.Findings) er
 	for _, f := range findings {
 		path := filepath.Join(
 			p.storePath,
-			fmt.Sprintf("%s-%s.json", util.NewIsoNanoSecIdentifier(), f.DataType()),
+			fmt.Sprintf("%s-%s.json", uuid.NewString(), f.DataType()),
 		)
 		err := os.WriteFile(path, f.JSON(), 0o644)
 		if err != nil {

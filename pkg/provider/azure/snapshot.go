@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/util"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
+	"github.com/google/uuid"
 )
 
 func (p *Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, error) {
@@ -38,7 +38,7 @@ func (p *Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, erro
 }
 
 func (p *Provider) CreateSnapshot(ctx context.Context, diskURI string) (string, error) {
-	name := identifierPrefix + "-" + util.NewIsoNanoSecIdentifier()
+	name := identifierPrefix + "-" + uuid.NewString()
 	createOpt := armcompute.DiskCreateOptionCopy
 	poller, err := p.snapClient.BeginCreateOrUpdate(
 		ctx,
@@ -111,7 +111,7 @@ Wait:
 }
 
 func (p *Provider) ConvertSnapshot2Disk(ctx context.Context, snapshotURI string) (string, error) {
-	name := identifierPrefix + "-" + util.NewIsoNanoSecIdentifier()
+	name := identifierPrefix + "-" + uuid.NewString()
 	createOpt := armcompute.DiskCreateOptionCopy
 	poller, err := p.diskClient.BeginCreateOrUpdate(
 		ctx,
