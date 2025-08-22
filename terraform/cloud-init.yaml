@@ -1,0 +1,130 @@
+#cloud-config
+
+bootcmd:
+  - [ bash, -c, "sleep 1m" ]
+
+timezone: UTC
+ssh_pwauth: false
+
+apt:
+  sources:
+    trivy:
+      source: "deb https://aquasecurity.github.io/trivy-repo/deb generic main"
+      key: |
+        -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+        mQGNBFzP66QBDAC+sYojv+2L2wU7ZOjekt741t/Hz9mAR6rZfsFE8eOdK6Ozav2t
+        l13QKpqSTUwQ33mQEwudEIUsZOov2tsBaG4r9Kxasu7wmeXoenvLWt92K6ZfcFwq
+        THti2Xcku6T1X+JXu4RAHf2wEreVY+Os8BnXMuIp4KWbFhVcLloeiMMZXUgSDHGM
+        pPXfvkF0D4AewSOlnlf8we7+AVX6ZA9tHyb2KVO40f3mgfwMA110B5xGRY5JU+hI
+        zouwwRb8xPX7cRf4BKaLKcMGzCEL+Ks7MUGCN7pKtIPkxDC1EyHk0dVOKKm2dl0W
+        kaZNTD+UoJjUTgkT/y+EJC2/nXMCNwdloGo+L9Ue8baRMku6PQEakmdh6j+y5Hwo
+        KafrJDK+Li+pnibN8TruEjIiJKbZWRWIiQ9Z3zY3O1KmrWilfFywICn9kyP9d1Rb
+        SCGx495cGzXl1RNB4k1j3oUOINL2A/5jIyh/e27/aNoqGad3xTMMdr2VmmxenTBz
+        xsJMXJViVD4CPacAEQEAAbQFdHJpdnmJAdQEEwEIAD4WIQQuLTVnRhYyyEu2zW/p
+        0KNhYnb6bAUCXM/rpAIbAwUJEswDAAULCQgHAgYVCAkKCwIEFgIDAQIeAQIXgAAK
+        CRDp0KNhYnb6bFBmDACtd1no/JcuBKDuntn0DCLw+j0A+v64GIXHJhyt2fxYhIG/
+        WwTkkZ27glIbOW8EvsDoa13Ec7slPCTQI9WYn9hXJcMOXSnHyIWaVguIM2ouSYZK
+        H6N2g1lA+Fh3vjpat63Lysp1hpOYQckM37x6N2M/H/kfeLnMMo9e7tcjHsO07/2t
+        RJorOzMZR7zZmNR+bhh58caes7IRbhihp6dMEZBacQ8qcHlbFFEmyVt38nXreSgi
+        b4BuXgtOfFpZftUZX5eF7xhTYdIKOKKAn3pTpVdCP6UAseVtGwMUFUpfz6sXrPnc
+        Vvm6edFMOX+LkZ0SH6GT4XGqcFZNleuODL+kzTkqqmZ+M0tEeauprlBw364CgL5I
+        FVs2p2Wr7Gjn7TW7zOmzT8Cl6Lw5if5i+kH0ROh0JLfDhUa+bIrVKiXO2QF0tLl2
+        p4GqyKKfp3BbHROF7bKqpypzB50tYpMMTCnIYQGyTtLTCv2SbO6PHepvXXKsODII
+        bfbBTsY/XQ0WYaD/HVs=
+        =HQ8K
+        -----END PGP PUBLIC KEY BLOCK-----
+
+package_update: true
+package_upgrade: true
+packages:
+  - ntfs-3g
+  - unattended-upgrades
+  - curl
+  - trivy
+  - clamav
+  - clamav-daemon
+  - libclamunrar
+
+write_files:
+  - path: /etc/apt/apt.conf.d/50unattended-upgrades
+    content: |
+      Unattended-Upgrade::Automatic-Reboot "true";
+      Unattended-Upgrade::Automatic-Reboot-Time "23:45";
+
+  - path: /etc/cron.daily/trivy-update-db
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/bin/sh
+      export TRIVY_CACHE_DIR=/root/.cache/trivy
+      /usr/bin/trivy rootfs --no-progress --download-db-only
+      /usr/bin/trivy rootfs --no-progress --download-java-db-only
+
+  - path: /etc/accuknox-omni/artifact.token
+    content: ${artifact_token}
+    owner: root:root
+    permissions: "0600"
+
+  - path: /etc/systemd/system/omni.service
+    content: |
+      [Unit]
+      Description=AccuKnox Omni
+      After=network.target
+      Wants=network.target
+
+      [Service]
+      Type=simple
+      User=root
+      ExecStart=/usr/local/bin/omni schedule "${provider}" \
+                  --artifact-token-file /etc/accuknox-omni/artifact.token \
+                  --artifact-endpoint "${artifact_endpoint}" \
+                  --tenant-id "${artifact_tenant_id}" \
+                  --artifact-label "${artifact_label}" %{for key, value in omni_additional_flags}--${key}="${value}" %{endfor}
+      Restart=always
+      RestartSec=10
+      StandardOutput=journal
+      StandardError=journal
+      SyslogIdentifier=accuknox-omni
+
+      [Install]
+      WantedBy=multi-user.target
+    owner: root:root
+    permissions: '0644'
+
+runcmd:
+  - |
+    /bin/bash -c '
+      set -euo pipefail
+
+      # update clamav database
+      systemctl stop clamav-freshclam.service
+      freshclam
+      systemctl start clamav-freshclam.service
+      systemctl start clamav-daemon.service
+
+      # download trivy databases
+      chmod +x /etc/cron.daily/trivy-update-db
+      export TRIVY_CACHE_DIR=/root/.cache/trivy
+      trivy rootfs --no-progress --download-db-only
+      trivy rootfs --no-progress --download-java-db-only
+
+      # install omni
+      mkdir -p /etc/accuknox-omni /usr/local/bin
+      curl -L https://accuknox-omni.s3.us-east-1.amazonaws.com/latest/omni-linux-amd64 -o /usr/local/bin/omni
+      chmod +x /usr/local/bin/omni
+
+      # start omni service
+      systemctl daemon-reload
+      systemctl enable omni.service --now
+      systemctl status omni.service
+
+      # unattended upgrades
+      dpkg-reconfigure -f noninteractive unattended-upgrades
+    '
+
+final_message: |
+  Cloud-init setup complete!
+  If everything went well, the AccuKnox Omni service should be running.
+  Check status with: systemctl status omni
+  View logs with: journalctl -u omni -f

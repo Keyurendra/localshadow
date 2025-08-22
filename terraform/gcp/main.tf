@@ -1,5 +1,6 @@
 locals {
   cloud_init_config = templatefile("${path.module}/cloud-init.yaml", {
+    provider              = "gcp"
     artifact_token        = var.artifact_token
     artifact_endpoint     = var.artifact_endpoint
     artifact_label        = var.artifact_label
