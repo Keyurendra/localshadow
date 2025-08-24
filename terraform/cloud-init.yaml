@@ -1,10 +1,10 @@
 #cloud-config
 
-bootcmd:
-  - [ bash, -c, "sleep 1m" ]
-
 timezone: UTC
 ssh_pwauth: false
+
+bootcmd:
+  - [ bash, -c, "sleep 1m" ]
 
 apt:
   sources:

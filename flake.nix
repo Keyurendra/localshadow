@@ -39,6 +39,7 @@
             gopls
             awscli2
             google-cloud-sdk
+            azure-cli
             terraform-ls
             terraform
           ];
