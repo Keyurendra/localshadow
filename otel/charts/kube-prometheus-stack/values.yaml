@@ -1,0 +1,264 @@
+# Install Prometheus Operator CRDs
+crds:
+  enabled: true
+# Create default rules for monitoring the cluster
+defaultRules:
+  # create default rules
+  create: true
+  # disable the ones that are not needed
+  rules:
+    etcd: false
+    windows: false
+# Configuration for alertmanager
+alertmanager:
+  enabled: false
+# Configuration for grafana
+grafana:
+  enabled: true
+  # Deploy default dashboards
+  defaultDashboardsEnabled: true
+  # Timezone for the default dashboards
+  # Other options are: browser or a specific timezone, i.e.
+  # Europe/Luxembourg
+  defaultDashboardsTimezone: browser
+  # Editable flag for the default dashboards
+  defaultDashboardsEditable: true
+  adminPassword: ihategrafana
+  resources:
+    requests:
+      cpu: 200m
+      memory: 300Mi
+    limits:
+      cpu: 200m
+      memory: 400Mi
+  # fix for https://github.com/prometheus-community/helm-charts/issues/3800
+  serviceMonitor:
+    labels:
+      release: kube-prometheus-stack
+  ingress:
+    # If true, Grafana Ingress will be created
+    enabled: false
+    # IngressClassName for Grafana Ingress.
+    # Should be provided if Ingress is enable.
+    ingressClassName: istio
+    # Annotations for Grafana Ingress
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      kubernetes.io/ingress.class: istio # istio does not support the ingressClassName field
+    # Labels to be added to the Ingress
+    labels: {}
+    # Hostnames.
+    # Must be provided if Ingress is enable.
+    hosts:
+      - grafana.omni.accuknox.com
+    # Path for grafana ingress
+    path: /
+    # TLS configuration for grafana Ingress
+    # Secret must be manually created in the namespace
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.omni.accuknox.com
+  # To make Grafana persistent (Using Statefulset)
+  persistence:
+    enabled: true
+    type: sts
+    # use default storage class
+    storageClassName: null
+    accessModes:
+      - ReadWriteOnce
+    size: 5Gi
+    finalizers:
+      - kubernetes.io/pvc-protection
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      # Allow discovery in all namespaces for dashboards
+      searchNamespace: ALL
+      provider:
+        allowUiUpdates: true
+    datasources:
+      enabled: true
+      defaultDatasourceEnabled: true
+      label: grafana_datasource
+      labelValue: "1"
+      alertmanager:
+        enabled: false
+  ## Configure additional grafana datasources (passed through tpl)
+  ## ref: http://docs.grafana.org/administration/provisioning/#datasources
+  additionalDataSources:
+    - name: loki
+      access: proxy
+      basicAuth: false
+      editable: false
+      type: loki
+      url: "http://loki-gateway.monitoring.svc.cluster.local"
+  # Flag to mark provisioned data sources for deletion if they are no
+  # longer configured. It takes no effect if data sources are already
+  # listed in the deleteDatasources section.
+  #
+  # ref: https://grafana.com/docs/grafana/latest/administration/provisioning/#example-data-source-config-file
+  prune: true
+# Flag to disable all the kubernetes component scrapers
+kubernetesServiceMonitors:
+  enabled: true
+# Component scraping the kube api server
+kubeApiServer:
+  enabled: true
+# Component scraping the kubelet and kubelet-hosted cAdvisor
+kubelet:
+  enabled: true
+  namespace: kube-system
+# Component scraping the kube controller manager
+kubeControllerManager:
+  enabled: true
+  # If your kube controller manager is not deployed as a pod, specify IPs
+  # it can be found on
+  endpoints: []
+  service:
+    enabled: true
+    port: 10257
+    targetPort: 10257
+  serviceMonitor:
+    enabled: true
+    https: true
+    insecureSkipVerify: true
+# Component scraping coreDns. Use either this or kubeDns
+coreDns:
+  enabled: true
+# Component scraping etcd
+#
+# Disabled because we are using K3S embedded sqlite datastore instead of
+# etcd.
+kubeEtcd:
+  enabled: false
+# Component scraping kube scheduler
+kubeScheduler:
+  enabled: true
+  # If your kube scheduler is not deployed as a pod, specify IPs it can be
+  # found on
+  endpoints: []
+  service:
+    enabled: true
+    port: 10259
+    targetPort: 10259
+  serviceMonitor:
+    enabled: true
+    https: true
+    insecureSkipVerify: true
+# Component scraping kube proxy
+kubeProxy:
+  enabled: true
+  # If your kube proxy is not deployed as a pod, specify IPs it can be found on
+  endpoints: []
+  service:
+    enabled: true
+    port: 10249
+    targetPort: 10249
+    selector:
+      k8s-app: kube-proxy
+# Component scraping kube state metrics
+kubeStateMetrics:
+  enabled: true
+# Deploy node exporter as a daemonset to all nodes
+nodeExporter:
+  enabled: true
+  operatingSystems:
+    linux:
+      enabled: true
+    aix:
+      enabled: false
+    darwin:
+      enabled: false
+prometheus-node-exporter:
+  enabled: true
+# Manages Prometheus and Alertmanager components
+prometheusOperator:
+  enabled: true
+  # Number of old replicasets to retain The default value is 10, 0 will
+  # garbage-collect old replicasets
+  revisionHistoryLimit: 3
+  kubeletService:
+    # If true, the operator will create and maintain a service for scraping
+    # kubelets
+    #
+    # ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/helm/prometheus-operator/README.md
+    enabled: true
+    namespace: kube-system
+    selector: ""
+    # Use '{{ template "kube-prometheus-stack.fullname" . }}-kubelet' by default
+    name: ""
+  # Create Endpoints objects for kubelet targets.
+  kubeletEndpointsEnabled: true
+  # Create EndpointSlice objects for kubelet targets.
+  kubeletEndpointSliceEnabled: false
+  # Resource limits & requests
+  resources:
+    requests:
+      cpu: 10m
+      memory: 25Mi
+    limits:
+      cpu: 20m
+      memory: 60Mi
+# Deploy a Prometheus instance
+prometheus:
+  enabled: true
+  # Toggle prometheus into agent mode
+  # Note many of features described below (e.g. rules, query, alerting, remote
+  # read, thanos) will not work in agent mode.
+  #
+  # ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/designs/prometheus-agent.md
+  agentMode: false
+  # Settings affecting prometheusSpec
+  # ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#prometheusspec
+  prometheusSpec:
+    # Statefulset's persistent volume claim retention policy whenDeleted and
+    # whenScaled determine whether statefulset's PVCs are deleted (true) or
+    # retained (false) on scaling down and deleting statefulset, respectively.
+    # Requires Kubernetes version 1.27.0+.
+    # Ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention
+    persistentVolumeClaimRetentionPolicy:
+      whenDeleted: Retain
+      whenScaled: Retain
+    disableCompaction: false
+    # Interval between consecutive scrapes.
+    # Defaults to 30s.
+    # ref: https://github.com/prometheus-operator/prometheus-operator/blob/release-0.44/pkg/prometheus/promcfg.go#L180-L183
+    scrapeInterval: "30s"
+    # Number of seconds to wait for target to respond before erroring
+    scrapeTimeout: ""
+    # How long to retain metrics
+    retention: 720h
+    # Maximum size of metrics
+    retentionSize: ""
+    # Number of replicas of each shard to deploy for a Prometheus deployment.
+    # Number of replicas multiplied by shards is the total number of Pods
+    # created.
+    replicas: 1
+    # Resource limits & requests
+    resources:
+      requests:
+        cpu: 1500m
+        memory: 3Gi
+      limits:
+        cpu: 1500m
+        memory: 3Gi
+    # Prometheus StorageSpec for persistent data
+    # ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/user-guides/storage.md
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          # use default storage class
+          storageClassName: null
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 50Gi
+    ## If true, a nil or {} value for prometheus.prometheusSpec.serviceMonitorSelector will cause the
+    ## prometheus resource to be created with selectors based on values in the helm deployment,
+    ## which will also match the servicemonitors created
+    ##
+    serviceMonitorSelectorNilUsesHelmValues: false

@@ -1,0 +1,83 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: otel-collector-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: otel-collector-gateway-tls
+      hosts:
+        - otel.omni.accuknox.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: otel-collector-gateway
+  namespace: opentelemetry
+spec:
+  hosts:
+    - otel.omni.accuknox.com
+  gateways:
+    - istio-system/otel-collector-gateway
+  http:
+    - route:
+        - destination:
+            port:
+              number: 4317
+            host: gateway-collector
+---
+apiVersion: security.istio.io/v1
+kind: RequestAuthentication
+metadata:
+  name: otel-collector-gateway
+  namespace: opentelemetry
+spec:
+  selector:
+    matchLabels:
+      app: otel-collector-gateway
+  jwtRules:
+    - issuer: "cspm.dev.accuknox.com"
+      jwksUri: "https://cspm.dev.accuknox.com/api/v1/jwks/"
+      timeout: 1m
+      outputClaimToHeaders:
+        - header: x-issuer
+          claim: iss
+    - issuer: "cspm.stage.accuknox.com"
+      jwksUri: "https://cspm.stage.accuknox.com/api/v1/jwks/"
+      timeout: 1m
+      outputClaimToHeaders:
+        - header: x-issuer
+          claim: iss
+    - issuer: "cspm.demo.accuknox.com"
+      jwksUri: "https://cspm.demo.accuknox.com/api/v1/jwks/"
+      timeout: 1m
+      outputClaimToHeaders:
+        - header: x-issuer
+          claim: iss
+    - issuer: "cspm.accuknox.com"
+      jwksUri: "https://cspm.accuknox.com/api/v1/jwks/"
+      timeout: 1m
+      outputClaimToHeaders:
+        - header: x-issuer
+          claim: iss
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: otel-collector-gateway
+  namespace: istio-system
+spec:
+  secretName: otel-collector-gateway-tls
+  dnsNames:
+    - otel.omni.accuknox.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer

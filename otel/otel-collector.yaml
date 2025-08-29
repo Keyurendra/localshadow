@@ -1,0 +1,65 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: gateway
+  namespace: opentelemetry
+  labels:
+    sidecar.istio.io/inject: "true"
+    app: otel-collector-gateway
+spec:
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+            include_metadata: true
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 90
+      batch:
+        send_batch_size: 8192
+        send_batch_max_size: 8192
+        timeout: 30s
+      attributes:
+        actions:
+          - key: env
+            from_context: metadata.x-issuer
+            action: upsert
+      transform:
+        log_statements:
+          - set(resource.attributes["service.name"], "omni")
+      metricstransform:
+        transforms:
+          - include: ^(.*)$
+            match_type: regexp
+            action: update
+            new_name: omni_$${1}
+    exporters:
+      otlphttp: # loki
+        endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
+      prometheus:
+        endpoint: "0.0.0.0:9100"
+    service:
+      pipelines:
+        metrics:
+          receivers:
+            - otlp
+          processors:
+            - memory_limiter
+            - attributes
+            - metricstransform
+            - batch
+          exporters:
+            - prometheus
+        logs:
+          receivers:
+            - otlp
+          processors:
+            - memory_limiter
+            - attributes
+            - transform
+            - batch
+          exporters:
+            - otlphttp # loki

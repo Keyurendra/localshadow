@@ -1,0 +1,51 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: grafana
+  namespace: istio-system
+spec:
+  secretName: grafana-tls
+  dnsNames:
+    - grafana.omni.accuknox.com
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+---
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: grafana
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: grafana-tls
+      hosts:
+        - grafana.omni.accuknox.com
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: grafana
+  namespace: monitoring
+spec:
+  hosts:
+    - grafana.omni.accuknox.com
+  gateways:
+    - istio-system/grafana
+  http:
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            port:
+              number: 80
+            host: kube-prometheus-stack-grafana

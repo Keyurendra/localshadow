@@ -1,0 +1,171 @@
+global:
+   dnsService: "rke2-coredns-rke2-coredns"
+loki:
+  auth_enabled: false
+  # The number of old ReplicaSets to retain to allow rollback
+  revisionHistoryLimit: 3
+  limits_config:
+    retention_period: 720h
+    reject_old_samples: true
+    reject_old_samples_max_age: 48h
+    max_cache_freshness_per_query: 10m
+    split_queries_by_interval: 15m
+    query_timeout: 300s
+    volume_enabled: true
+    otlp_config:
+      resource_attributes:
+        ignore_defaults: true
+        attributes_config:
+          - action: index_label
+            attributes:
+              - tenant_id
+              - provider
+              - region
+              - account
+              - instance_id
+              - env
+              - service.name
+  commonConfig:
+    replication_factor: 1
+  schemaConfig:
+    configs:
+      - from: "2024-04-01"
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: loki_index_
+          period: 24h
+  ingester:
+    chunk_encoding: snappy
+  tracing:
+    enabled: true
+  querier:
+    # Default is 4, if you have enough memory and CPU you can increase,
+    # reduce if OOMing
+    max_concurrent: 2
+# Configuration for the gateway
+gateway:
+  # Specifies whether the gateway should be enabled
+  enabled: true
+  # Number of replicas for the gateway
+  replicas: 1
+  # Default container port
+  containerPort: 8080
+  # Enable logging of 2xx and 3xx HTTP requests
+  verboseLogging: true
+  autoscaling:
+    # Enable autoscaling for the gateway
+    enabled: false
+  # Resource requests and limits for the gateway
+  resources:
+    requests:
+      cpu: 10m
+      memory: 15Mi
+    limits:
+      cpu: 10m
+      memory: 25Mi
+  # Gateway service configuration
+  service:
+    # Port of the gateway service
+    port: 80
+    # Type of the gateway service
+    type: ClusterIP
+  # Gateway ingress configuration
+  ingress:
+    # Specifies whether an ingress for the gateway should be created
+    enabled: false
+  # Basic auth configuration
+  basicAuth:
+    # Enables basic authentication for the gateway
+    enabled: false
+deploymentMode: SingleBinary
+singleBinary:
+  replicas: 1
+  autoscaling:
+    enabled: false
+  persistence:
+    # Enable persistent disk
+    enabled: true
+    # Size of persistent disk
+    size: 5Gi
+    # Storage class to be used.
+    # If set to "-", storageClassName: "", which disables dynamic
+    # provisioning.
+    # If empty or set to null, the default storage class is used.
+    storageClass: null
+  resources:
+    requests:
+      cpu: 1500m
+      memory: 3Gi
+    limits:
+      cpu: 1500m
+      memory: 3Gi
+  extraEnv:
+    # Keep a little bit lower than memory limits
+    - name: GOMEMLIMIT
+      value: 3500MiB
+chunksCache:
+  # Specifies whether memcached based chunks-cache should be enabled
+  #
+  # Disabled due to lack of sufficient resources
+  enabled: false
+resultsCache:
+  # Specifies whether memcached based results-cache should be enabled
+  #
+  # Disabled due to lack of sufficient resources
+  enabled: false
+# Enable minio for storage
+minio:
+  enabled: true
+  replicas: 1
+  persistence:
+    size: 50Gi
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1Gi
+    limits:
+      cpu: 200m
+      memory: 1Gi
+lokiCanary:
+  enabled: true
+  # If true, the canary will send directly to Loki via the address
+  # configured for verification.
+  #
+  # If false, it will write to stdout and an Agent will be needed to scrape
+  # and send the logs.
+  push: true
+  # Resource requests and limits for the canary
+  resources:
+    requests:
+      cpu: 20m
+      memory: 30Mi
+    limits:
+      cpu: 20m
+      memory: 50Mi
+# Zero out replica counts of other deployment modes
+backend:
+  replicas: 0
+read:
+  replicas: 0
+write:
+  replicas: 0
+ingester:
+  replicas: 0
+querier:
+  replicas: 0
+queryFrontend:
+  replicas: 0
+queryScheduler:
+  replicas: 0
+distributor:
+  replicas: 0
+compactor:
+  replicas: 0
+indexGateway:
+  replicas: 0
+bloomCompactor:
+  replicas: 0
+bloomGateway:
+  replicas: 0
