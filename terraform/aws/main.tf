@@ -184,6 +184,7 @@ resource "aws_iam_role_policy" "omni_policy" {
         Action = [
           "ec2:DescribeInstances",
           "ec2:DescribeVolumes",
+          "ec2:DescribeVolumeStatus",
           "ec2:DescribeSnapshots",
           "ec2:CreateSnapshot",
           "ec2:DeleteSnapshot",

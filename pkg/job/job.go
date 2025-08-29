@@ -411,7 +411,7 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 	}
 	j.logger.LogAttrs(
 		ctx,
-		slog.LevelDebug,
+		slog.LevelInfo,
 		"OS detected on mounted partition",
 		slog.String("cloned_disk_uri", diskURI),
 		slog.String("target_vm_uri", targetVMURI),

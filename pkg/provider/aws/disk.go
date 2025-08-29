@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -124,6 +125,18 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 		retry.Context(ctx),
 		retry.Attempts(20),
 		retry.Delay(time.Second*30),
+		retry.LastErrorOnly(true),
+		retry.OnRetry(func(attempt uint, err error) {
+			p.logger.LogAttrs(
+				ctx,
+				slog.LevelError,
+				"volume attached but device not found on fs",
+				slog.Int("attempt", int(attempt)),
+				slog.String("vm_uri", vmURI),
+				slog.String("disk_uri", diskURI),
+				slog.Any("error", err),
+			)
+		}),
 	)
 }
 
@@ -270,11 +283,55 @@ func (p *Provider) ListUnattachedDisks(ctx context.Context) ([]resource.Disk, er
 }
 
 func (p *Provider) WaitDiskReady(ctx context.Context, diskURI string) error {
-	return ec2.NewVolumeAvailableWaiter(p.ec2).Wait(
+	err := ec2.NewVolumeAvailableWaiter(p.ec2).Wait(
 		ctx,
 		&ec2.DescribeVolumesInput{
 			VolumeIds: []string{diskURI},
 		},
 		p.waitDeadline,
 	)
+	if err != nil {
+		return fmt.Errorf("waiting for volume to be available: %w", err)
+	}
+
+	tick := time.NewTicker(time.Second * 30)
+	defer tick.Stop()
+
+Wait:
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-tick.C:
+			status, err := p.ec2.DescribeVolumeStatus(ctx, &ec2.DescribeVolumeStatusInput{
+				VolumeIds: []string{diskURI},
+			})
+			if err != nil {
+				return fmt.Errorf("querying volume status: %w", err)
+			}
+			if len(status.VolumeStatuses) == 0 {
+				return fmt.Errorf("volume %s status not found", diskURI)
+			}
+			initStat := status.VolumeStatuses[0].InitializationStatusDetails
+			if initStat == nil || initStat.Progress == nil {
+				continue Wait
+			}
+			if *initStat.Progress != 100 {
+				var eta int64
+				if initStat.EstimatedTimeToCompleteInSeconds != nil {
+					eta = *initStat.EstimatedTimeToCompleteInSeconds
+				}
+				p.logger.LogAttrs(
+					ctx,
+					slog.LevelDebug,
+					"waiting for volume initialization",
+					slog.String("disk_uri", diskURI),
+					slog.Int64("progress", *initStat.Progress),
+					slog.Int64("eta_seconds", eta),
+				)
+				continue Wait
+			}
+			return nil
+		}
+	}
 }

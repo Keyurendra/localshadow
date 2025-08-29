@@ -52,6 +52,7 @@ func (r Retry) getRetryOpts(ctx context.Context) []retry.Option {
 		retry.Attempts(r.attempts),
 		retry.Delay(r.delay),
 		retry.DelayType(retry.BackOffDelay),
+		retry.LastErrorOnly(true),
 		retry.OnRetry(func(attempt uint, err error) {
 			r.logger.LogAttrs(
 				ctx,

@@ -144,6 +144,7 @@ func (p Publisher) uploadFinding(ctx context.Context, f scanner.Findings) error 
 	retryOpts := []retry.Option{
 		retry.Context(ctx),
 		retry.DelayType(retry.BackOffDelay),
+		retry.LastErrorOnly(true),
 		retry.OnRetry(func(attempt uint, err error) {
 			p.logger.LogAttrs(
 				ctx,

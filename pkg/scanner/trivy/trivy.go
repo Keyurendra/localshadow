@@ -40,7 +40,7 @@ func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.
 		"--scanners=vuln",
 		"--skip-db-update",
 		"--skip-java-db-update",
-		"--timeout 24h",
+		"--timeout=24h",
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
