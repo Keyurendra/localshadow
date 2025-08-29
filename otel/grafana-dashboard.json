@@ -1224,7 +1224,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=\"omni\", env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\",instance_id=\"$instance_id\"}",
+          "expr": "{service_name=\"omni\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\",instance_id=\"$instance_id\"} | env=\"$env\"",
           "queryType": "range",
           "refId": "A"
         }

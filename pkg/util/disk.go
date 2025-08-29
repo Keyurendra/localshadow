@@ -102,7 +102,7 @@ func MountRO(ctx context.Context, partition, baseMountPoint, fsTyp string) (stri
 }
 
 func Unmount(ctx context.Context, mountPoint string) error {
-	err := unix.Unmount(mountPoint, unix.MNT_FORCE)
+	err := unix.Unmount(mountPoint, unix.MNT_DETACH)
 	if err != nil {
 		return err
 	}

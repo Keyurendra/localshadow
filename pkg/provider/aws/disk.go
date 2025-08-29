@@ -10,10 +10,10 @@ import (
 	"github.com/accuknox/omniscan/pkg/resource"
 	"github.com/accuknox/omniscan/pkg/util"
 
+	"github.com/avast/retry-go/v4"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	awstime "github.com/aws/smithy-go/time"
 )
 
 func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {
@@ -104,25 +104,27 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 		return "", fmt.Errorf("waiting for volume attachment: %w", err)
 	}
 
-	// it takes at most 30s for the disk to appear on the fs
-	awstime.SleepWithContext(ctx, time.Second*30)
-
-	newUsedFSDevices, err := util.ListBlockDevices(ctx)
-	if err != nil {
-		return "", fmt.Errorf("enumerating newly attached devices: %w", err)
-	}
-
-	m := make(map[string]struct{})
-	for _, dev := range usedFSDevices {
-		m[dev] = struct{}{}
-	}
-	for _, dev := range newUsedFSDevices {
-		if _, found := m[dev]; !found {
-			return dev, nil
-		}
-	}
-
-	return "", fmt.Errorf("volume attached but device not found on fs")
+	return retry.DoWithData(
+		func() (string, error) {
+			newUsedFSDevices, err := util.ListBlockDevices(ctx)
+			if err != nil {
+				return "", fmt.Errorf("enumerating newly attached devices: %w", err)
+			}
+			m := make(map[string]struct{})
+			for _, dev := range usedFSDevices {
+				m[dev] = struct{}{}
+			}
+			for _, dev := range newUsedFSDevices {
+				if _, found := m[dev]; !found {
+					return dev, nil
+				}
+			}
+			return "", fmt.Errorf("volume attached but device not found on fs")
+		},
+		retry.Context(ctx),
+		retry.Attempts(20),
+		retry.Delay(time.Second*30),
+	)
 }
 
 func (p *Provider) DetachDisk(ctx context.Context, diskURI, vmURI string) error {
