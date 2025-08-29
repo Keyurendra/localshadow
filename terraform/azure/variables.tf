@@ -60,3 +60,9 @@ variable "omni_additional_flags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_telemetry" {
+  description = "Enable telemetry"
+  type        = bool
+  default     = true
+}

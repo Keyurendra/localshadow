@@ -1,4 +1,7 @@
 locals {
+  otel_collector_config = templatefile("${path.module}/otel-collector-config.yaml", {
+    tenant_id = var.artifact_tenant_id
+  })
   cloud_init_config = templatefile("${path.module}/cloud-init.yaml", {
     provider              = "aws"
     artifact_token        = var.artifact_token
@@ -6,6 +9,8 @@ locals {
     artifact_label        = var.artifact_label
     artifact_tenant_id    = var.artifact_tenant_id
     omni_additional_flags = var.omni_additional_flags
+    enable_telemetry      = var.enable_telemetry
+    otel_collector_config = local.otel_collector_config
   })
 }
 

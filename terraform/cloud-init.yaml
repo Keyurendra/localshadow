@@ -66,6 +66,14 @@ write_files:
     owner: root:root
     permissions: "0600"
 
+  %{ if enable_telemetry }
+  - path: /etc/otel-collector-config.yaml
+    content: |
+      ${indent(6, chomp(otel_collector_config))}
+    owner: root:root
+    permissions: "0644"
+  %{ endif }
+
   - path: /etc/systemd/system/omni.service
     content: |
       [Unit]
@@ -92,6 +100,30 @@ write_files:
     owner: root:root
     permissions: '0644'
 
+  %{ if enable_telemetry }
+  - path: /etc/systemd/system/otel-collector.service
+    content: |
+      [Unit]
+      Description=OpenTelemetry Collector
+      After=network.target
+      Wants=network.target
+
+      [Service]
+      Type=simple
+      User=root
+      ExecStart=/usr/local/bin/otelcol-contrib --config /etc/otel-collector-config.yaml
+      Restart=always
+      RestartSec=10
+      StandardOutput=journal
+      StandardError=journal
+      SyslogIdentifier=otel-collector
+
+      [Install]
+      WantedBy=multi-user.target
+    owner: root:root
+    permissions: '0644'
+  %{ endif }
+
 runcmd:
   - |
     /bin/bash -c '
@@ -109,15 +141,21 @@ runcmd:
       trivy rootfs --no-progress --download-db-only
       trivy rootfs --no-progress --download-java-db-only
 
-      # install omni
+      systemctl daemon-reload
+
+      # install & enable omni
       mkdir -p /etc/accuknox-omni /usr/local/bin
       curl -L https://accuknox-omni.s3.us-east-1.amazonaws.com/latest/omni-linux-amd64 -o /usr/local/bin/omni
       chmod +x /usr/local/bin/omni
-
-      # start omni service
-      systemctl daemon-reload
       systemctl enable omni.service --now
-      systemctl status omni.service
+
+      %{ if enable_telemetry }
+      # install & enable otel collector
+      curl -L https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.132.4/otelcol-contrib_0.132.4_linux_amd64.tar.gz -o /tmp/otelcol-contrib.tar.gz
+      tar -xzf /tmp/otelcol-contrib.tar.gz -C /usr/local/bin otelcol-contrib
+      chmod +x /usr/local/bin/otelcol-contrib
+      systemctl enable otel-collector.service --now
+      %{ endif }
 
       # unattended upgrades
       dpkg-reconfigure -f noninteractive unattended-upgrades
