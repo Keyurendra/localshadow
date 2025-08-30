@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	awstime "github.com/aws/smithy-go/time"
 )
 
 func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {
@@ -98,14 +99,19 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 		return "", err
 	}
 
-	err = ec2.NewVolumeInUseWaiter(p.ec2).Wait(ctx, &ec2.DescribeVolumesInput{
-		VolumeIds: []string{diskURI},
-	}, p.waitDeadline)
+	err = ec2.NewVolumeInUseWaiter(p.ec2).Wait(
+		ctx,
+		&ec2.DescribeVolumesInput{VolumeIds: []string{diskURI}},
+		p.waitDeadline,
+	)
 	if err != nil {
 		return "", fmt.Errorf("waiting for volume attachment: %w", err)
 	}
 
-	return retry.DoWithData(
+	// it takes ~30s for an avg sized disk to appear on the fs
+	awstime.SleepWithContext(ctx, time.Second*30)
+
+	dev, err := retry.DoWithData(
 		func() (string, error) {
 			newUsedFSDevices, err := util.ListBlockDevices(ctx)
 			if err != nil {
@@ -130,14 +136,17 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 			p.logger.LogAttrs(
 				ctx,
 				slog.LevelError,
-				"volume attached but device not found on fs",
+				"attempting to identify attached device",
 				slog.Int("attempt", int(attempt)),
-				slog.String("vm_uri", vmURI),
 				slog.String("disk_uri", diskURI),
 				slog.Any("error", err),
 			)
 		}),
 	)
+	if err != nil {
+		return "", fmt.Errorf("giving up waiting for device to appear on fs: %w", err)
+	}
+	return dev, nil
 }
 
 func (p *Provider) DetachDisk(ctx context.Context, diskURI, vmURI string) error {
@@ -316,7 +325,7 @@ Wait:
 			if initStat == nil || initStat.Progress == nil {
 				continue Wait
 			}
-			if *initStat.Progress != 100 {
+			if *initStat.Progress == 0 {
 				var eta int64
 				if initStat.EstimatedTimeToCompleteInSeconds != nil {
 					eta = *initStat.EstimatedTimeToCompleteInSeconds
@@ -324,7 +333,7 @@ Wait:
 				p.logger.LogAttrs(
 					ctx,
 					slog.LevelDebug,
-					"waiting for volume initialization",
+					"waiting for volume initialization to begin",
 					slog.String("disk_uri", diskURI),
 					slog.Int64("progress", *initStat.Progress),
 					slog.Int64("eta_seconds", eta),

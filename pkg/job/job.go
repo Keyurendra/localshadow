@@ -263,11 +263,11 @@ func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult,
 		slog.String("source_disk_uri", disk.URI),
 		slog.String("host_vm_uri", host.URI),
 	)
+	defer j.prov.DetachDisk(ctx, clone, host.URI)
 	path, err := j.attachClonedDisk(ctx, clone, host.URI)
 	if err != nil {
 		return nil, err
 	}
-	defer j.prov.DetachDisk(ctx, clone, host.URI)
 
 	return j.scanAttachedDisk(ctx, path, clone, target.URI)
 }
