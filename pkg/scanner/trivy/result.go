@@ -35,6 +35,7 @@ type Metadata struct {
 type VMMetadata struct {
 	URI      string `json:"uri,omitempty"`
 	Platform string `json:"platform,omitempty"`
+	OS       string `json:"os,omitempty"`
 }
 
 func (r Result) JSON() []byte {

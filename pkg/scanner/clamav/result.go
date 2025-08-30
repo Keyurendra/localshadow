@@ -13,6 +13,7 @@ import (
 type Result struct {
 	Platform        string          `json:"platform,omitempty"`
 	VMUri           string          `json:"vmURI,omitempty"`
+	OS              string          `json:"os,omitempty"`
 	MaliciousFiles  []MaliciousFile `json:"maliciousFiles"`
 	ClamscanSummary parser.Summary  `json:"clamscanSummary"`
 	ClamscanErrors  []string        `json:"clamscanErrors,omitempty"`

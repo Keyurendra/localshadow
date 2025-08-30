@@ -19,7 +19,7 @@ func NewScanner() scanner.Scanner {
 	return s{}
 }
 
-func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.Findings, error) {
+func (s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
 	path, err := exec.LookPath("trivy")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
@@ -72,6 +72,7 @@ func (s) Scan(ctx context.Context, mountpoint, vmURI, platform string) (scanner.
 			VM: VMMetadata{
 				URI:      vmURI,
 				Platform: platform,
+				OS:       osType,
 			},
 		},
 	}, nil

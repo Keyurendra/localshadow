@@ -463,6 +463,7 @@ func (j Job) performScans(ctx context.Context, mountPoint, osType, targetURI str
 			mountPoint,
 			targetURI,
 			platform,
+			osType,
 		)
 	}
 
@@ -492,6 +493,7 @@ func (j Job) performScans(ctx context.Context, mountPoint, osType, targetURI str
 			mountPoint,
 			targetURI,
 			platform,
+			osType,
 		)
 	}
 
