@@ -51,6 +51,12 @@
     },
     {
       "type": "panel",
+      "id": "stat",
+      "name": "Stat",
+      "version": ""
+    },
+    {
+      "type": "panel",
       "id": "table",
       "name": "Table",
       "version": ""
@@ -84,6 +90,564 @@
   "id": null,
   "links": [],
   "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 21,
+      "panels": [],
+      "title": "Scans",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "A scan is said to be successful if and only if the results are also pushed to the artifact API without errors",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 1
+      },
+      "id": 17,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_successful_scan_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"vuln_scan\", os=\"linux\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Successful Vuln Scans (Linux)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "A scan is said to be successful if and only if the results are also pushed to the artifact API without errors",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "green",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_successful_scan_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"malware_scan\", os=\"linux\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Successful Malware Scans (Linux)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "A scan is said to be successful if and only if the results are also pushed to the artifact API without errors",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_successful_scan_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"vuln_scan\", os=\"windows\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Successful Vuln Scans (Windows)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "description": "A scan is said to be successful if and only if the results are also pushed to the artifact API without errors",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "blue",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 20,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_successful_scan_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"malware_scan\", os=\"windows\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Successful Malware Scans (Windows)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 8
+      },
+      "id": 16,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_error_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"orchestration\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Orchestration Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 8
+      },
+      "id": 15,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_error_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"vuln_scan\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Vuln Scan Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 8
+      },
+      "id": 13,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_error_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"malware_scan\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Malware Scan Errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "red",
+            "mode": "fixed"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 8
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.1.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "round(sum(increase(omni_error_count_total{env=\"$env\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\", instance_id=\"$instance_id\", type=\"artifact_api\"}[$__range]))) or vector(0)",
+          "legendFormat": "__auto",
+          "range": true,
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          }
+        }
+      ],
+      "title": "Artifact API Errors",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 12,
+      "panels": [],
+      "title": "Omni Host Stats",
+      "type": "row"
+    },
     {
       "datasource": {
         "type": "prometheus",
@@ -151,7 +715,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 16
       },
       "id": 2,
       "options": {
@@ -170,17 +734,17 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "exemplar": false,
           "expr": "1 - sum without (state) (\r\n  max by (instance_id, cpu, state) (\r\n    rate(\r\n      omni_system_cpu_time_seconds_total{\r\n        job=\"gateway-collector\",\r\n        env=\"$env\",\r\n        provider=\"$provider\",\r\n        account=\"$account\",\r\n        region=\"$region\",\r\n        instance_id=\"$instance_id\",\r\n        state=~\"idle|iowait|steal\"\r\n      }[$__rate_interval]\r\n    )\r\n  )\r\n)",
           "instant": false,
           "legendFormat": "{{cpu}}",
           "range": true,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         }
       ],
       "title": "CPU Usage",
@@ -252,7 +816,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 0
+        "y": 16
       },
       "id": 3,
       "options": {
@@ -271,15 +835,15 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "expr": "omni_system_cpu_load_average_1m{\r\n  job=\"gateway-collector\",\r\n  env=\"$env\",\r\n  provider=\"$provider\",\r\n  account=\"$account\",\r\n  region=\"$region\",\r\n  instance_id=\"$instance_id\"\r\n}\r\n",
           "legendFormat": "1m load average",
           "range": true,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         },
         {
           "datasource": {
@@ -389,7 +953,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 8
+        "y": 24
       },
       "id": 4,
       "options": {
@@ -408,15 +972,15 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "expr": "omni_system_memory_usage_bytes{\r\n  job=\"gateway-collector\",\r\n  env=\"$env\",\r\n  provider=\"$provider\",\r\n  account=\"$account\",\r\n  region=\"$region\",\r\n  instance_id=\"$instance_id\",\r\n  state!~\"slab_reclaimable|slab_unreclaimable\"\r\n}",
           "legendFormat": "{{state}}",
           "range": true,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         }
       ],
       "title": "Memory Usage",
@@ -458,7 +1022,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 8
+        "y": 24
       },
       "id": 1,
       "options": {
@@ -559,7 +1123,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 32
       },
       "id": 5,
       "options": {
@@ -578,15 +1142,15 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "expr": "rate(omni_system_network_io_bytes_total{\r\n    job=\"gateway-collector\",\r\n    env=\"$env\",\r\n    provider=\"$provider\",\r\n    account=\"$account\",\r\n    region=\"$region\",\r\n    instance_id=\"$instance_id\",\r\n    device!=\"lo\",\r\n    direction=\"receive\"\r\n}[$__rate_interval]) * 8",
           "legendFormat": "{{device}}",
           "range": true,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         }
       ],
       "title": "Network Received",
@@ -658,7 +1222,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 32
       },
       "id": 6,
       "options": {
@@ -677,15 +1241,15 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "expr": "rate(omni_system_network_io_bytes_total{\r\n    job=\"gateway-collector\",\r\n    env=\"$env\",\r\n    provider=\"$provider\",\r\n    account=\"$account\",\r\n    region=\"$region\",\r\n    instance_id=\"$instance_id\",\r\n    device!=\"lo\",\r\n    direction=\"transmit\"\r\n}[$__rate_interval]) * 8",
           "legendFormat": "{{device}}",
           "range": true,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         }
       ],
       "title": "Network Transmitted",
@@ -757,7 +1321,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 40
       },
       "id": 7,
       "options": {
@@ -776,15 +1340,15 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "expr": "sum (\r\n  rate(omni_system_disk_io_bytes_total{\r\n    job=\"gateway-collector\",\r\n    env=\"$env\",\r\n    provider=\"$provider\",\r\n    account=\"$account\",\r\n    region=\"$region\",\r\n    instance_id=\"$instance_id\",\r\n    device=~\"(/dev/)?(mmcblk.p.+|nvme.+|rbd.+|sd.+|vd.+|xvd.+|dm-.+|md.+|dasd.+)\",\r\n    direction=\"read\"\r\n  }[$__rate_interval])\r\n)\r\n",
           "legendFormat": "read",
           "range": true,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         },
         {
           "datasource": {
@@ -941,7 +1505,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 40
       },
       "id": 8,
       "options": {
@@ -961,6 +1525,10 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "exemplar": false,
           "expr": "sum by (mountpoint) (\r\n  omni_system_filesystem_usage_bytes{\r\n    job=\"gateway-collector\",\r\n    env=\"$env\",\r\n    provider=\"$provider\",\r\n    account=\"$account\",\r\n    region=\"$region\",\r\n    instance_id=\"$instance_id\",\r\n    type!=\"\",\r\n    mountpoint!=\"\"\r\n  }\r\n)",
@@ -968,11 +1536,7 @@
           "instant": true,
           "legendFormat": "",
           "range": false,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         },
         {
           "datasource": {
@@ -1159,7 +1723,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 48
       },
       "id": 9,
       "options": {
@@ -1178,15 +1742,15 @@
       "pluginVersion": "12.1.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
           "editorMode": "code",
           "expr": "omni_system_processes_count{\r\n  job=\"gateway-collector\",\r\n  env=\"$env\",\r\n  provider=\"$provider\",\r\n  account=\"$account\",\r\n  region=\"$region\",\r\n  instance_id=\"$instance_id\"\r\n}",
           "legendFormat": "{{status}}",
           "range": true,
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          }
+          "refId": "A"
         }
       ],
       "title": "Processes",
@@ -1201,7 +1765,7 @@
         "h": 16,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 56
       },
       "id": 11,
       "options": {
@@ -1213,7 +1777,7 @@
         "showLabels": false,
         "showTime": false,
         "sortOrder": "Descending",
-        "wrapLogMessage": false
+        "wrapLogMessage": true
       },
       "pluginVersion": "12.1.0",
       "targets": [
@@ -1224,7 +1788,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{service_name=\"omni\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\",instance_id=\"$instance_id\"} | env=\"$env\"",
+          "expr": "{service_name=\"omni\", tenant_id=\"$tenant_id\", provider=\"$provider\", account=\"$account\", region=\"$region\",instance_id=\"$instance_id\"} | env=\"$env\" | json | line_format \"{{.MESSAGE}}\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -1337,13 +1901,13 @@
     ]
   },
   "time": {
-    "from": "now-15m",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Omni Telemetry",
   "uid": "eb480ee2-caaf-471a-a434-18700273a3b0",
-  "version": 56,
+  "version": 1,
   "weekStart": ""
 }

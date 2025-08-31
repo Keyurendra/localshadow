@@ -4,7 +4,7 @@ instance_type      = "t3.medium"
 artifact_token     = "REDACTED"
 artifact_endpoint  = "https://cspm.accuknox.com/api/v1/artifact/"
 artifact_label     = "YOUR_LABEL"
-artifact_tenant_id = 0 # your tenant id
+artifact_tenant_id = 100
 omni_additional_flags = {
   "local-publisher"     = "false"
   "skip-malware-scan"   = "false"
@@ -12,7 +12,7 @@ omni_additional_flags = {
   "log-format"          = "text"
   "trigger-immediately" = "true"
   "crontab"             = "@daily"
-  # "vm-name-regex"       = "^windows-omni-target$"
+  # "vm-name-regex"       = "^target-vm$"
   # "vm-label-regex"      = "foo=bar"
   # "vm-label-regex"      = "bar=bazz"
 }

@@ -1,0 +1,19 @@
+project_id         = "YOUR_GCP_PROJECT_ID"
+region             = "asia-south1"
+zone               = "asia-south1-b"
+machine_type       = "e2-medium"
+artifact_token     = "REDACTED"
+artifact_endpoint  = "https://cspm.accuknox.com/api/v1/artifact/"
+artifact_label     = "YOUR_LABEL"
+artifact_tenant_id = 100
+omni_additional_flags = {
+  "local-publisher"     = "false"
+  "skip-malware-scan"   = "false"
+  "log-level"           = "info"
+  "log-format"          = "text"
+  "trigger-immediately" = "true"
+  "crontab"             = "@daily"
+  # "vm-name-regex"       = "^target-vm$"
+  # "vm-label-regex"      = "foo=bar"
+  # "vm-label-regex"      = "bar=bazz"
+}
