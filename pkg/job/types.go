@@ -7,6 +7,11 @@ import (
 	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
+type ScheduleConfig struct {
+	Crontab               string
+	TriggerJobImmediately bool
+}
+
 type execResult struct {
 	OS            string
 	Clamscan      scanner.Findings
@@ -16,25 +21,28 @@ type execResult struct {
 }
 
 type ErrorSummary struct {
-	OS             string `json:"os,omitempty"`
-	ExecutionError error  `json:"executionError,omitempty"`
-	ClamscanError  error  `json:"clamscanError,omitempty"`
-	TrivyError     error  `json:"trivyError,omitempty"`
+	OS                 string `json:"os,omitempty"`
+	OrchestrationError error  `json:"orchestrationError,omitempty"`
+	ClamscanError      error  `json:"clamscanError,omitempty"`
+	TrivyError         error  `json:"trivyError,omitempty"`
+	ArtifactAPIError   error  `json:"artifactAPIError,omitempty"`
 }
 
 func (s ErrorSummary) MarshalJSON() ([]byte, error) {
 	type Alias ErrorSummary
 	type errSummary struct {
-		ExecutionError string `json:"executionError"`
-		ClamscanError  string `json:"clamscanError"`
-		TrivyError     string `json:"trivyError"`
+		OrchestrationError string `json:"orchestrationError"`
+		ClamscanError      string `json:"clamscanError"`
+		TrivyError         string `json:"trivyError"`
+		ArtifactAPIError   string `json:"artifactAPIError"`
 		*Alias
 	}
 	return json.Marshal(&errSummary{
-		ExecutionError: errorToString(s.ExecutionError),
-		ClamscanError:  errorToString(s.ClamscanError),
-		TrivyError:     errorToString(s.TrivyError),
-		Alias:          (*Alias)(&s),
+		OrchestrationError: errorToString(s.OrchestrationError),
+		ClamscanError:      errorToString(s.ClamscanError),
+		TrivyError:         errorToString(s.TrivyError),
+		ArtifactAPIError:   errorToString(s.ArtifactAPIError),
+		Alias:              (*Alias)(&s),
 	})
 }
 

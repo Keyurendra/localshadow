@@ -32,10 +32,10 @@ spec:
           - set(resource.attributes["service.name"], "omni")
       metricstransform:
         transforms:
-          - include: ^(.*)$
+          - include: ^(omni_)?(.*)$
             match_type: regexp
             action: update
-            new_name: omni_$${1}
+            new_name: omni_$${2}
     exporters:
       otlphttp: # loki
         endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp

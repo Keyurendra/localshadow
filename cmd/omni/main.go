@@ -167,14 +167,24 @@ func subCommands() []*cli.Command {
 				}
 			}
 
-			opts := []job.OptFunc{job.WithConcurrency(c.Uint("concurrency"))}
+			opts := []job.OptFunc{
+				job.WithConcurrency(c.Uint("concurrency")),
+				job.WithPrometheusMetricsPort(c.Uint16("prometheus-metrics-port")),
+			}
 			if c.Bool("skip-malware-scan") {
 				opts = append(opts, job.WithClamscanDisabled())
+			}
+			if c.Bool("enable-prometheus-metrics") {
+				opts = append(opts, job.WithPrometheusMetrics())
 			}
 
 			switch name {
 			case "scan":
-				summary, err := job.NewScanJob(provider, publisher, opts...).Run(ctx)
+				j, err := job.NewScanJob(provider, publisher, opts...)
+				if err != nil {
+					return fmt.Errorf("creating job: %w", err)
+				}
+				summary, err := j.Run(ctx)
 				if err != nil {
 					return fmt.Errorf("executing scan job: %w", err)
 				}
@@ -185,8 +195,14 @@ func subCommands() []*cli.Command {
 				fmt.Println(string(output))
 				return nil
 			case "schedule":
-				j := job.NewScanJob(provider, publisher, opts...)
-				return j.Schedule(ctx, c.String("crontab"), c.Bool("trigger-immediately"))
+				j, err := job.NewScanJob(provider, publisher, opts...)
+				if err != nil {
+					return fmt.Errorf("creating job: %w", err)
+				}
+				return j.Schedule(ctx, job.ScheduleConfig{
+					Crontab:               c.String("crontab"),
+					TriggerJobImmediately: c.Bool("trigger-immediately"),
+				})
 			default:
 				return nil
 			}
@@ -215,6 +231,16 @@ func subCommands() []*cli.Command {
 					Name:  "trigger-immediately",
 					Value: false,
 					Usage: "Trigger the first scan right after scheduling",
+				},
+				&cli.BoolFlag{
+					Name:  "enable-prometheus-metrics",
+					Value: false,
+					Usage: "Enable prometheus metrics endpoint",
+				},
+				&cli.Uint16Flag{
+					Name:  "prometheus-metrics-port",
+					Value: 9100,
+					Usage: "Port for prometheus metrics",
 				},
 			),
 		},

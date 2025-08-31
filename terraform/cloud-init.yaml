@@ -88,7 +88,7 @@ write_files:
                   --artifact-token-file /etc/accuknox-omni/artifact.token \
                   --artifact-endpoint "${artifact_endpoint}" \
                   --tenant-id "${artifact_tenant_id}" \
-                  --artifact-label "${artifact_label}" %{for key, value in omni_additional_flags}--${key}="${value}" %{endfor}
+                  --artifact-label "${artifact_label}" %{for key, value in omni_additional_flags}--${key}="${value}" %{endfor} %{if enable_telemetry}--enable-prometheus-metrics %{endif}
       Restart=always
       RestartSec=10
       StandardOutput=journal
@@ -143,19 +143,19 @@ runcmd:
 
       systemctl daemon-reload
 
-      # install & enable omni
-      mkdir -p /etc/accuknox-omni /usr/local/bin
-      curl -L https://accuknox-omni.s3.us-east-1.amazonaws.com/latest/omni-linux-amd64 -o /usr/local/bin/omni
-      chmod +x /usr/local/bin/omni
-      systemctl enable omni.service --now
-
-      %{ if enable_telemetry }
       # install & enable otel collector
+      %{ if enable_telemetry }
       curl -L https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v0.132.4/otelcol-contrib_0.132.4_linux_amd64.tar.gz -o /tmp/otelcol-contrib.tar.gz
       tar -xzf /tmp/otelcol-contrib.tar.gz -C /usr/local/bin otelcol-contrib
       chmod +x /usr/local/bin/otelcol-contrib
       systemctl enable otel-collector.service --now
       %{ endif }
+
+      # install & enable omni
+      mkdir -p /etc/accuknox-omni /usr/local/bin
+      curl -L https://accuknox-omni.s3.us-east-1.amazonaws.com/latest/omni-linux-amd64 -o /usr/local/bin/omni
+      chmod +x /usr/local/bin/omni
+      systemctl enable omni.service --now
 
       # unattended upgrades
       dpkg-reconfigure -f noninteractive unattended-upgrades

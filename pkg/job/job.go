@@ -9,8 +9,10 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 
+	"github.com/accuknox/omniscan/pkg/metric"
 	"github.com/accuknox/omniscan/pkg/provider"
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/publisher/cspm"
@@ -29,18 +31,30 @@ type Job struct {
 	prov       provider.Provider
 	pub        publisher.Publisher
 	cspmConfig cspm.Config
+	collector  *metric.Collector
 }
 
-func NewScanJob(prov provider.Provider, pub publisher.Publisher, optFns ...OptFunc) Job {
+func NewScanJob(prov provider.Provider, pub publisher.Publisher, optFns ...OptFunc) (*Job, error) {
 	o := defaultOpts()
 	for _, fn := range optFns {
 		fn(&o)
 	}
-	return Job{
-		opts: o,
-		prov: prov,
-		pub:  pub,
+	var (
+		collector *metric.Collector
+		err       error
+	)
+	if o.prometheusMetrics {
+		collector, err = metric.NewCollector(o.prometheusMetricsPort)
+		if err != nil {
+			return nil, fmt.Errorf("creating metrics collector: %w", err)
+		}
 	}
+	return &Job{
+		opts:      o,
+		prov:      prov,
+		pub:       pub,
+		collector: collector,
+	}, nil
 }
 
 func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
@@ -99,7 +113,7 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 			var errors ErrorSummary
 
 			if err != nil {
-				errors.ExecutionError = err
+				errors.OrchestrationError = err
 			}
 
 			if res != nil {
@@ -114,14 +128,14 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 				)
 				err := j.publish(ctx, res)
 				if err != nil {
-					errors.ExecutionError = fmt.Errorf(
+					errors.ArtifactAPIError = fmt.Errorf(
 						"publishing artifact: %w",
 						err,
 					)
 				}
 			}
 
-			if anyNonNil(errors.ExecutionError, errors.TrivyError, errors.ClamscanError) {
+			if anyNonNil(errors.OrchestrationError, errors.TrivyError, errors.ClamscanError) {
 				j.logger.LogAttrs(
 					ctx,
 					slog.LevelError,
@@ -129,11 +143,44 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 					slog.String("target_vm_uri", target.URI),
 					slog.Group(
 						"errors",
-						slog.Any("execution", errors.ExecutionError),
+						slog.Any("orchestration", errors.OrchestrationError),
 						slog.Any("trivy", errors.TrivyError),
 						slog.Any("clamav", errors.ClamscanError),
 					),
 				)
+			}
+
+			if !j.prometheusMetrics {
+				return target.URI, &errors
+			}
+
+			osTyp := metric.OSTypeLinux
+			if res.OS == "windows" {
+				osTyp = metric.OSTypeWindows
+			}
+
+			if errors.OrchestrationError != nil {
+				j.collector.RecordError(metric.ErrorTypeOrchestration, osTyp)
+			}
+
+			if errors.TrivyError != nil {
+				j.collector.RecordError(metric.ErrorTypeVulnScan, osTyp)
+			}
+
+			if errors.ClamscanError != nil {
+				j.collector.RecordError(metric.ErrorTypeMalwareScan, osTyp)
+			}
+
+			if errors.ArtifactAPIError != nil {
+				j.collector.RecordError(metric.ErrorTypeArtifactAPI, osTyp)
+			}
+
+			if errors.ArtifactAPIError == nil && errors.TrivyError == nil {
+				j.collector.RecordSuccessfulScan(metric.ScanTypeVulnScan, osTyp)
+			}
+
+			if errors.ArtifactAPIError == nil && errors.ClamscanError == nil {
+				j.collector.RecordSuccessfulScan(metric.ScanTypeMalwareScan, osTyp)
 			}
 
 			return target.URI, &errors
@@ -152,7 +199,7 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 	return queue.Wait(), err
 }
 
-func (j Job) Schedule(ctx context.Context, crontab string, triggerImmediately bool) error {
+func (j Job) Schedule(ctx context.Context, c ScheduleConfig) error {
 	j.logger.LogAttrs(ctx, slog.LevelInfo, "creating scheduler")
 	s, err := gocron.NewScheduler()
 	if err != nil {
@@ -164,7 +211,7 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerImmediately bo
 		gocron.WithSingletonMode(gocron.LimitModeWait),
 		gocron.WithName("scan"),
 	}
-	if triggerImmediately {
+	if c.TriggerJobImmediately {
 		opts = append(opts, gocron.WithStartAt(gocron.WithStartImmediately()))
 	}
 
@@ -172,11 +219,11 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerImmediately bo
 		ctx,
 		slog.LevelInfo,
 		"creating scan job",
-		slog.String("crontab", crontab),
-		slog.Bool("trigger_immediately", triggerImmediately),
+		slog.String("crontab", c.Crontab),
+		slog.Bool("trigger_immediately", c.TriggerJobImmediately),
 	)
 	_, err = s.NewJob(
-		gocron.CronJob(crontab, false),
+		gocron.CronJob(c.Crontab, false),
 		gocron.NewTask(j.Run, ctx),
 		opts...,
 	)
@@ -184,15 +231,42 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerImmediately bo
 		return fmt.Errorf("creating scheduled job: %w", err)
 	}
 
-	s.Start() // non-blocking
-
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	<-ctx.Done() // interrupt/sigterm received
-	j.logger.LogAttrs(ctx, slog.LevelInfo, "shutting down scheduler")
+	var wg sync.WaitGroup
 
-	return s.Shutdown()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if !j.prometheusMetrics {
+			return
+		}
+		defer cancel()
+		err := j.collector.ServeHTTP(ctx)
+		if err != nil {
+			j.logger.LogAttrs(
+				ctx,
+				slog.LevelError,
+				"prometheus metric endpoint terminated",
+				slog.Any("error", err),
+			)
+		}
+	}()
+
+	s.Start() // non-blocking
+
+	<-ctx.Done() // interrupt/sigterm received
+
+	j.logger.LogAttrs(ctx, slog.LevelInfo, "waiting for metric server to stop")
+	wg.Wait()
+
+	j.logger.LogAttrs(ctx, slog.LevelInfo, "shutting down scheduler")
+	if err := s.Shutdown(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (j Job) pruneDangling(ctx context.Context) error {
