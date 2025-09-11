@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
@@ -166,9 +165,9 @@ func (p Publisher) uploadFinding(ctx context.Context, f scanner.Findings) error 
 			return nil
 		}
 
-		body, err := json.Marshal(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("unexpected status %s", resp.Status)
+			return fmt.Errorf("reading response body: %w", err)
 		}
 
 		return fmt.Errorf("%s: %s", resp.Status, string(body))
