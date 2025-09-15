@@ -27,6 +27,7 @@ func (s ScanType) String() string {
 type OSType string
 
 const (
+	OSTypeUnknown OSType = "unknown"
 	OSTypeLinux   OSType = "linux"
 	OSTypeWindows OSType = "windows"
 )

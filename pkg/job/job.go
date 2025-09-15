@@ -154,9 +154,14 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 				return target.URI, &errors
 			}
 
-			osTyp := metric.OSTypeLinux
-			if res.OS == "windows" {
-				osTyp = metric.OSTypeWindows
+			osTyp := metric.OSTypeUnknown
+			if res != nil {
+				switch res.OS {
+				case "windows":
+					osTyp = metric.OSTypeWindows
+				case "linux":
+					osTyp = metric.OSTypeLinux
+				}
 			}
 
 			if errors.OrchestrationError != nil {
