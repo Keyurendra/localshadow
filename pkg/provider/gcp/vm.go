@@ -29,6 +29,20 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 		}
 
 		for _, i := range page.Value.GetInstances() {
+			vmRegion := regionFromZone(zoneFromURI(i.GetZone()))
+			if p.region != vmRegion {
+				p.logger.LogAttrs(
+					ctx,
+					slog.LevelDebug,
+					"instance out of host region. Skipping...",
+					slog.String("vm_uri", i.GetSelfLink()),
+					slog.String("vm_name", i.GetName()),
+					slog.String("vm_region", vmRegion),
+					slog.String("host_region", p.region),
+				)
+				continue
+			}
+
 			if r := p.vmFilter.Name; r != nil && !r.MatchString(i.GetName()) {
 				p.logger.LogAttrs(
 					ctx,

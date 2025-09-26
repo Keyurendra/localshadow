@@ -117,6 +117,10 @@ func (p Provider) ListDisks(ctx context.Context) ([]resource.Disk, error) {
 			return nil, fmt.Errorf("fetching compute disks: %w", err)
 		}
 		for _, d := range page.Value.GetDisks() {
+			diskRegion := regionFromZone(zoneFromURI(d.GetZone()))
+			if p.region != diskRegion {
+				continue
+			}
 			disks = append(disks, resource.Disk{
 				URI: d.GetSelfLink(),
 			})

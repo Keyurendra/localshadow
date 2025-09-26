@@ -18,3 +18,11 @@ func zoneFromURI(uri string) string {
 	}
 	return ""
 }
+
+func regionFromZone(zone string) string {
+	parts := strings.Split(zone, "-")
+	if len(parts) < 2 {
+		return zone
+	}
+	return strings.Join(parts[:len(parts)-1], "-")
+}

@@ -16,6 +16,7 @@ type Provider struct {
 	opts
 	project   string
 	zone      string
+	region    string
 	instances *compute.InstancesClient
 	disks     *compute.DisksClient
 	snapshots *compute.SnapshotsClient
@@ -62,6 +63,7 @@ func (p *Provider) Init(ctx context.Context) error {
 		return fmt.Errorf("querying GCP zone from metadata svc: %w", err)
 	}
 	p.zone = zone
+	p.region = regionFromZone(zone)
 	p.logger.LogAttrs(
 		ctx,
 		slog.LevelInfo,
@@ -123,10 +125,7 @@ func (p Provider) PruneDangling(ctx context.Context) error {
 			"deleting dangling snapshot",
 			slog.String("snapshot_uri", s.URI),
 		)
-		err := p.DeleteSnapshot(ctx, s.URI)
-		if err != nil {
-			return fmt.Errorf("deleting snapshot %q: %w", s.URI, err)
-		}
+		p.DeleteSnapshot(ctx, s.URI)
 	}
 
 	disks, err := p.ListUnattachedDisks(ctx)
@@ -143,10 +142,7 @@ func (p Provider) PruneDangling(ctx context.Context) error {
 			"deleting dangling disk",
 			slog.String("disk_uri", d.URI),
 		)
-		err := p.DeleteDisk(ctx, d.URI)
-		if err != nil {
-			return fmt.Errorf("deleting snapshot %q: %w", d.URI, err)
-		}
+		p.DeleteDisk(ctx, d.URI)
 	}
 
 	return nil
