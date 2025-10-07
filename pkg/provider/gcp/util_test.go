@@ -17,3 +17,8 @@ func TestZoneFromURI(t *testing.T) {
 	zone := zoneFromURI(exampleURI)
 	assert.Equal(t, "asia-south1-a", zone)
 }
+
+func TestRegionFromZone(t *testing.T) {
+	region := regionFromZone("asia-south1-a")
+	assert.Equal(t, "asia-south1", region)
+}
