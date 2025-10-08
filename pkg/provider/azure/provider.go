@@ -7,11 +7,11 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/util"
-
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
+
+	"github.com/accuknox/omniscan/pkg/provider"
+	"github.com/accuknox/omniscan/pkg/util"
 )
 
 type Provider struct {

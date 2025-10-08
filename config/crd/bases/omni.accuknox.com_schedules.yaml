@@ -1,0 +1,395 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: schedules.omni.accuknox.com
+spec:
+  group: omni.accuknox.com
+  names:
+    kind: Schedule
+    listKind: ScheduleList
+    plural: schedules
+    singular: schedule
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - description: Cron expression for scan execution
+      jsonPath: .spec.schedule
+      name: Schedule
+      type: string
+    - description: Current phase of the schedule
+      jsonPath: .status.phase
+      name: Phase
+      type: string
+    - description: Last time a scan was triggered
+      jsonPath: .status.lastScheduleTime
+      name: Last Schedule
+      type: date
+    - description: Currently running scans
+      jsonPath: .status.activeScans
+      name: Active Scans
+      type: integer
+    - description: Time since creation
+      jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Schedule is the Schema for the schedules API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec defines the desired state of Schedule
+            properties:
+              artifactAPI:
+                description: |-
+                  AccuKnox Artifact API configuration. Resulting scan artifacts are
+                  published to this endpoint.
+                properties:
+                  endpoint:
+                    description: AccuKnox artifact api endpoint.
+                    type: string
+                  label:
+                    description: Label to be assosciated with the resulting scan findings.
+                    type: string
+                  tenantID:
+                    description: AccuKnox platform tenancy ID
+                    type: integer
+                  token:
+                    description: JWT auth token for the artifact API.
+                    properties:
+                      secretRef:
+                        description: Reference to the Secret containing the token.
+                        properties:
+                          key:
+                            description: Key within the Secret to select.
+                            type: string
+                          name:
+                            description: Name of the referent Secret.
+                            type: string
+                        required:
+                        - key
+                        - name
+                        type: object
+                    required:
+                    - secretRef
+                    type: object
+                required:
+                - endpoint
+                - label
+                - tenantID
+                - token
+                type: object
+              concurrency:
+                default: 1
+                description: Concurrency defines the no. of scans to run concurrently.
+                format: int32
+                minimum: 1
+                type: integer
+              cronJobNamespace:
+                description: |-
+                  CronJobNamespace defines the namespace in which the Kubernetes CronJob
+                  must be created.
+                type: string
+              namespaceSelector:
+                description: |-
+                  NamespaceSelector restricts scans to specific namespaces. This
+                  unrelated to CronJobNamespace.
+                properties:
+                  operator:
+                    description: |-
+                      Operator represents a key's relationship to a set of values.
+                      Valid operators are In, NotIn.
+                    enum:
+                    - In
+                    - NotIn
+                    type: string
+                  values:
+                    description: Values is an array of string values.
+                    items:
+                      type: string
+                    minItems: 1
+                    type: array
+                required:
+                - operator
+                - values
+                type: object
+              scansHistoryLimit:
+                description: |-
+                  The number of finished scans to retain. Value must be non-negative
+                  integer. Defaults to 3.
+                format: int32
+                type: integer
+              schedule:
+                description: Schedule in Cron format, see https://en.wikipedia.org/wiki/Cron.
+                minLength: 1
+                type: string
+              template:
+                description: Template defines the template used for scheduled scans.
+                properties:
+                  metadata:
+                    description: Metadata carries standard object metadata for the
+                      scan.
+                    type: object
+                  spec:
+                    description: Spec defines the scan specification.
+                    properties:
+                      backoffLimit:
+                        default: 6
+                        description: |-
+                          BackoffLimit is the number of retries before marking the job failed.
+                          Defaults to 6.
+                        format: int32
+                        type: integer
+                      clusterName:
+                        description: |-
+                          Unique identifier for your cluster. This name will be used as the asset
+                          name for scan findings on the AccuKnox platform.
+                        minLength: 1
+                        type: string
+                      image:
+                        description: |-
+                          Image is the container image to use.
+                          More info: https://kubernetes.io/docs/concepts/containers/images
+                        type: string
+                      imagePullPolicy:
+                        description: |-
+                          ImagePullPolicy defines how the image is pulled.
+                          One of Always, Never, IfNotPresent.
+                          Defaults to Always if :latest tag is specified, or IfNotPresent otherwise.
+                        enum:
+                        - Always
+                        - Never
+                        - IfNotPresent
+                        type: string
+                      resources:
+                        description: |-
+                          Resources specifies compute resources required by the container.
+                          More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                        properties:
+                          claims:
+                            description: |-
+                              Claims lists the names of resources, defined in spec.resourceClaims,
+                              that are used by this container.
+
+                              This is an alpha field and requires enabling the
+                              DynamicResourceAllocation feature gate.
+
+                              This field is immutable. It can only be set for containers.
+                            items:
+                              description: ResourceClaim references one entry in PodSpec.ResourceClaims.
+                              properties:
+                                name:
+                                  description: |-
+                                    Name must match the name of one entry in pod.spec.resourceClaims of
+                                    the Pod where this field is used. It makes that resource available
+                                    inside a container.
+                                  type: string
+                                request:
+                                  description: |-
+                                    Request is the name chosen for a request in the referenced claim.
+                                    If empty, everything from the claim is made available, otherwise
+                                    only the result of this request.
+                                  type: string
+                              required:
+                              - name
+                              type: object
+                            type: array
+                            x-kubernetes-list-map-keys:
+                            - name
+                            x-kubernetes-list-type: map
+                          limits:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Limits describes the maximum amount of compute resources allowed.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                            type: object
+                          requests:
+                            additionalProperties:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            description: |-
+                              Requests describes the minimum amount of compute resources required.
+                              If Requests is omitted for a container, it defaults to Limits if that is explicitly specified,
+                              otherwise to an implementation-defined value. Requests cannot exceed Limits.
+                              More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+                            type: object
+                        type: object
+                      skipMalwareScan:
+                        default: true
+                        description: |-
+                          Skip malware scanning. Malware scanning can be CPU intensive. Disabled
+                          by default.
+                        type: boolean
+                    required:
+                    - clusterName
+                    type: object
+                required:
+                - spec
+                type: object
+              timeZone:
+                description: |-
+                  The time zone name for the given schedule, see
+                  https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+                  If not specified, this will default to the time zone of the
+                  kube-controller-manager process. The set of valid time zone names and
+                  the time zone offset is loaded from the system-wide time zone database
+                  by the API server during CronJob validation and the controller manager
+                  during execution. If no system-wide time zone database can be found a
+                  bundled version of the database is used instead. If the time zone name
+                  becomes invalid during the lifetime of a CronJob or due to a change in
+                  host configuration, the controller will stop creating new new Jobs and
+                  will create a system event with the reason UnknownTimeZone.
+                  More information can be found in
+                  https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#time-zones
+                type: string
+              vmSelector:
+                description: |-
+                  VMSelector is a label query over VMs.
+                  More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
+                properties:
+                  matchExpressions:
+                    description: matchExpressions is a list of label selector requirements.
+                      The requirements are ANDed.
+                    items:
+                      description: |-
+                        A label selector requirement is a selector that contains values, a key, and an operator that
+                        relates the key and values.
+                      properties:
+                        key:
+                          description: key is the label key that the selector applies
+                            to.
+                          type: string
+                        operator:
+                          description: |-
+                            operator represents a key's relationship to a set of values.
+                            Valid operators are In, NotIn, Exists and DoesNotExist.
+                          type: string
+                        values:
+                          description: |-
+                            values is an array of string values. If the operator is In or NotIn,
+                            the values array must be non-empty. If the operator is Exists or DoesNotExist,
+                            the values array must be empty. This array is replaced during a strategic
+                            merge patch.
+                          items:
+                            type: string
+                          type: array
+                          x-kubernetes-list-type: atomic
+                      required:
+                      - key
+                      - operator
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: |-
+                      matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
+                      map is equivalent to an element of matchExpressions, whose key field is "key", the
+                      operator is "In", and the values array contains only "value". The requirements are ANDed.
+                    type: object
+                type: object
+                x-kubernetes-map-type: atomic
+            required:
+            - artifactAPI
+            - cronJobNamespace
+            - schedule
+            - template
+            type: object
+          status:
+            description: Status defines the observed state of Schedule
+            properties:
+              activeScans:
+                description: |-
+                  ActiveScans tracks currently running scans from the last schedule
+                  execution.
+                format: int32
+                type: integer
+              lastScheduleTime:
+                description: LastScheduleTime is the last time a scheduled scan run
+                  was triggered.
+                format: date-time
+                type: string
+              lastSuccessfulTime:
+                description: |-
+                  LastSuccessfulTime is the last time a scheduled scan run completed
+                  successfully.
+                format: date-time
+                type: string
+              phase:
+                default: Bootstrapping
+                description: Phase represents the current phase of the scan.
+                enum:
+                - Unknown
+                - Bootstrapping
+                - BootstrapFailed
+                - Awaiting
+                - Running
+                type: string
+              vmScanHistory:
+                additionalProperties:
+                  description: VMScanRecord tracks scan history for a specific VM.
+                  properties:
+                    lastScanName:
+                      description: LastScanName is the name of the last scan resource
+                        created for this VM.
+                      type: string
+                    lastScanPhase:
+                      description: LastScanPhase is the phase of the last scan.
+                      enum:
+                      - Unknown
+                      - Pending
+                      - Running
+                      - Succeeded
+                      - Failed
+                      type: string
+                    lastScanTime:
+                      description: LastScanTime is when the VM was last scanned.
+                      format: date-time
+                      type: string
+                  required:
+                  - lastScanName
+                  - lastScanPhase
+                  - lastScanTime
+                  type: object
+                description: |-
+                  VMScanHistory tracks the last scan time for each VM to avoid
+                  re-scanning recently scanned VMs.
+                  Map key format: "namespace/vmName"
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

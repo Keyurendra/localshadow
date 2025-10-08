@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-
 	"cloud.google.com/go/compute/apiv1/computepb"
 	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
+
+	"github.com/accuknox/omniscan/pkg/resource"
 )
 
 func (p Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, error) {

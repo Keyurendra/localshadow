@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/util"
-
 	"cloud.google.com/go/compute/apiv1/computepb"
 	"google.golang.org/api/iterator"
+
+	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/util"
 )
 
 func (p Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {

@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/util"
-
 	"github.com/avast/retry-go/v4"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	awstime "github.com/aws/smithy-go/time"
+
+	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/util"
 )
 
 func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {

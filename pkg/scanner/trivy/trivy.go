@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"os/exec"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-
 	"github.com/aquasecurity/trivy/pkg/types"
+
+	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
 type s struct{}

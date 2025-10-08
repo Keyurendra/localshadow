@@ -6,10 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/uuid"
+
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/scanner"
-
-	"github.com/google/uuid"
 )
 
 type Publisher struct {

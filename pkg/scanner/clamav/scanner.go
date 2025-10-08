@@ -17,14 +17,23 @@ import (
 	"github.com/accuknox/omniscan/pkg/scanner/clamav/parser"
 )
 
-type s struct{}
-
-func NewScanner() scanner.Scanner {
-	return s{}
+type s struct {
+	useDaemon bool
 }
 
-func (s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
-	path, err := exec.LookPath("clamdscan")
+func NewScanner(useDaemon bool) scanner.Scanner {
+	return s{useDaemon: useDaemon}
+}
+
+func (s s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
+	execName := "clamscan"
+	args := []string{"--infected", "--recursive"}
+	if s.useDaemon {
+		execName = "clamdscan"
+		args = []string{"--infected", "--multiscan", "--fdpass"}
+	}
+
+	path, err := exec.LookPath(execName)
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
 			return nil, fmt.Errorf("`clamscan` executable not found in PATH")
@@ -37,10 +46,7 @@ func (s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (
 	cmd := exec.CommandContext(
 		ctx,
 		path,
-		mountpoint,
-		"--infected",
-		"--multiscan",
-		"--fdpass",
+		append([]string{mountpoint}, args...)...,
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

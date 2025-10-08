@@ -1,24 +1,8 @@
 package job
 
-import (
-	"encoding/json"
-	"sync"
+import "encoding/json"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-)
-
-type ScheduleConfig struct {
-	Crontab               string
-	TriggerJobImmediately bool
-}
-
-type execResult struct {
-	OS            string
-	Clamscan      scanner.Findings
-	Trivy         scanner.Findings
-	ClamscanError error
-	TrivyError    error
-}
+type ErrorSummaryMap map[string]ErrorSummary
 
 type ErrorSummary struct {
 	OS                 string `json:"os,omitempty"`
@@ -51,27 +35,4 @@ func errorToString(err error) string {
 		return err.Error()
 	}
 	return "null"
-}
-
-type summary struct {
-	mu sync.Mutex
-	M  map[string]ErrorSummary
-}
-
-func newSummary() summary {
-	return summary{
-		M: make(map[string]ErrorSummary),
-	}
-}
-
-func (s *summary) Write(uri string, errors ErrorSummary) {
-	s.mu.Lock()
-	s.M[uri] = errors
-	s.mu.Unlock()
-}
-
-func (s *summary) Read() map[string]ErrorSummary {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.M
 }

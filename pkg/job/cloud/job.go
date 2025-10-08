@@ -1,4 +1,4 @@
-package job
+package cloud
 
 import (
 	"context"
@@ -12,29 +12,25 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/go-co-op/gocron/v2"
+	"github.com/jaypipes/ghw"
+
+	"github.com/accuknox/omniscan/pkg/job"
 	"github.com/accuknox/omniscan/pkg/metric"
 	"github.com/accuknox/omniscan/pkg/provider"
 	"github.com/accuknox/omniscan/pkg/publisher"
-	"github.com/accuknox/omniscan/pkg/publisher/cspm"
 	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy"
 	"github.com/accuknox/omniscan/pkg/util"
-
-	"github.com/go-co-op/gocron/v2"
-	"github.com/jaypipes/ghw"
 )
 
 type Job struct {
 	opts
-	prov       provider.Provider
-	pub        publisher.Publisher
-	cspmConfig cspm.Config
-	collector  *metric.Collector
+	prov      provider.Provider
+	pub       publisher.Publisher
+	collector *metric.Collector
 }
 
-func NewScanJob(prov provider.Provider, pub publisher.Publisher, optFns ...OptFunc) (*Job, error) {
+func NewJob(prov provider.Provider, pub publisher.Publisher, optFns ...OptFunc) (*Job, error) {
 	o := defaultOpts()
 	for _, fn := range optFns {
 		fn(&o)
@@ -57,7 +53,77 @@ func NewScanJob(prov provider.Provider, pub publisher.Publisher, optFns ...OptFu
 	}, nil
 }
 
-func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
+func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) error {
+	j.logger.LogAttrs(ctx, slog.LevelInfo, "creating scheduler")
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		return fmt.Errorf("creating scheduler: %w", err)
+	}
+
+	opts := []gocron.JobOption{
+		gocron.WithContext(ctx),
+		gocron.WithSingletonMode(gocron.LimitModeWait),
+		gocron.WithName("scan"),
+	}
+	if triggerNow {
+		opts = append(opts, gocron.WithStartAt(gocron.WithStartImmediately()))
+	}
+
+	j.logger.LogAttrs(
+		ctx,
+		slog.LevelInfo,
+		"creating scan job",
+		slog.String("crontab", crontab),
+		slog.Bool("trigger_now", triggerNow),
+	)
+	_, err = s.NewJob(
+		gocron.CronJob(crontab, false),
+		gocron.NewTask(j.Run, ctx),
+		opts...,
+	)
+	if err != nil {
+		return fmt.Errorf("creating scheduled job: %w", err)
+	}
+
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if !j.prometheusMetrics {
+			return
+		}
+		defer cancel()
+		err := j.collector.ServeHTTP(ctx)
+		if err != nil {
+			j.logger.LogAttrs(
+				ctx,
+				slog.LevelError,
+				"prometheus metric endpoint terminated",
+				slog.Any("error", err),
+			)
+		}
+	}()
+
+	s.Start() // non-blocking
+
+	<-ctx.Done() // interrupt/sigterm received
+
+	j.logger.LogAttrs(ctx, slog.LevelInfo, "waiting for metric server to stop")
+	wg.Wait()
+
+	j.logger.LogAttrs(ctx, slog.LevelInfo, "shutting down scheduler")
+	if err := s.Shutdown(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 	j.logger.LogAttrs(ctx, slog.LevelInfo, "initializing provider")
 	if err := j.prov.Init(ctx); err != nil {
 		return nil, fmt.Errorf("initialization given provider: %w", err)
@@ -89,7 +155,7 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 			"blocking until scan is enqueued to the concurrent task queue",
 			slog.String("target_vm_uri", target.URI),
 		)
-		err = queue.Enqueue(ctx, func() (string, *ErrorSummary) {
+		err = queue.Enqueue(ctx, func() (string, *job.ErrorSummary) {
 			j.logger.LogAttrs(
 				ctx,
 				slog.LevelInfo,
@@ -110,7 +176,7 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 				return target.URI, nil
 			}
 
-			var errors ErrorSummary
+			var errors job.ErrorSummary
 
 			if err != nil {
 				errors.OrchestrationError = err
@@ -118,15 +184,15 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 
 			if res != nil {
 				errors.OS = res.OS
-				errors.ClamscanError = res.ClamscanError
-				errors.TrivyError = res.TrivyError
+				errors.ClamscanError = res.MalwareScanError
+				errors.TrivyError = res.VulnScanError
 				j.logger.LogAttrs(
 					ctx,
 					slog.LevelInfo,
 					"publishing scan results",
 					slog.String("target_vm_uri", target.URI),
 				)
-				err := j.publish(ctx, res)
+				err := res.Publish(ctx, j.pub)
 				if err != nil {
 					errors.ArtifactAPIError = fmt.Errorf(
 						"publishing artifact: %w",
@@ -204,76 +270,6 @@ func (j Job) Run(ctx context.Context) (map[string]ErrorSummary, error) {
 	return queue.Wait(), err
 }
 
-func (j Job) Schedule(ctx context.Context, c ScheduleConfig) error {
-	j.logger.LogAttrs(ctx, slog.LevelInfo, "creating scheduler")
-	s, err := gocron.NewScheduler()
-	if err != nil {
-		return fmt.Errorf("creating scheduler: %w", err)
-	}
-
-	opts := []gocron.JobOption{
-		gocron.WithContext(ctx),
-		gocron.WithSingletonMode(gocron.LimitModeWait),
-		gocron.WithName("scan"),
-	}
-	if c.TriggerJobImmediately {
-		opts = append(opts, gocron.WithStartAt(gocron.WithStartImmediately()))
-	}
-
-	j.logger.LogAttrs(
-		ctx,
-		slog.LevelInfo,
-		"creating scan job",
-		slog.String("crontab", c.Crontab),
-		slog.Bool("trigger_immediately", c.TriggerJobImmediately),
-	)
-	_, err = s.NewJob(
-		gocron.CronJob(c.Crontab, false),
-		gocron.NewTask(j.Run, ctx),
-		opts...,
-	)
-	if err != nil {
-		return fmt.Errorf("creating scheduled job: %w", err)
-	}
-
-	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
-	defer cancel()
-
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		if !j.prometheusMetrics {
-			return
-		}
-		defer cancel()
-		err := j.collector.ServeHTTP(ctx)
-		if err != nil {
-			j.logger.LogAttrs(
-				ctx,
-				slog.LevelError,
-				"prometheus metric endpoint terminated",
-				slog.Any("error", err),
-			)
-		}
-	}()
-
-	s.Start() // non-blocking
-
-	<-ctx.Done() // interrupt/sigterm received
-
-	j.logger.LogAttrs(ctx, slog.LevelInfo, "waiting for metric server to stop")
-	wg.Wait()
-
-	j.logger.LogAttrs(ctx, slog.LevelInfo, "shutting down scheduler")
-	if err := s.Shutdown(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (j Job) pruneDangling(ctx context.Context) error {
 	entries, err := os.ReadDir(j.baseMountPoint)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -309,7 +305,7 @@ func (j Job) pruneDangling(ctx context.Context) error {
 	return nil
 }
 
-func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*execResult, error) {
+func (j Job) scanVM(ctx context.Context, host, target resource.VM) (*job.RunResult, error) {
 	if len(target.Disks) == 0 {
 		j.logger.LogAttrs(
 			ctx,
@@ -413,7 +409,7 @@ func (j Job) attachClonedDisk(ctx context.Context, diskURI, hostURI string) (str
 	return path, nil
 }
 
-func (j Job) scanAttachedDisk(ctx context.Context, path, diskURI, targetVMURI string) (*execResult, error) {
+func (j Job) scanAttachedDisk(ctx context.Context, path, diskURI, targetVMURI string) (*job.RunResult, error) {
 	parts, err := util.ListUnmountedPartitions(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing unmounted partitions: %w", err)
@@ -446,7 +442,7 @@ func (j Job) scanAttachedDisk(ctx context.Context, path, diskURI, targetVMURI st
 	return nil, nil
 }
 
-func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, targetVMURI string) (*execResult, error) {
+func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, targetVMURI string) (*job.RunResult, error) {
 	if p.Type == "unknown" {
 		j.logger.LogAttrs(
 			ctx,
@@ -476,7 +472,7 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		slog.String("mount_point", mountPoint),
 	)
 
-	osType := j.detectOS(mountPoint)
+	osType := util.DetectOS(mountPoint)
 	if osType == "unknown" {
 		j.logger.LogAttrs(
 			ctx,
@@ -498,7 +494,8 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		slog.String("os", osType),
 	)
 
-	return j.performScans(ctx, mountPoint, osType, targetVMURI)
+	run := job.NewRun(j.trivyEnabled, j.clamscanEnabled, true, j.logger)
+	return run.ScanMountPoint(ctx, osType, mountPoint, targetVMURI, j.prov.GetName())
 }
 
 func (j Job) mountPartition(ctx context.Context, dev, fsType string) (string, error) {
@@ -510,87 +507,6 @@ func (j Job) mountPartition(ctx context.Context, dev, fsType string) (string, er
 		)
 	}
 	return at, nil
-}
-
-func (j Job) detectOS(mountPoint string) string {
-	linuxProb := util.DetectLinuxRootFS(mountPoint)
-	winProb := util.DetectWindowsRootFS(mountPoint)
-	if linuxProb < .5 && winProb < .5 {
-		return "unknown"
-	}
-	if linuxProb > winProb {
-		return "linux"
-	}
-	return "windows"
-}
-
-func (j Job) performScans(ctx context.Context, mountPoint, osType, targetURI string) (*execResult, error) {
-	f := execResult{OS: osType}
-	platform := j.prov.GetName()
-
-	if j.clamscanEnabled {
-		j.logger.LogAttrs(
-			ctx,
-			slog.LevelInfo,
-			"running clamav scan",
-			slog.String("mount_point", mountPoint),
-			slog.String("os", osType),
-			slog.String("target_vm_uri", targetURI),
-		)
-		f.Clamscan, f.ClamscanError = clamav.NewScanner().Scan(
-			ctx,
-			mountPoint,
-			targetURI,
-			platform,
-			osType,
-		)
-	}
-
-	if osType == "windows" {
-		j.logger.LogAttrs(
-			ctx,
-			slog.LevelDebug,
-			"trivy scan is not supported for windows. Skipping...",
-			slog.String("mount_point", mountPoint),
-			slog.String("os", osType),
-			slog.String("target_vm_uri", targetURI),
-		)
-		return &f, nil
-	}
-
-	if j.trivyEnabled {
-		j.logger.LogAttrs(
-			ctx,
-			slog.LevelInfo,
-			"running trivy scan",
-			slog.String("mount_point", mountPoint),
-			slog.String(`os`, osType),
-			slog.String("target_vm_uri", targetURI),
-		)
-		f.Trivy, f.TrivyError = trivy.NewScanner().Scan(
-			ctx,
-			mountPoint,
-			targetURI,
-			platform,
-			osType,
-		)
-	}
-
-	return &f, nil
-}
-
-func (j Job) publish(ctx context.Context, raw *execResult) error {
-	var items []scanner.Findings
-	if raw.ClamscanError == nil && raw.Clamscan != nil {
-		items = append(items, raw.Clamscan)
-	}
-	if raw.TrivyError == nil && raw.Trivy != nil {
-		items = append(items, raw.Trivy)
-	}
-	if len(items) == 0 {
-		return nil
-	}
-	return j.pub.Publish(ctx, items...)
 }
 
 func anyNonNil(args ...any) bool {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/google/uuid"
+
+	"github.com/accuknox/omniscan/pkg/resource"
 )
 
 func (p *Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, error) {

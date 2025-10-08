@@ -5,9 +5,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/metadata"
-
 	"github.com/stretchr/testify/assert"
+
+	"github.com/accuknox/omniscan/pkg/scanner/clamav/metadata"
 )
 
 func TestELF(t *testing.T) {

@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/avast/retry-go/v4"
+
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/scanner"
-
-	"github.com/avast/retry-go/v4"
 )
 
 type Config struct {

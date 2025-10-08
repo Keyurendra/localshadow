@@ -3,10 +3,10 @@ package retry
 import (
 	"context"
 
+	"github.com/avast/retry-go/v4"
+
 	"github.com/accuknox/omniscan/pkg/provider"
 	"github.com/accuknox/omniscan/pkg/resource"
-
-	"github.com/avast/retry-go/v4"
 )
 
 type Retry struct {

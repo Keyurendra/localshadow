@@ -1,8 +1,10 @@
-package job
+package cloud
 
 import (
 	"context"
 	"sync"
+
+	"github.com/accuknox/omniscan/pkg/job"
 )
 
 type queue struct {
@@ -24,7 +26,7 @@ func (q *queue) dequeue() {
 	q.wg.Done()
 }
 
-func (q *queue) Enqueue(ctx context.Context, fn func() (string, *ErrorSummary)) error {
+func (q *queue) Enqueue(ctx context.Context, fn func() (string, *job.ErrorSummary)) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -42,7 +44,7 @@ func (q *queue) Enqueue(ctx context.Context, fn func() (string, *ErrorSummary)) 
 	return nil
 }
 
-func (q *queue) Wait() map[string]ErrorSummary {
+func (q *queue) Wait() job.ErrorSummaryMap {
 	q.wg.Wait()
 	return q.summary.Read()
 }

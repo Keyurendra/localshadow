@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-
 	"cloud.google.com/go/compute/apiv1/computepb"
 	"google.golang.org/api/iterator"
+
+	"github.com/accuknox/omniscan/pkg/resource"
 )
 
 func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {

@@ -6,12 +6,12 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+
+	"github.com/accuknox/omniscan/pkg/resource"
 )
 
 func (p *Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {

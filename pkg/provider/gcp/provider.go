@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/accuknox/omniscan/pkg/provider"
-
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/metadata"
+
+	"github.com/accuknox/omniscan/pkg/provider"
 )
 
 type Provider struct {
