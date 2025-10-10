@@ -9,8 +9,8 @@ type OptFunc func(*opts)
 
 type opts struct {
 	baseMountPoint        string
-	trivyEnabled          bool
-	clamscanEnabled       bool
+	vulnScanEnabled       bool
+	malwareScanEnabled    bool
 	concurrency           uint
 	logger                *slog.Logger
 	prometheusMetrics     bool
@@ -23,15 +23,15 @@ func WithBaseMountPoint(baseMountPoint string) OptFunc {
 	}
 }
 
-func WithClamscanDisabled() OptFunc {
+func WithMalwareScanDisabled() OptFunc {
 	return func(o *opts) {
-		o.clamscanEnabled = false
+		o.malwareScanEnabled = false
 	}
 }
 
-func WithTrivyDisabled() OptFunc {
+func WithVulnScanDisabled() OptFunc {
 	return func(o *opts) {
-		o.trivyEnabled = false
+		o.vulnScanEnabled = false
 	}
 }
 
@@ -72,8 +72,8 @@ func WithPrometheusMetricsPort(port uint16) OptFunc {
 func defaultOpts() opts {
 	return opts{
 		baseMountPoint:        "/accuknox",
-		clamscanEnabled:       true,
-		trivyEnabled:          true,
+		malwareScanEnabled:    true,
+		vulnScanEnabled:       true,
 		concurrency:           uint(runtime.NumCPU()),
 		logger:                slog.Default(),
 		prometheusMetrics:     false,

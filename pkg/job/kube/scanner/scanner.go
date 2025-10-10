@@ -92,7 +92,7 @@ func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, e
 				Reason:  "ScanFailed",
 				Message: result.MalwareScanError.Error(),
 			}
-			errors.ClamscanError = result.MalwareScanError
+			errors.MalwareScanError = result.MalwareScanError
 		}
 
 		if result.VulnScanError != nil {
@@ -102,7 +102,7 @@ func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, e
 				Reason:  "ScanFailed",
 				Message: result.VulnScanError.Error(),
 			}
-			errors.TrivyError = result.VulnScanError
+			errors.VulnScanError = result.VulnScanError
 		}
 
 		err := result.Publish(ctx, j.pub)
@@ -144,6 +144,6 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		slog.String("partition_name", mountpoint),
 		slog.String("os", osType),
 	)
-	run := job.NewRun(j.vulnScanEnabled, j.malwareScanEnabled, false, j.logger)
+	run := job.NewRun(j.vulnScanEnabled, j.malwareScanEnabled, false, "", j.logger)
 	return run.ScanMountPoint(ctx, osType, mountpoint, vmURI, j.prov.GetName())
 }

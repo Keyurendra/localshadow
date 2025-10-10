@@ -88,6 +88,64 @@ func CloudScheduleCmdFlags() []cli.Flag {
 	}, CloudScanCmdFlags()...)
 }
 
+func AgentScanCmdFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.BoolFlag{
+			Name:  "local-publisher",
+			Usage: "Store artifacts locally only",
+		},
+		&cli.StringFlag{
+			Name:      "local-publisher-store-path",
+			Usage:     "Path to local publisher's store directory",
+			TakesFile: true,
+			Value:     "/var/lib/accuknox",
+		},
+		&cli.StringFlag{
+			Name:  "artifact-endpoint",
+			Usage: "AccuKnox artifact API endpoint",
+			Value: "https://cspm.accuknox.com/api/v1/artifact/",
+		},
+		&cli.UintFlag{
+			Name:        "tenant-id",
+			Usage:       "AccuKnox tenant ID",
+			HideDefault: true,
+		},
+		&cli.StringFlag{
+			Name:  "artifact-label",
+			Usage: "Label to associate with the artifact",
+		},
+		&cli.StringFlag{
+			Name:      "artifact-token-file",
+			Usage:     "Path to AccuKnox artifact API JWT auth token",
+			TakesFile: true,
+		},
+		&cli.BoolFlag{
+			Name:  "skip-malware-scan",
+			Usage: "Scan only for vulnerabilities",
+		},
+		&cli.StringFlag{
+			Name:      "database-directory",
+			Usage:     "Path to vulnerability scanner's database directory",
+			TakesFile: true,
+		},
+	}
+}
+
+func AgentScheduleCmdFlags() []cli.Flag {
+	return append([]cli.Flag{
+		&cli.StringFlag{
+			Name:  "crontab",
+			Value: "@daily",
+			Usage: "Cron expression for scheduling",
+		},
+		&cli.BoolFlag{
+			Name:  "trigger-immediately",
+			Value: false,
+			Usage: "Trigger the first scan right after scheduling",
+		},
+	}, AgentScanCmdFlags()...)
+}
+
 func CreateCSPMPublisher(c *cli.Command) (publisher.Publisher, error) {
 	endpoint := c.String("artifact-endpoint")
 	if endpoint == "" {

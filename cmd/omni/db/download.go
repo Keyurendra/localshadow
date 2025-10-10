@@ -1,0 +1,177 @@
+package db
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"slices"
+	"strconv"
+	"time"
+
+	"github.com/aquasecurity/trivy-db/pkg/db"
+	"github.com/aquasecurity/trivy/pkg/fanal/types"
+	"github.com/aquasecurity/trivy/pkg/javadb"
+	"github.com/aquasecurity/trivy/pkg/oci"
+	"github.com/aquasecurity/trivy/pkg/utils/fsutils"
+	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/urfave/cli/v3"
+)
+
+const (
+	vulnDBMediaType = "application/vnd.aquasec.trivy.db.layer.v1.tar+gzip"
+	javaDBMediaType = "application/vnd.aquasec.trivy.javadb.layer.v1.tar+gzip"
+)
+
+var downloadCmd = &cli.Command{
+	Name: "download",
+	Flags: []cli.Flag{
+		&cli.StringFlag{
+			Name:      "destination",
+			TakesFile: true,
+			Value:     "/var/lib/accuknox-omni/",
+			Config:    cli.StringConfig{TrimSpace: true},
+		},
+		&cli.StringFlag{
+			Name:   "vuln-db-repository",
+			Value:  "ghcr.io/aquasecurity/trivy-db",
+			Config: cli.StringConfig{TrimSpace: true},
+		},
+		&cli.StringFlag{
+			Name:   "java-db-repository",
+			Value:  "ghcr.io/aquasecurity/trivy-java-db",
+			Config: cli.StringConfig{TrimSpace: true},
+		},
+		&cli.BoolFlag{
+			Name:  "quiet",
+			Value: false,
+		},
+		&cli.BoolFlag{
+			Name:  "force",
+			Value: false,
+		},
+	},
+	Arguments: []cli.Argument{
+		&cli.StringArgs{
+			Name:      "databases",
+			Max:       2,
+			Min:       1,
+			Config:    cli.StringConfig{TrimSpace: true},
+			UsageText: "[vuln java]",
+		},
+	},
+	Action: func(ctx context.Context, c *cli.Command) error {
+		databases := slices.Compact(c.StringArgs("databases"))
+		if len(databases) == 0 {
+			return fmt.Errorf("no database specified")
+		}
+
+		vulnDBRepo := c.String("vuln-db-repository")
+		javaDBRepo := c.String("java-db-repository")
+		cacheDir := c.String("destination")
+		quiet := c.Bool("quiet")
+		force := c.Bool("force")
+
+		for _, database := range databases {
+			switch database {
+			case "vuln":
+				needsUpdate, err := needsUpdate(cacheDir, database)
+				if err != nil {
+					return fmt.Errorf("determining if an update is needed: %w", err)
+				}
+				if !needsUpdate && !force {
+					slog.LogAttrs(
+						ctx,
+						slog.LevelInfo,
+						"vuln db is fairly recent. Skipping...",
+					)
+					continue
+				}
+				destination := filepath.Join(cacheDir, "db")
+				repo, err := parseRepository(vulnDBRepo, db.SchemaVersion)
+				if err != nil {
+					return fmt.Errorf("parsing repository %s: %w", vulnDBRepo, err)
+				}
+				artifacts := oci.NewArtifacts([]name.Reference{repo}, types.RegistryOptions{})
+				err = artifacts.Download(ctx, destination, oci.DownloadOption{
+					MediaType: vulnDBMediaType,
+					Quiet:     quiet,
+				})
+				if err != nil {
+					return fmt.Errorf("downloading vuln database: %w", err)
+				}
+			case "java":
+				needsUpdate, err := needsUpdate(cacheDir, database)
+				if err != nil {
+					return fmt.Errorf("determining if an update is needed: %w", err)
+				}
+				if !needsUpdate && !force {
+					slog.LogAttrs(
+						ctx,
+						slog.LevelInfo,
+						"java db is fairly recent. Skipping...",
+					)
+					continue
+				}
+				destination := filepath.Join(cacheDir, "java-db")
+				repo, err := parseRepository(javaDBRepo, javadb.SchemaVersion)
+				if err != nil {
+					return fmt.Errorf("parsing repository %s: %w", javaDBRepo, err)
+				}
+				artifacts := oci.NewArtifacts([]name.Reference{repo}, types.RegistryOptions{})
+				err = artifacts.Download(ctx, destination, oci.DownloadOption{
+					MediaType: javaDBMediaType,
+					Quiet:     quiet,
+				})
+				if err != nil {
+					return fmt.Errorf("downloading java database: %w", err)
+				}
+			default:
+				slog.LogAttrs(
+					ctx,
+					slog.LevelError,
+					"Unknown database passed...Ignoring",
+					slog.String("argument", database),
+				)
+			}
+		}
+		return nil
+	},
+}
+
+func parseRepository(repo string, schemaVersion int) (name.Reference, error) {
+	dbRepository, err := name.ParseReference(repo, name.WithDefaultTag(""))
+	if err != nil {
+		return nil, err
+	}
+
+	t, ok := dbRepository.(name.Tag)
+	if !ok || t.TagStr() != "" {
+		return dbRepository, nil
+	}
+
+	dbRepository = t.Tag(strconv.Itoa(schemaVersion))
+	return dbRepository, nil
+}
+
+func needsUpdate(dir string, typ string) (bool, error) {
+	if !fsutils.DirExists(dir) {
+		return true, nil
+	}
+	dbFile := filepath.Join("db", "trivy.db")
+	threshold := time.Hour * 24
+	if typ == "java" {
+		dbFile = filepath.Join("java-db", "trivy-java.db")
+		threshold = time.Hour * 24 * 3
+	}
+	dbFile = filepath.Join(dir, dbFile)
+	info, err := os.Stat(dbFile)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return true, nil
+		}
+		return false, fmt.Errorf("getting db file info: %w", err)
+	}
+	return time.Since(info.ModTime()) > threshold, nil
+}

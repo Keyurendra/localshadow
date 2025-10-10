@@ -1,13 +1,13 @@
 {
   description = "AccuKnox OmniScan";
   inputs = {
-    unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
-  outputs = { unstable, flake-utils, ... }:
+  outputs = { nixpkgs, flake-utils, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import unstable {
+        pkgs = import nixpkgs {
           inherit system;
           config.allowUnfreePredicate = p: builtins.elem (pkgs.lib.getName p) [
             "terraform"
@@ -22,8 +22,11 @@
             pname = "omni";
             version = "0.0.0";
             src = ./.;
-            vendorHash = "sha256-XrQsn/mecYsWvdStbywOCnVAuo8asJOl80UBPpgWHlk=";
-            env.CGO_ENABLED = 0;
+            vendorHash = "sha256-8PDYulmj8Cfwo19rEE0XfWLjVjoQRsNyr3p61QsFAKw=";
+            env = {
+              CGO_ENABLED = 0;
+              GOEXPERIMENT = "jsonv2";
+            };
             subPackages = [ "cmd/omni" ];
             nativeBuildInputs = [ pkgs.installShellFiles ];
             postInstall = ''
@@ -76,9 +79,6 @@
             pkgs.gotools
             pkgs.gofumpt
             pkgs.gopls
-            pkgs.awscli2
-            pkgs.google-cloud-sdk
-            pkgs.azure-cli
             pkgs.terraform-ls
             pkgs.terraform
             pkgs.kubebuilder

@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -23,8 +22,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	omniv1alpha1 "github.com/accuknox/omniscan/api/v1alpha1"
+	"github.com/accuknox/omniscan/cmd/omni/agent"
 	"github.com/accuknox/omniscan/cmd/omni/aws"
 	"github.com/accuknox/omniscan/cmd/omni/azure"
+	"github.com/accuknox/omniscan/cmd/omni/db"
 	"github.com/accuknox/omniscan/cmd/omni/gcp"
 	"github.com/accuknox/omniscan/cmd/omni/openshift"
 	"github.com/accuknox/omniscan/internal/controller"
@@ -43,9 +44,11 @@ func init() {
 }
 
 func main() {
-	err := cmd.Run(context.Background(), os.Args)
+	ctx := context.Background()
+	err := cmd.Run(ctx, os.Args)
 	if err != nil {
-		log.Fatal(err)
+		slog.ErrorContext(ctx, err.Error())
+		os.Exit(1)
 	}
 }
 
@@ -85,6 +88,8 @@ var cmd = &cli.Command{
 		},
 	},
 	Commands: []*cli.Command{
+		db.NewCommand(),
+		agent.NewCommand(),
 		aws.NewCommand(),
 		gcp.NewCommand(),
 		azure.NewCommand(),

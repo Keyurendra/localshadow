@@ -39,7 +39,7 @@ var scanCmd = &cli.Command{
 
 		opts := []cloud.OptFunc{cloud.WithConcurrency(c.Uint("concurrency"))}
 		if c.Bool("skip-malware-scan") {
-			opts = append(opts, cloud.WithClamscanDisabled())
+			opts = append(opts, cloud.WithMalwareScanDisabled())
 		}
 
 		job, err := cloud.NewJob(provider, publisher, opts...)

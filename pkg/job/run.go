@@ -2,6 +2,7 @@ package job
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/accuknox/omniscan/pkg/publisher"
@@ -12,6 +13,7 @@ import (
 
 type Run struct {
 	logger          *slog.Logger
+	vulnScanDBDir   string
 	vulnScan        bool
 	malwareScan     bool
 	useClamAVDaemon bool
@@ -25,7 +27,7 @@ type RunResult struct {
 	VulnScanError       error
 }
 
-func NewRun(vulnScan, malwareScan bool, useClamAVDaemon bool, logger *slog.Logger) Run {
+func NewRun(vulnScan, malwareScan bool, useClamAVDaemon bool, vulnScanDBDir string, logger *slog.Logger) Run {
 	if logger == nil {
 		logger = slog.Default()
 	}
@@ -33,6 +35,7 @@ func NewRun(vulnScan, malwareScan bool, useClamAVDaemon bool, logger *slog.Logge
 		vulnScan:        vulnScan,
 		malwareScan:     malwareScan,
 		useClamAVDaemon: useClamAVDaemon,
+		vulnScanDBDir:   vulnScanDBDir,
 		logger:          logger,
 	}
 }
@@ -44,7 +47,7 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 		r.logger.LogAttrs(
 			ctx,
 			slog.LevelInfo,
-			"running clamav scan",
+			"running malware scan",
 			slog.String("mount_point", mount),
 			slog.String("os", os),
 			slog.String("target_vm_uri", vmURI),
@@ -76,12 +79,20 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 		r.logger.LogAttrs(
 			ctx,
 			slog.LevelInfo,
-			"running trivy scan",
+			"running vuln scan",
 			slog.String("mount_point", mount),
 			slog.String("os", os),
 			slog.String("target_vm_uri", vmURI),
 		)
-		result.VulnScanFindings, result.VulnScanError = trivy.NewScanner().Scan(
+		var opts []trivy.OptFunc
+		if r.vulnScanDBDir != "" {
+			opts = append(opts, trivy.WithCacheDirectory(r.vulnScanDBDir))
+		}
+		trivyScanner, err := trivy.NewScanner(opts...)
+		if err != nil {
+			return nil, fmt.Errorf("initializing vuln scanner: %w", err)
+		}
+		result.VulnScanFindings, result.VulnScanError = trivyScanner.Scan(
 			ctx,
 			mount,
 			vmURI,

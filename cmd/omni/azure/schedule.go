@@ -41,7 +41,7 @@ var scheduleCmd = &cli.Command{
 			cloud.WithPrometheusMetricsPort(c.Uint16("prometheus-metrics-port")),
 		}
 		if c.Bool("skip-malware-scan") {
-			opts = append(opts, cloud.WithClamscanDisabled())
+			opts = append(opts, cloud.WithMalwareScanDisabled())
 		}
 		if c.Bool("enable-prometheus-metrics") {
 			opts = append(opts, cloud.WithPrometheusMetrics())

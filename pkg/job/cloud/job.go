@@ -184,8 +184,8 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 
 			if res != nil {
 				errors.OS = res.OS
-				errors.ClamscanError = res.MalwareScanError
-				errors.TrivyError = res.VulnScanError
+				errors.MalwareScanError = res.MalwareScanError
+				errors.VulnScanError = res.VulnScanError
 				j.logger.LogAttrs(
 					ctx,
 					slog.LevelInfo,
@@ -201,7 +201,7 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 				}
 			}
 
-			if anyNonNil(errors.OrchestrationError, errors.TrivyError, errors.ClamscanError) {
+			if anyNonNil(errors.OrchestrationError, errors.VulnScanError, errors.MalwareScanError) {
 				j.logger.LogAttrs(
 					ctx,
 					slog.LevelError,
@@ -210,8 +210,8 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 					slog.Group(
 						"errors",
 						slog.Any("orchestration", errors.OrchestrationError),
-						slog.Any("trivy", errors.TrivyError),
-						slog.Any("clamav", errors.ClamscanError),
+						slog.Any("vuln", errors.VulnScanError),
+						slog.Any("malware", errors.MalwareScanError),
 					),
 				)
 			}
@@ -234,11 +234,11 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 				j.collector.RecordError(metric.ErrorTypeOrchestration, osTyp)
 			}
 
-			if errors.TrivyError != nil {
+			if errors.VulnScanError != nil {
 				j.collector.RecordError(metric.ErrorTypeVulnScan, osTyp)
 			}
 
-			if errors.ClamscanError != nil {
+			if errors.MalwareScanError != nil {
 				j.collector.RecordError(metric.ErrorTypeMalwareScan, osTyp)
 			}
 
@@ -246,11 +246,11 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 				j.collector.RecordError(metric.ErrorTypeArtifactAPI, osTyp)
 			}
 
-			if errors.ArtifactAPIError == nil && errors.TrivyError == nil {
+			if errors.ArtifactAPIError == nil && errors.VulnScanError == nil {
 				j.collector.RecordSuccessfulScan(metric.ScanTypeVulnScan, osTyp)
 			}
 
-			if errors.ArtifactAPIError == nil && errors.ClamscanError == nil {
+			if errors.ArtifactAPIError == nil && errors.MalwareScanError == nil {
 				j.collector.RecordSuccessfulScan(metric.ScanTypeMalwareScan, osTyp)
 			}
 
@@ -494,7 +494,7 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		slog.String("os", osType),
 	)
 
-	run := job.NewRun(j.trivyEnabled, j.clamscanEnabled, true, j.logger)
+	run := job.NewRun(j.vulnScanEnabled, j.malwareScanEnabled, true, "", j.logger)
 	return run.ScanMountPoint(ctx, osType, mountPoint, targetVMURI, j.prov.GetName())
 }
 

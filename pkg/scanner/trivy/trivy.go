@@ -1,57 +1,91 @@
 package trivy
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"os/exec"
 
+	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
+	"github.com/aquasecurity/trivy/pkg/commands/artifact"
+	flanalTypes "github.com/aquasecurity/trivy/pkg/fanal/types"
+	"github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/types"
 
 	"github.com/accuknox/omniscan/pkg/scanner"
 )
 
-type s struct{}
-
-func NewScanner() scanner.Scanner {
-	return s{}
+type s struct {
+	opts
 }
 
-func (s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
-	path, err := exec.LookPath("trivy")
+func NewScanner(fns ...OptFunc) (scanner.Scanner, error) {
+	o, err := defaultOpts()
 	if err != nil {
-		if errors.Is(err, exec.ErrNotFound) {
-			return nil, fmt.Errorf("`trivy` executable not found in PATH")
-		}
-		return nil, fmt.Errorf("looking up trivy in PATH: %w", err)
+		return nil, fmt.Errorf("initializing opts: %w", err)
+	}
+	for _, fn := range fns {
+		fn(o)
+	}
+	return &s{
+		opts: *o,
+	}, nil
+}
+
+func (s s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
+	opts := flag.Options{
+		GlobalOptions: flag.GlobalOptions{
+			Timeout:  s.timeout,
+			CacheDir: s.cacheDir,
+			Quiet:    true,
+		},
+		CacheOptions: flag.CacheOptions{
+			CacheBackend: "memory",
+		},
+		ScanOptions: flag.ScanOptions{
+			Scanners:          []types.Scanner{types.VulnerabilityScanner},
+			DisableTelemetry:  true,
+			Target:            mountpoint,
+			DetectionPriority: flanalTypes.PriorityPrecise,
+			Parallel:          0,
+		},
+		VulnerabilityOptions: flag.VulnerabilityOptions{
+			VulnSeveritySources: []dbTypes.SourceID{"auto"},
+		},
+		DBOptions: flag.DBOptions{
+			SkipDBUpdate:     true,
+			SkipJavaDBUpdate: true,
+		},
+		PackageOptions: flag.PackageOptions{
+			PkgTypes: []string{"os"},
+			PkgRelationships: []flanalTypes.Relationship{
+				flanalTypes.RelationshipUnknown,
+				flanalTypes.RelationshipRoot,
+				flanalTypes.RelationshipWorkspace,
+				flanalTypes.RelationshipDirect,
+				flanalTypes.RelationshipIndirect,
+			},
+		},
+		ReportOptions: flag.ReportOptions{
+			Format:      types.FormatJSON,
+			ListAllPkgs: true,
+			Severities: []dbTypes.Severity{
+				dbTypes.SeverityUnknown,
+				dbTypes.SeverityLow,
+				dbTypes.SeverityMedium,
+				dbTypes.SeverityHigh,
+				dbTypes.SeverityCritical,
+			},
+		},
 	}
 
-	var stdout, stderr bytes.Buffer
-
-	cmd := exec.CommandContext(
-		ctx,
-		path,
-		"rootfs",
-		mountpoint,
-		"--quiet",
-		"--format=json",
-		"--scanners=vuln",
-		"--skip-db-update",
-		"--skip-java-db-update",
-		"--timeout=24h",
-	)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-
-	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("executing trivy: %w: %s", err, stderr.String())
+	runner, err := artifact.NewRunner(ctx, opts, artifact.TargetRootfs)
+	if err != nil {
+		return nil, fmt.Errorf("initializing scanner: %w", err)
 	}
+	defer runner.Close(ctx)
 
-	report := new(types.Report)
-	if err := json.NewDecoder(&stdout).Decode(report); err != nil {
-		return nil, fmt.Errorf("decoding trivy report: %w", err)
+	report, err := runner.ScanRootfs(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("scanning rootfs %s: %w", mountpoint, err)
 	}
 
 	return &Result{
