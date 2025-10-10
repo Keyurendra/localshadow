@@ -84,7 +84,7 @@ write_files:
       [Service]
       Type=simple
       User=root
-      ExecStart=/usr/local/bin/omni schedule "${provider}" \
+      ExecStart=/usr/local/bin/omni "${provider}" schedule \
                   --artifact-token-file /etc/accuknox-omni/artifact.token \
                   --artifact-endpoint "${artifact_endpoint}" \
                   --tenant-id "${artifact_tenant_id}" \
