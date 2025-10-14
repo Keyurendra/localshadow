@@ -9,8 +9,9 @@ import (
 type OptFunc func(*opts)
 
 type opts struct {
-	timeout  time.Duration
-	cacheDir string
+	timeout          time.Duration
+	cacheDir         string
+	useEmbeddedTrivy bool
 }
 
 func WithTimeout(timeout time.Duration) OptFunc {
@@ -25,13 +26,20 @@ func WithCacheDirectory(cacheDir string) OptFunc {
 	}
 }
 
+func WithUseEmbeddedTrivy(use bool) OptFunc {
+	return func(o *opts) {
+		o.useEmbeddedTrivy = use
+	}
+}
+
 func defaultOpts() (*opts, error) {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
 		return nil, fmt.Errorf("get user cache directory: %w", err)
 	}
 	return &opts{
-		timeout:  time.Hour * 12,
-		cacheDir: cacheDir,
+		timeout:          time.Hour * 12,
+		cacheDir:         cacheDir,
+		useEmbeddedTrivy: false,
 	}, nil
 }

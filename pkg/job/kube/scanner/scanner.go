@@ -144,6 +144,13 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		slog.String("partition_name", mountpoint),
 		slog.String("os", osType),
 	)
-	run := job.NewRun(j.vulnScanEnabled, j.malwareScanEnabled, false, "", j.logger)
+	run := job.NewRun(
+		j.vulnScanEnabled,
+		j.malwareScanEnabled,
+		false,
+		false,
+		j.vulnDBDirectory,
+		j.logger,
+	)
 	return run.ScanMountPoint(ctx, osType, mountpoint, vmURI, j.prov.GetName())
 }

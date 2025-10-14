@@ -90,9 +90,7 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) erro
 
 	var wg sync.WaitGroup
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		if !j.prometheusMetrics {
 			return
 		}
@@ -106,7 +104,7 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) erro
 				slog.Any("error", err),
 			)
 		}
-	}()
+	})
 
 	s.Start() // non-blocking
 
@@ -494,7 +492,14 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		slog.String("os", osType),
 	)
 
-	run := job.NewRun(j.vulnScanEnabled, j.malwareScanEnabled, true, "", j.logger)
+	run := job.NewRun(
+		j.vulnScanEnabled,
+		j.malwareScanEnabled,
+		true,
+		false,
+		j.vulnDBDirectory,
+		j.logger,
+	)
 	return run.ScanMountPoint(ctx, osType, mountPoint, targetVMURI, j.prov.GetName())
 }
 

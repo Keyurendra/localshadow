@@ -11,6 +11,7 @@ type opts struct {
 	baseMountPoint        string
 	vulnScanEnabled       bool
 	malwareScanEnabled    bool
+	vulnDBDirectory       string
 	concurrency           uint
 	logger                *slog.Logger
 	prometheusMetrics     bool
@@ -32,6 +33,12 @@ func WithMalwareScanDisabled() OptFunc {
 func WithVulnScanDisabled() OptFunc {
 	return func(o *opts) {
 		o.vulnScanEnabled = false
+	}
+}
+
+func WithVulnDBDirectory(dir string) OptFunc {
+	return func(o *opts) {
+		o.vulnDBDirectory = dir
 	}
 }
 
@@ -74,6 +81,7 @@ func defaultOpts() opts {
 		baseMountPoint:        "/accuknox",
 		malwareScanEnabled:    true,
 		vulnScanEnabled:       true,
+		vulnDBDirectory:       "/root/.cache/trivy/",
 		concurrency:           uint(runtime.NumCPU()),
 		logger:                slog.Default(),
 		prometheusMetrics:     false,

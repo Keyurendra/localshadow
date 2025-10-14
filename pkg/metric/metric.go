@@ -73,10 +73,7 @@ func (c Collector) ServeHTTP(ctx context.Context) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-
+	wg.Go(func() {
 		<-ctx.Done()
 
 		// graceful termination
@@ -92,7 +89,7 @@ func (c Collector) ServeHTTP(ctx context.Context) error {
 				slog.Any("error", err),
 			)
 		}
-	}()
+	})
 
 	if err := srv.ListenAndServe(); err != nil {
 		if errors.Is(err, http.ErrServerClosed) {

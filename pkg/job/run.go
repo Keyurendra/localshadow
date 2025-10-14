@@ -12,11 +12,12 @@ import (
 )
 
 type Run struct {
-	logger          *slog.Logger
-	vulnScanDBDir   string
-	vulnScan        bool
-	malwareScan     bool
-	useClamAVDaemon bool
+	logger           *slog.Logger
+	vulnScan         bool
+	vulnScanDBDir    string
+	useEmbeddedTrivy bool
+	malwareScan      bool
+	useClamAVDaemon  bool
 }
 
 type RunResult struct {
@@ -27,16 +28,17 @@ type RunResult struct {
 	VulnScanError       error
 }
 
-func NewRun(vulnScan, malwareScan bool, useClamAVDaemon bool, vulnScanDBDir string, logger *slog.Logger) Run {
+func NewRun(vulnScan, malwareScan, useClamAVDaemon, useEmbeddedTrivy bool, vulnScanDBDir string, logger *slog.Logger) Run {
 	if logger == nil {
 		logger = slog.Default()
 	}
 	return Run{
-		vulnScan:        vulnScan,
-		malwareScan:     malwareScan,
-		useClamAVDaemon: useClamAVDaemon,
-		vulnScanDBDir:   vulnScanDBDir,
-		logger:          logger,
+		vulnScan:         vulnScan,
+		malwareScan:      malwareScan,
+		useClamAVDaemon:  useClamAVDaemon,
+		useEmbeddedTrivy: useEmbeddedTrivy,
+		vulnScanDBDir:    vulnScanDBDir,
+		logger:           logger,
 	}
 }
 
@@ -84,7 +86,7 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 			slog.String("os", os),
 			slog.String("target_vm_uri", vmURI),
 		)
-		var opts []trivy.OptFunc
+		opts := []trivy.OptFunc{trivy.WithUseEmbeddedTrivy(r.useEmbeddedTrivy)}
 		if r.vulnScanDBDir != "" {
 			opts = append(opts, trivy.WithCacheDirectory(r.vulnScanDBDir))
 		}

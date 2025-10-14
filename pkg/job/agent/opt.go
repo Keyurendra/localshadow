@@ -5,7 +5,7 @@ import "log/slog"
 type OptFunc func(*opts)
 
 type opts struct {
-	vulnScanDBDir      string
+	vulnDBDirectory    string
 	vulnScanEnabled    bool
 	malwareScanEnabled bool
 	logger             *slog.Logger
@@ -23,9 +23,9 @@ func WithVulnScanDisabled() OptFunc {
 	}
 }
 
-func WithVulnScanDBDirectory(dir string) OptFunc {
+func WithVulnDBDirectory(dir string) OptFunc {
 	return func(o *opts) {
-		o.vulnScanDBDir = dir
+		o.vulnDBDirectory = dir
 	}
 }
 
@@ -40,7 +40,7 @@ func WithLogger(l *slog.Logger) OptFunc {
 
 func defaultOpts() opts {
 	return opts{
-		vulnScanDBDir:      "/var/lib/accuknox-omni/",
+		vulnDBDirectory:    "/var/lib/accuknox-omni/",
 		malwareScanEnabled: true,
 		vulnScanEnabled:    true,
 		logger:             slog.Default(),

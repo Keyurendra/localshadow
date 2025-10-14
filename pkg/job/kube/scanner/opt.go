@@ -5,8 +5,9 @@ import "log/slog"
 type OptFunc func(*opts)
 
 type opts struct {
-	vulnScanEnabled    bool
 	malwareScanEnabled bool
+	vulnScanEnabled    bool
+	vulnDBDirectory    string
 	logger             *slog.Logger
 }
 
@@ -19,6 +20,12 @@ func WithMalwareScanDisabled() OptFunc {
 func WithVulnScanDisabled() OptFunc {
 	return func(o *opts) {
 		o.vulnScanEnabled = false
+	}
+}
+
+func WithVulnDBDirectory(dir string) OptFunc {
+	return func(o *opts) {
+		o.vulnDBDirectory = dir
 	}
 }
 
@@ -35,6 +42,7 @@ func defaultOpts() opts {
 	return opts{
 		malwareScanEnabled: true,
 		vulnScanEnabled:    true,
+		vulnDBDirectory:    "/root/.cache/trivy/",
 		logger:             slog.Default(),
 	}
 }

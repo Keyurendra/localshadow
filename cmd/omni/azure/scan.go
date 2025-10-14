@@ -37,7 +37,10 @@ var scanCmd = &cli.Command{
 			}
 		}
 
-		opts := []cloud.OptFunc{cloud.WithConcurrency(c.Uint("concurrency"))}
+		opts := []cloud.OptFunc{
+			cloud.WithConcurrency(c.Uint("concurrency")),
+			cloud.WithVulnDBDirectory(c.String("vuln-db-directory")),
+		}
 		if c.Bool("skip-malware-scan") {
 			opts = append(opts, cloud.WithMalwareScanDisabled())
 		}

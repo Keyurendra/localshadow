@@ -72,6 +72,12 @@ var scanCmd = &cli.Command{
 			Name:  "skip-malware-scan",
 			Usage: "Scan only for vulnerabilities",
 		},
+		&cli.StringFlag{
+			Name:      "vuln-db-directory",
+			Usage:     "Path to vulnerability scanner's database directory",
+			Value:     "/root/.cache/trivy/",
+			TakesFile: true,
+		},
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
 		namespace := c.String("namespace")
@@ -120,7 +126,9 @@ var scanCmd = &cli.Command{
 			}
 		}
 
-		var scOpts []scanner.OptFunc
+		scOpts := []scanner.OptFunc{
+			scanner.WithVulnDBDirectory(c.String("vuln-db-directory")),
+		}
 		if c.Bool("skip-malware-scan") {
 			scOpts = append(scOpts, scanner.WithMalwareScanDisabled())
 		}

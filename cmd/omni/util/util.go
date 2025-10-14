@@ -48,6 +48,12 @@ func CloudScanCmdFlags() []cli.Flag {
 			Usage: "Scan only for vulnerabilities",
 		},
 		&cli.StringFlag{
+			Name:      "vuln-db-directory",
+			Usage:     "Path to vulnerability scanner's database directory",
+			Value:     "/root/.cache/trivy/",
+			TakesFile: true,
+		},
+		&cli.StringFlag{
 			Name:  "vm-name-regex",
 			Usage: "Filter VMs by name using regex",
 		},
@@ -124,8 +130,9 @@ func AgentScanCmdFlags() []cli.Flag {
 			Usage: "Scan only for vulnerabilities",
 		},
 		&cli.StringFlag{
-			Name:      "database-directory",
+			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",
+			Value:     "/var/lib/accuknox-omni/",
 			TakesFile: true,
 		},
 	}
