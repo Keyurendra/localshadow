@@ -281,7 +281,7 @@ create_uninstall_script() {
 }
 
 {
-    setup_env "--artifact-token-file=$(filepath_join "$OMNI_HOME_DIR" artifact.tok)" "--database-directory=$OMNI_HOME_DIR" "$@"
+    setup_env "--artifact-token-file=$(filepath_join "$OMNI_HOME_DIR" artifact.tok)" "--vuln-db-directory=$OMNI_HOME_DIR" "$@"
     verify_systemd
     verify_omni_url
     setup_token

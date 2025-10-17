@@ -150,6 +150,7 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		false,
 		false,
 		j.vulnDBDirectory,
+		mountpoint,
 		j.logger,
 	)
 	return run.ScanMountPoint(ctx, osType, mountpoint, vmURI, j.prov.GetName())

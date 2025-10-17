@@ -10,7 +10,14 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/publisher/cspm"
+	"github.com/accuknox/omniscan/pkg/util"
 )
+
+var rootfs string
+
+func init() {
+	rootfs, _ = util.FindRootFS()
+}
 
 func CloudScanCmdFlags() []cli.Flag {
 	return []cli.Flag{
@@ -133,6 +140,12 @@ func AgentScanCmdFlags() []cli.Flag {
 			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",
 			Value:     "/var/lib/accuknox-omni/",
+			TakesFile: true,
+		},
+		&cli.StringFlag{
+			Name:      "malware-scan-target-directory",
+			Usage:     "Limit malware scan to a specific directory",
+			Value:     rootfs,
 			TakesFile: true,
 		},
 	}

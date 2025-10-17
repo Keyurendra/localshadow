@@ -48,6 +48,11 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) erro
 		opts = append(opts, gocron.WithStartAt(gocron.WithStartImmediately()))
 	}
 
+	rootfs, err := util.FindRootFS()
+	if err != nil {
+		return fmt.Errorf("determining rootfs: %w", err)
+	}
+
 	j.logger.LogAttrs(
 		ctx,
 		slog.LevelInfo,
@@ -57,7 +62,7 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) erro
 	)
 	_, err = s.NewJob(
 		gocron.CronJob(crontab, false),
-		gocron.NewTask(j.Run, ctx),
+		gocron.NewTask(j.Run, ctx, rootfs),
 		opts...,
 	)
 	if err != nil {
@@ -128,6 +133,10 @@ func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, e
 }
 
 func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job.RunResult, error) {
+	targetDir := mountpoint
+	if j.malwareScanTargetDirectory != "" {
+		targetDir = j.malwareScanTargetDirectory
+	}
 	osType := util.DetectOS(mountpoint)
 	if osType == "unknown" {
 		j.logger.LogAttrs(
@@ -151,6 +160,7 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		false,
 		true,
 		j.vulnDBDirectory,
+		targetDir,
 		j.logger,
 	)
 	return run.ScanMountPoint(ctx, osType, mountpoint, vmURI, "agent")

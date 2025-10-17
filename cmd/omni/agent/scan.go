@@ -7,19 +7,20 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"github.com/accuknox/omniscan/cmd/omni/util"
+	cmdUtil "github.com/accuknox/omniscan/cmd/omni/util"
 	"github.com/accuknox/omniscan/pkg/job/agent"
 	"github.com/accuknox/omniscan/pkg/publisher/file"
+	"github.com/accuknox/omniscan/pkg/util"
 )
 
 var scanCmd = &cli.Command{
 	Name:  "scan",
-	Flags: util.AgentScanCmdFlags(),
+	Flags: cmdUtil.AgentScanCmdFlags(),
 	Action: func(ctx context.Context, c *cli.Command) error {
 		publisher := file.NewPublisher(c.String("local-publisher-store-path"))
 		if !c.Bool("local-publisher") {
 			var err error
-			publisher, err = util.CreateCSPMPublisher(c)
+			publisher, err = cmdUtil.CreateCSPMPublisher(c)
 			if err != nil {
 				return err
 			}
@@ -27,6 +28,7 @@ var scanCmd = &cli.Command{
 
 		opts := []agent.OptFunc{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
+			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
 		}
 		if c.Bool("skip-malware-scan") {
 			opts = append(opts, agent.WithMalwareScanDisabled())
@@ -37,7 +39,12 @@ var scanCmd = &cli.Command{
 			return fmt.Errorf("creating job: %w", err)
 		}
 
-		summary, err := job.Run(ctx, "/")
+		rootfs, err := util.FindRootFS()
+		if err != nil {
+			return fmt.Errorf("determining rootfs: %w", err)
+		}
+
+		summary, err := job.Run(ctx, rootfs)
 		if err != nil {
 			return fmt.Errorf("executing scan job: %w", err)
 		}

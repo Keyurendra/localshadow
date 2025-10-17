@@ -498,6 +498,7 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		true,
 		false,
 		j.vulnDBDirectory,
+		mountPoint,
 		j.logger,
 	)
 	return run.ScanMountPoint(ctx, osType, mountPoint, targetVMURI, j.prov.GetName())

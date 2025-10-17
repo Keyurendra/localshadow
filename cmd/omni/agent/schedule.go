@@ -25,6 +25,7 @@ var scheduleCmd = &cli.Command{
 		}
 		opts := []agent.OptFunc{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
+			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
 		}
 		if c.Bool("skip-malware-scan") {
 			opts = append(opts, agent.WithMalwareScanDisabled())

@@ -1,14 +1,20 @@
 package agent
 
-import "log/slog"
+import (
+	"context"
+	"log/slog"
+
+	"github.com/accuknox/omniscan/pkg/util"
+)
 
 type OptFunc func(*opts)
 
 type opts struct {
-	vulnDBDirectory    string
-	vulnScanEnabled    bool
-	malwareScanEnabled bool
-	logger             *slog.Logger
+	vulnDBDirectory            string
+	vulnScanEnabled            bool
+	malwareScanEnabled         bool
+	malwareScanTargetDirectory string
+	logger                     *slog.Logger
 }
 
 func WithMalwareScanDisabled() OptFunc {
@@ -29,6 +35,12 @@ func WithVulnDBDirectory(dir string) OptFunc {
 	}
 }
 
+func WithMalwareScanTargetDirectory(dir string) OptFunc {
+	return func(o *opts) {
+		o.malwareScanTargetDirectory = dir
+	}
+}
+
 func WithLogger(l *slog.Logger) OptFunc {
 	return func(o *opts) {
 		if l == nil {
@@ -39,10 +51,20 @@ func WithLogger(l *slog.Logger) OptFunc {
 }
 
 func defaultOpts() opts {
+	rootfs, err := util.FindRootFS()
+	if err != nil {
+		slog.LogAttrs(
+			context.TODO(),
+			slog.LevelWarn,
+			"failed to determine rootfs",
+			slog.String("error", err.Error()),
+		)
+	}
 	return opts{
-		vulnDBDirectory:    "/var/lib/accuknox-omni/",
-		malwareScanEnabled: true,
-		vulnScanEnabled:    true,
-		logger:             slog.Default(),
+		vulnDBDirectory:            "/var/lib/accuknox-omni/",
+		malwareScanEnabled:         true,
+		vulnScanEnabled:            true,
+		malwareScanTargetDirectory: rootfs,
+		logger:                     slog.Default(),
 	}
 }
