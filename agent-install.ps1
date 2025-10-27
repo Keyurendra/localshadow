@@ -103,6 +103,9 @@ function Install-ClamAV {
         }
     }
     else {
+        $clamPath = (Get-ChildItem "C:\Program Files" -Directory | Where-Object { $_.Name -match "ClamAV" }).FullName
+        $script:ClamAVPath = $clamPath
+        $script:FreshClamPath = Join-Path $clamPath "freshclam.exe"
         Write-Info "ClamAV is already installed at: $($clamav.Source)"
     }
 }
