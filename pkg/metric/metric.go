@@ -15,7 +15,6 @@ import (
 
 type Collector struct {
 	port                uint16
-	logger              *slog.Logger
 	registry            *prometheus.Registry
 	errorCount          *prometheus.CounterVec
 	successfulScanCount *prometheus.CounterVec

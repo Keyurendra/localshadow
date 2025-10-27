@@ -85,6 +85,7 @@
             kubevirt
             kubernetes-code-generator
             goreleaser
+            golangci-lint
           ];
         };
       });

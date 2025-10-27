@@ -15,8 +15,26 @@ permissions:
   contents: write
 
 jobs:
-  goreleaser:
+  lint:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.1
+  release:
+    runs-on: ubuntu-latest
+    needs:
+      - lint
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -58,12 +76,12 @@ jobs:
         env:
           GOEXPERIMENT: jsonv2
         run: |-
-          mkdir -p ./build/latest
+          mkdir -p ./build/main
 
           for os in linux windows; do
               for arch in amd64 arm64; do
                   echo "building for $os $arch"
-                  path="./build/latest/omni-$os-$arch"
+                  path="./build/main/omni-$os-$arch"
                   if [[ "$os" == "windows" ]]; then
                       path="${path}.exe"
                   fi
