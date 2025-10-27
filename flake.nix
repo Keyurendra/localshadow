@@ -71,19 +71,20 @@
           default = omni;
         };
         devShells.default = pkgs.mkShell {
-          packages = [
-            pkgs.nixd
-            pkgs.nixpkgs-fmt
-            pkgs.go
-            pkgs.go-tools
-            pkgs.gotools
-            pkgs.gofumpt
-            pkgs.gopls
-            pkgs.terraform-ls
-            pkgs.terraform
-            pkgs.kubebuilder
-            pkgs.kubevirt
-            pkgs.kubernetes-code-generator
+          packages = with pkgs; [
+            nixd
+            nixpkgs-fmt
+            go
+            go-tools
+            gotools
+            gofumpt
+            gopls
+            terraform-ls
+            terraform
+            kubebuilder
+            kubevirt
+            kubernetes-code-generator
+            goreleaser
           ];
         };
       });
