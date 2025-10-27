@@ -41,6 +41,8 @@ jobs:
       - name: Build and Push Blobs to S3 under `latest`
         if: github.ref == 'refs/heads/main'
         shell: bash
+        env:
+          GOEXPERIMENT: jsonv2
         run: |-
           mkdir -p ./build/latest
 
