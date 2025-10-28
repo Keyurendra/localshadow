@@ -21,6 +21,10 @@
     Run scan immediately after installation (default: true)
 .PARAMETER HomeDir
     Home directory for Omni data (default: C:\ProgramData\AccuKnox\Omni)
+.PARAMETER ClamavMSIInstallerFile
+    Path to ClamAV MSI installer (.msi) for airgapped installation.
+.PARAMETER SkipDatabaseDownload
+    Skip downloading ClamAV database
 #>
 
 [CmdletBinding()]
@@ -32,7 +36,9 @@ param(
     [bool]$SkipDownload = $false,
     [Parameter(Mandatory=$true)][string]$ArtifactApiToken = "",
     [bool]$TriggerImmediately = $true,
-    [string]$HomeDir = "C:\ProgramData\AccuKnox\Omni"
+    [string]$HomeDir = "C:\ProgramData\AccuKnox\Omni",
+    [string]$ClamavMSIInstallerFile = "",
+    [bool]$SkipDatabaseDownload = $false
 )
 
 $ErrorActionPreference = "Stop"
@@ -80,34 +86,47 @@ function Get-FileFromUrl {
 
 function Install-ClamAV {
     $clamav = Get-Command clamscan -ErrorAction SilentlyContinue
-    if (-not $clamav) {
-        Write-Info "ClamAV not found. Installing via winget..."
+    if ($clamav) {
+        $clamPath = (Get-ChildItem "C:\Program Files" -Directory | Where-Object { $_.Name -match "ClamAV" }).FullName
+        $script:ClamAVPath = $clamPath
+        $script:FreshClamPath = Join-Path $clamPath "freshclam.exe"
+        Write-Info "ClamAV is already installed at: $($clamav.Source)"
+        return
+    }
+
+    if (-not [string]::IsNullOrEmpty($script:ClamavMSIInstallerFile)) {
+        Write-Info "ClamAV not found. Installing via MSI installer $($script:ClamavMSIInstallerFile)"
+        try {
+            $proc = Start-Process msiexec.exe -PassThru -Wait -ArgumentList "/i `"$script:ClamavMSIInstallerFile`" /qn"
+            if ($proc.ExitCode -ne 0) {
+                Write-Fatal "Installation failed with exit code $($proc.ExitCode)"
+            }
+        } catch {
+            Write-Fatal "Failed to execute MSI installer: $_"
+        }
+    } else {
         $winget = Get-Command winget -ErrorAction SilentlyContinue
         if (-not $winget) {
             Write-Fatal "winget is not installed. Please install Windows Package Manager (winget) first.`nVisit: https://aka.ms/getwinget"
         }
         try {
             & winget install --id=Cisco.ClamAV -e --silent --accept-package-agreements --accept-source-agreements
-            Write-Info "ClamAV installed successfully"
-            $clamPath = (Get-ChildItem "C:\Program Files" -Directory | Where-Object { $_.Name -match "ClamAV" }).FullName
-            $oldPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine)
-            if (-not ($oldPath -split ';' | Where-Object { $_ -eq $clamPath })) {
-                [Environment]::SetEnvironmentVariable("Path", "$oldPath;$clamPath", [EnvironmentVariableTarget]::Machine)
-                Write-Info "ClamAV path added to system PATH"
-            }
-            $script:ClamAVPath = $clamPath
-            $script:FreshClamPath = Join-Path $clamPath "freshclam.exe"
-        }
-        catch {
-            Write-Fatal "Failed to install ClamAV: $_"
+        } catch {
+            Write-Fatal "Failed to install ClamAV using winget: $_"
         }
     }
-    else {
-        $clamPath = (Get-ChildItem "C:\Program Files" -Directory | Where-Object { $_.Name -match "ClamAV" }).FullName
-        $script:ClamAVPath = $clamPath
-        $script:FreshClamPath = Join-Path $clamPath "freshclam.exe"
-        Write-Info "ClamAV is already installed at: $($clamav.Source)"
+
+    Write-Info "ClamAV installed successfully"
+
+    $clamPath = (Get-ChildItem "C:\Program Files" -Directory | Where-Object { $_.Name -match "ClamAV" }).FullName
+    $oldPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine)
+    if (-not ($oldPath -split ';' | Where-Object { $_ -eq $clamPath })) {
+        [Environment]::SetEnvironmentVariable("Path", "$oldPath;$clamPath", [EnvironmentVariableTarget]::Machine)
+        Write-Info "ClamAV path added to system PATH"
     }
+
+    $script:ClamAVPath = $clamPath
+    $script:FreshClamPath = Join-Path $clamPath "freshclam.exe"
 }
 
 function Update-ClamAVDatabase {
@@ -527,14 +546,22 @@ try {
     Initialize-Environment
     Test-Url
     Install-ClamAV
-    Update-ClamAVDatabase
-    New-FreshClamScheduledTask
+    if (-not $SkipDatabaseDownload) {
+        Update-ClamAVDatabase
+        New-FreshClamScheduledTask
+    } else {
+        Write-Info "Skipping downloading ClamAV database"
+        $dbPath = Join-Path "$script:ClamAVPath" "database"
+        if (-not (Test-Path $dbPath)) {
+            Write-Fatal "ClamAV database not found at $dbPath and download was skipped"
+        }
+    }
     Save-Token
     if (-not $SkipDownload) {
         Install-OmniBinary
     }
     else {
-        Write-Info "Skipping download as requested"
+        Write-Info "Skipping downloading Omni binary"
         if (-not (Test-Path $script:OmniBinPath)) {
             Write-Fatal "Omni binary not found at $script:OmniBinPath and download was skipped"
         }
