@@ -4,6 +4,11 @@ name: Lint Pipeline
 on:
   pull_request:
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_ORG_TOKEN }}
+  GOPRIVATE: "github.com/accuknox/*"
+  GOEXPERIMENT: jsonv2
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -17,9 +22,10 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Include a GH token in the URL when interacting with GH repos
+        run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
-        env:
-          GOEXPERIMENT: jsonv2

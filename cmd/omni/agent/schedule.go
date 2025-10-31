@@ -23,17 +23,29 @@ var scheduleCmd = &cli.Command{
 				return err
 			}
 		}
+
+		skipMalwareScan := c.Bool("skip-malware-scan")
+		skipVulnScan := c.Bool("skip-vuln-scan")
+		if skipVulnScan && skipMalwareScan {
+			return fmt.Errorf("atleast one scaner should be enabled")
+		}
+
 		opts := []agent.OptFunc{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
 			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
 		}
-		if c.Bool("skip-malware-scan") {
+		if skipMalwareScan {
 			opts = append(opts, agent.WithMalwareScanDisabled())
 		}
+		if skipVulnScan {
+			opts = append(opts, agent.WithVulnScanDisabled())
+		}
+
 		job, err := agent.NewJob(publisher, opts...)
 		if err != nil {
 			return fmt.Errorf("creating job: %w", err)
 		}
+
 		return job.Schedule(
 			ctx,
 			c.String("crontab"), c.Bool("trigger-immediately"),

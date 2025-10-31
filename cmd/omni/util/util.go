@@ -136,6 +136,10 @@ func AgentScanCmdFlags() []cli.Flag {
 			Name:  "skip-malware-scan",
 			Usage: "Scan only for vulnerabilities",
 		},
+		&cli.BoolFlag{
+			Name:  "skip-vuln-scan",
+			Usage: "Scan only for malware",
+		},
 		&cli.StringFlag{
 			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",

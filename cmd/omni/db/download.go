@@ -3,7 +3,9 @@ package db
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -43,6 +45,11 @@ var downloadCmd = &cli.Command{
 			Value:  "ghcr.io/aquasecurity/trivy-java-db",
 			Config: cli.StringConfig{TrimSpace: true},
 		},
+		&cli.StringFlag{
+			Name:   "msrc-db-url",
+			Value:  "https://accuknox-windows-vuln-db.s3.us-east-1.amazonaws.com/db.sqlite3",
+			Config: cli.StringConfig{TrimSpace: true},
+		},
 		&cli.BoolFlag{
 			Name:  "quiet",
 			Value: false,
@@ -58,7 +65,7 @@ var downloadCmd = &cli.Command{
 			Max:       2,
 			Min:       1,
 			Config:    cli.StringConfig{TrimSpace: true},
-			UsageText: "[vuln java]",
+			UsageText: "[vuln java msrc]",
 		},
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
@@ -69,6 +76,7 @@ var downloadCmd = &cli.Command{
 
 		vulnDBRepo := c.String("vuln-db-repository")
 		javaDBRepo := c.String("java-db-repository")
+		msrcDBUrl := c.String("msrc-db-url")
 		cacheDir := c.String("destination")
 		quiet := c.Bool("quiet")
 		force := c.Bool("force")
@@ -126,6 +134,31 @@ var downloadCmd = &cli.Command{
 				})
 				if err != nil {
 					return fmt.Errorf("downloading java database: %w", err)
+				}
+			case "msrc":
+				destination := filepath.Join(cacheDir, "msrc", "msrc.sqlite")
+				if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+					return fmt.Errorf("creating directory %s: %w", filepath.Dir(destination), err)
+				}
+
+				out, err := os.Create(destination)
+				if err != nil {
+					return fmt.Errorf("creating file %s: %w", destination, err)
+				}
+				defer out.Close()
+
+				resp, err := http.Get(msrcDBUrl)
+				if err != nil {
+					return fmt.Errorf("failed to download: %w", err)
+				}
+				defer resp.Body.Close()
+
+				if resp.StatusCode != http.StatusOK {
+					return fmt.Errorf("bad status: %s", resp.Status)
+				}
+
+				if _, err := io.Copy(out, resp.Body); err != nil {
+					return fmt.Errorf("failed to write file: %w", err)
 				}
 			default:
 				slog.LogAttrs(

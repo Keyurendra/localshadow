@@ -14,6 +14,11 @@ on:
 permissions:
   contents: write
 
+env:
+  GITHUB_TOKEN: ${{ secrets.GH_ORG_TOKEN }}
+  GOPRIVATE: "github.com/accuknox/*"
+  GOEXPERIMENT: jsonv2
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -27,12 +32,13 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Include a GH token in the URL when interacting with GH repos
+        run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
           version: latest
-        env:
-          GOEXPERIMENT: jsonv2
   release:
     runs-on: ubuntu-latest
     needs:
@@ -47,6 +53,9 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
+
+      - name: Include a GH token in the URL when interacting with GH repos
+        run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
 
       - name: Cache Go modules
         uses: actions/cache@v4
@@ -75,8 +84,6 @@ jobs:
       - name: Build and Push Blobs to S3 under `latest`
         if: github.ref == 'refs/heads/main'
         shell: bash
-        env:
-          GOEXPERIMENT: jsonv2
         run: |-
           mkdir -p ./build/main
 

@@ -492,15 +492,16 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		slog.String("os", osType),
 	)
 
-	run := job.NewRun(
-		j.vulnScanEnabled,
-		j.malwareScanEnabled,
-		true,
-		false,
-		j.vulnDBDirectory,
-		mountPoint,
-		j.logger,
-	)
+	run := job.NewRun(job.RunConfig{
+		Logger:                     j.logger,
+		VulnScan:                   j.vulnScanEnabled,
+		VulnScanDBDir:              j.vulnDBDirectory,
+		UseEmbeddedTrivy:           false,
+		MalwareScan:                j.malwareScanEnabled,
+		MalwareScanTargetDirectory: mountPoint,
+		UseClamAVDaemon:            true,
+		OfflineWinVulnScan:         true,
+	})
 	return run.ScanMountPoint(ctx, osType, mountPoint, targetVMURI, j.prov.GetName())
 }
 
