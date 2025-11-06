@@ -59,7 +59,7 @@ spec:
           type: RuntimeDefault
       containers:
       - command:
-        - /omni
+        - /bin/omni
         - openshift
         - operator
         args:

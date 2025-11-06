@@ -147,8 +147,17 @@ var scanCmd = &cli.Command{
 		if err != nil {
 			return fmt.Errorf("marshalling execution summary to json: %w", err)
 		}
-
 		fmt.Println(string(output))
+
+		for _, err := range summary {
+			anyNonNil := err.OrchestrationError != nil ||
+				err.MalwareScanError != nil ||
+				err.VulnScanError != nil ||
+				err.ArtifactAPIError != nil
+			if anyNonNil {
+				return fmt.Errorf("non-zero exit code")
+			}
+		}
 
 		return nil
 	},

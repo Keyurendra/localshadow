@@ -29,14 +29,10 @@ func isJobCompleted(job *batchv1.Job) bool {
 
 func isJobFailed(job *batchv1.Job) bool {
 	for _, c := range job.Status.Conditions {
-		var backoff int32 = 6
-		if limit := job.Spec.BackoffLimit; limit != nil {
-			backoff = *limit
-		}
 		if c.Status != corev1.ConditionTrue {
 			continue
 		}
-		if c.Type == batchv1.JobFailed && job.Status.Failed > backoff {
+		if c.Type == batchv1.JobFailed && job.Status.Failed > 0 {
 			return true
 		}
 	}
