@@ -477,7 +477,7 @@ try {
         }
         else {
             Write-Info "Skipping downloading MSRC database"
-            $dbPath = Join-Path "$Global:OmniHomeDir" "msrc" "msrc.sqlite"
+            $dbPath = Join-Path -Path $Global:OmniHomeDir -ChildPath "msrc\msrc.sqlite"
             if (-not (Test-Path $dbPath)) {
                 Write-Fatal "MSRC database not found at $dbPath and download was skipped"
             }
@@ -496,9 +496,12 @@ try {
     Write-Info "Installation completed successfully!"
     Write-Info ""
     Write-Info "Omni Scan Commands:"
-    Write-Info "  Check task status:                Get-ScheduledTask -TaskName 'AccuKnox Omni Scan'"
-    Write-Info "  View task info:                   Get-ScheduledTaskInfo -TaskName 'AccuKnox Omni Scan'"
-    Write-Info "  Run scan manually:                Start-ScheduledTask -TaskName 'AccuKnox Omni Scan'"
+    Write-Info "  Check vuln scan task status:      Get-ScheduledTask -TaskName 'AccuKnox Omni Vuln Scan'"
+    Write-Info "  View vuln scan task info:         Get-ScheduledTaskInfo -TaskName 'AccuKnox Omni Vuln Scan'"
+    Write-Info "  Check malware scan task status:   Get-ScheduledTask -TaskName 'AccuKnox Omni Malware Scan'"
+    Write-Info "  View malware scan task info:      Get-ScheduledTaskInfo -TaskName 'AccuKnox Omni Malware Scan'"
+    Write-Info "  Run vuln scan manually:           Start-ScheduledTask -TaskName 'AccuKnox Omni Vuln Scan'"
+    Write-Info "  Run malware scan manually:        Start-ScheduledTask -TaskName 'AccuKnox Omni Malware Scan'"
     Write-Info "  View live log for malware scan:   Get-Content '$script:MalwareScanLogFile' -Wait"
     Write-Info "  View live log for vuln scan:      Get-Content '$script:VulnScanLogFile' -Wait"
     Write-Info ""
