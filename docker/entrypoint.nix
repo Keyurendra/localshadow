@@ -5,6 +5,7 @@ pkgs.writeShellScriptBin "entrypoint" ''
 
   dev="$1"; shift
   mountpoint=/mnt/accuknox
+  skipMalwareScan=false
 
   if [[ -z "$ARTIFACT_API_ENDPOINT" ]]; then
     echo "env variable ARTIFACT_API_ENDPOINT not set"
@@ -19,6 +20,10 @@ pkgs.writeShellScriptBin "entrypoint" ''
   if [[ -z "$ARTIFACT_API_LABEL" ]]; then
     echo "env variable ARTIFACT_API_LABEL not set"
     exit 1
+  fi
+
+  if [[ "$SKIP_MALWARE_SCAN" == "true" || "$SKIP_MALWARE_SCAN" == "1" ]]; then
+    skipMalwareScan=true
   fi
 
   ${pkgs.coreutils}/bin/mkdir -p "$mountpoint"
@@ -36,8 +41,10 @@ pkgs.writeShellScriptBin "entrypoint" ''
   }
   trap cleanup EXIT
 
-  echo "[*] Downloading ClamAV DB"
-  ${pkgs.clamav}/bin/freshclam
+  if [[ $skipMalwareScan == false ]]; then
+    echo "[*] Downloading ClamAV DB"
+    ${pkgs.clamav}/bin/freshclam
+  fi
 
   echo "[*] Downloading Trivy DB"
   export TRIVY_CACHE_DIR=/root/.cache/trivy
@@ -136,5 +143,6 @@ pkgs.writeShellScriptBin "entrypoint" ''
   omni openshift scan "$mountpoint" \
     --artifact-endpoint "$ARTIFACT_API_ENDPOINT" \
     --tenant-id "$ARTIFACT_API_TENANT_ID" \
+    --skip-malware-scan "$skipMalwareScan" \
     --artifact-label "$ARTIFACT_API_LABEL" "$@"
 ''

@@ -425,7 +425,6 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 			"--name=" + scan.Name,
 			"--namespace=" + scan.Namespace,
 			"--artifact-token-file=/etc/omni/artifact.tok",
-			"--skip-malware-scan=" + fmt.Sprint(scan.Spec.SkipMalwareScan),
 		},
 		vols: []corev1.Volume{
 			{
@@ -478,6 +477,10 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 			{
 				Name:  "ARTIFACT_API_LABEL",
 				Value: scan.Spec.ArtifactAPI.Label,
+			},
+			{
+				Name:  "SKIP_MALWARE_SCAN",
+				Value: fmt.Sprint(scan.Spec.SkipMalwareScan),
 			},
 		},
 	}
