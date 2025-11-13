@@ -72,7 +72,18 @@ type ScanReconciler struct {
 	KubeClient kubernetes.Interface
 }
 
-// +kubebuilder:rbac:groups=*,resources=*,verbs=*
+// +kubebuilder:rbac:groups=omni.accuknox.com,resources=scans,verbs=get;list;watch;patch;update
+// +kubebuilder:rbac:groups=omni.accuknox.com,resources=scans/status,verbs=patch;update
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;patch;delete
+// +kubebuilder:rbac:groups=snapshot.storage.k8s.io,resources=volumesnapshots,verbs=get;list;watch;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=create
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;patch
+// +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=create
+// +kubebuilder:rbac:groups="kubevirt.io",resources=virtualmachines,verbs=get
 
 // Reconcile performs the main reconciliation loop for Scan resources.
 func (r *ScanReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -322,12 +333,17 @@ func (r *ScanReconciler) updateCondition(ctx context.Context, key types.Namespac
 
 // ensureJob creates or retrieves a job (orchestration or scan) with its service account.
 func (r *ScanReconciler) ensureJob(ctx context.Context, scan *v1alpha1.Scan, parent *batchv1.Job) (*batchv1.Job, bool, error) {
+	typ := jobTypeOrch
+	if parent != nil {
+		typ = jobTypeScan
+	}
+
 	hash, err := scan.Hash()
 	if err != nil {
 		return nil, false, fmt.Errorf("compute scan hash: %w", err)
 	}
 
-	isNew, err := r.ensureRole(ctx, scan)
+	isNew, err := r.ensureRole(ctx, scan, typ)
 	if err != nil {
 		return nil, false, fmt.Errorf("ensure role: %w", err)
 	}
@@ -335,7 +351,7 @@ func (r *ScanReconciler) ensureJob(ctx context.Context, scan *v1alpha1.Scan, par
 		return nil, true, nil
 	}
 
-	sa, isNew, err := r.ensureSvcAcct(ctx, scan)
+	sa, isNew, err := r.ensureSvcAcct(ctx, scan, typ)
 	if err != nil {
 		return nil, false, fmt.Errorf("ensure service account: %w", err)
 	}
@@ -371,10 +387,6 @@ func (r *ScanReconciler) ensureJob(ctx context.Context, scan *v1alpha1.Scan, par
 			return nil, false, fmt.Errorf("create job: %w", err)
 		}
 
-		typ := jobTypeOrch
-		if parent != nil {
-			typ = jobTypeScan
-		}
 		r.setJobCreationCondition(ctx, types.NamespacedName{
 			Namespace: scan.Namespace,
 			Name:      scan.Name,
@@ -564,12 +576,19 @@ func (r *ScanReconciler) setJobCreationCondition(ctx context.Context, req types.
 }
 
 // ensureSvcAcct creates or retrieves the service account for the scan jobs.
-func (r *ScanReconciler) ensureSvcAcct(ctx context.Context, scan *v1alpha1.Scan) (*corev1.ServiceAccount, bool, error) {
+func (r *ScanReconciler) ensureSvcAcct(ctx context.Context, scan *v1alpha1.Scan, typ int) (*corev1.ServiceAccount, bool, error) {
 	hash, err := scan.Hash()
 	if err != nil {
 		return nil, false, fmt.Errorf("compute scan hash: %w", err)
 	}
-	name := truncName(scan.Name + "-" + hash)
+
+	mid := "orch"
+	if typ == jobTypeScan {
+		mid = "scan"
+	}
+
+	name := truncName(scan.Name + "-" + mid + "-" + hash)
+
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        name,
@@ -578,9 +597,11 @@ func (r *ScanReconciler) ensureSvcAcct(ctx context.Context, scan *v1alpha1.Scan)
 			Annotations: scan.Annotations,
 		},
 	}
+
 	if err := ctrl.SetControllerReference(scan, sa, r.Scheme); err != nil {
 		return nil, false, fmt.Errorf("set controller reference: %w", err)
 	}
+
 	if err := r.Create(ctx, sa); err != nil {
 		if !apierr.IsAlreadyExists(err) {
 			return nil, false, fmt.Errorf("creating service account: %w", err)
@@ -591,16 +612,75 @@ func (r *ScanReconciler) ensureSvcAcct(ctx context.Context, scan *v1alpha1.Scan)
 		}
 		return sa, isNew, nil
 	}
+
 	return sa, true, nil
 }
 
 // ensureRole creates the scan role if it doesn't exist.
-func (r *ScanReconciler) ensureRole(ctx context.Context, scan *v1alpha1.Scan) (bool, error) {
+func (r *ScanReconciler) ensureRole(ctx context.Context, scan *v1alpha1.Scan, typ int) (bool, error) {
 	hash, err := scan.Hash()
 	if err != nil {
 		return false, fmt.Errorf("compute scan hash: %w", err)
 	}
-	name := truncName(scan.Name + "-" + hash)
+
+	mid := "orch"
+	if typ == jobTypeScan {
+		mid = "scan"
+	}
+
+	name := truncName(scan.Name + "-" + mid + "-" + hash)
+
+	rules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{"omni.accuknox.com"},
+			Resources: []string{"scans"},
+			Verbs:     []string{"get", "patch", "update"},
+		},
+		{
+			APIGroups: []string{"omni.accuknox.com"},
+			Resources: []string{"scans/status"},
+			Verbs:     []string{"patch", "update"},
+		},
+		{
+			APIGroups: []string{""},
+			Resources: []string{"pods"},
+			Verbs:     []string{"get", "patch"},
+		},
+		{
+			APIGroups: []string{""},
+			Resources: []string{"persistentvolumeclaims"},
+			Verbs:     []string{"get", "list", "create", "delete", "watch"},
+		},
+		{
+			APIGroups: []string{"snapshot.storage.k8s.io"},
+			Resources: []string{"volumesnapshots"},
+			Verbs:     []string{"get", "list", "create", "delete", "watch"},
+		},
+		{
+			APIGroups: []string{"kubevirt.io"},
+			Resources: []string{"virtualmachines"},
+			Verbs:     []string{"get"},
+		},
+		{
+			APIGroups: []string{"batch"},
+			Resources: []string{"jobs"},
+			Verbs:     []string{"patch"},
+		},
+	}
+	if typ == jobTypeScan {
+		rules = []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"omni.accuknox.com"},
+				Resources: []string{"scans"},
+				Verbs:     []string{"get", "patch", "update"},
+			},
+			{
+				APIGroups: []string{"omni.accuknox.com"},
+				Resources: []string{"scans/status"},
+				Verbs:     []string{"patch", "update"},
+			},
+		}
+	}
 
 	cr := &rbacv1.Role{}
 	key := types.NamespacedName{Name: name, Namespace: scan.Namespace}
@@ -611,13 +691,7 @@ func (r *ScanReconciler) ensureRole(ctx context.Context, scan *v1alpha1.Scan) (b
 			Namespace: scan.Namespace,
 			Labels:    scan.GetLabels(),
 		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{"*"},
-				Resources: []string{"*"},
-				Verbs:     []string{"*"},
-			},
-		},
+		Rules: rules,
 	}
 	if err := ctrl.SetControllerReference(scan, desired, r.Scheme); err != nil {
 		return false, fmt.Errorf("set controller reference: %w", err)
@@ -628,11 +702,15 @@ func (r *ScanReconciler) ensureRole(ctx context.Context, scan *v1alpha1.Scan) (b
 			return false, fmt.Errorf("get role: %w", err)
 		}
 		if err := r.Create(ctx, desired); err != nil {
+			if apierr.IsAlreadyExists(err) {
+				goto Patch
+			}
 			return false, fmt.Errorf("create role: %w", err)
 		}
 		return true, nil
 	}
 
+Patch:
 	patch := client.MergeFrom(cr.DeepCopy())
 	cr.Rules = desired.Rules
 	if err := r.Patch(ctx, cr, patch); err != nil {

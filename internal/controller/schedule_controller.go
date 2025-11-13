@@ -54,7 +54,15 @@ type ScheduleReconciler struct {
 	logger *slog.Logger
 }
 
-// +kubebuilder:rbac:groups=*,resources=*,verbs=*
+// +kubebuilder:rbac:groups=omni.accuknox.com,resources=schedules,verbs=get;list;watch;patch;update
+// +kubebuilder:rbac:groups=omni.accuknox.com,resources=schedules/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups=omni.accuknox.com,resources=scans,verbs=get;list;watch;create;delete
+// +kubebuilder:rbac:groups=batch,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterroles,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=clusterrolebindings,verbs=get;list;watch;create;update;patch
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;create;update
+// +kubebuilder:rbac:groups="kubevirt.io",resources=virtualmachines,verbs=list
 
 // Reconcile performs the main reconciliation loop for Schedule resources.
 func (r *ScheduleReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -218,9 +226,29 @@ func (r *ScheduleReconciler) ensureClusterRole(ctx context.Context, schedule *v1
 		},
 		Rules: []rbacv1.PolicyRule{
 			{
-				APIGroups: []string{"*"},
-				Resources: []string{"*"},
-				Verbs:     []string{"*"},
+				APIGroups: []string{"omni.accuknox.com"},
+				Resources: []string{"schedules"},
+				Verbs:     []string{"get", "list", "watch", "update"},
+			},
+			{
+				APIGroups: []string{"omni.accuknox.com"},
+				Resources: []string{"schedules/status"},
+				Verbs:     []string{"get", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"omni.accuknox.com"},
+				Resources: []string{"scans"},
+				Verbs:     []string{"get", "list", "watch", "create", "update", "patch"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list", "create", "update"},
+			},
+			{
+				APIGroups: []string{"kubevirt.io"},
+				Resources: []string{"virtualmachines"},
+				Verbs:     []string{"list"},
 			},
 		},
 	}
@@ -233,11 +261,15 @@ func (r *ScheduleReconciler) ensureClusterRole(ctx context.Context, schedule *v1
 			return fmt.Errorf("get cluster role: %w", err)
 		}
 		if err := r.Create(ctx, desired); err != nil {
+			if apierr.IsAlreadyExists(err) {
+				goto Patch
+			}
 			return fmt.Errorf("create cluster role: %w", err)
 		}
 		return nil
 	}
 
+Patch:
 	patch := client.MergeFrom(cr.DeepCopy())
 	cr.Rules = desired.Rules
 	if err := r.Patch(ctx, cr, patch); err != nil {
@@ -298,12 +330,16 @@ func (r *ScheduleReconciler) ensureCronJob(ctx context.Context, schedule *v1alph
 		}
 
 		if err := r.Create(ctx, cronJob); err != nil {
+			if apierr.IsAlreadyExists(err) {
+				goto Patch
+			}
 			return nil, fmt.Errorf("create cronjob: %w", err)
 		}
 
 		return cronJob, nil
 	}
 
+Patch:
 	desired := r.buildCronJob(schedule)
 	patch := client.MergeFrom(cronJob.DeepCopy())
 	cronJob.Spec = desired.Spec

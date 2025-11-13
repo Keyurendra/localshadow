@@ -23,7 +23,7 @@
               pname = "omni";
               version = "0.0.0";
               src = ./.;
-              vendorHash = "sha256-SWShpN958AXw0az8pie+E9g7M0ZRvfnAt0G/7N1TpAM=";
+              vendorHash = "sha256-a/pdVD0JZOEhOwfjmTdot/lRF7HbwlOlrp0GSOQTluo=";
               ldflags = [ "-s" "-w" ];
               env = {
                 CGO_ENABLED = 0;
