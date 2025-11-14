@@ -21,7 +21,7 @@ env:
 
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: omni-telemetry
     steps:
       - uses: actions/checkout@v5
         with:
@@ -40,7 +40,7 @@ jobs:
         with:
           version: latest
   release:
-    runs-on: ubuntu-latest
+    runs-on: omni-telemetry
     needs:
       - lint
     steps:
