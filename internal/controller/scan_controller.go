@@ -41,7 +41,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/accuknox/omniscan/api/v1alpha1"
-	"github.com/accuknox/omniscan/pkg/util"
 )
 
 const (
@@ -474,7 +473,11 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 			ReadOnly:  true,
 		}},
 		securityContext: &corev1.SecurityContext{
-			Privileged: util.Ptr(true),
+			Capabilities: &corev1.Capabilities{
+				Add: []corev1.Capability{
+					"SYS_ADMIN",
+				},
+			},
 		},
 		annotations: annotations,
 		env: []corev1.EnvVar{
