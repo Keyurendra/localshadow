@@ -78,6 +78,13 @@ rules:
 - apiGroups:
   - omni.accuknox.com
   resources:
+  - scans/finalizers
+  - schedules/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - omni.accuknox.com
+  resources:
   - scans/status
   verbs:
   - patch

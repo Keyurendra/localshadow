@@ -73,6 +73,7 @@ type ScanReconciler struct {
 
 // +kubebuilder:rbac:groups=omni.accuknox.com,resources=scans,verbs=get;list;watch;patch;update
 // +kubebuilder:rbac:groups=omni.accuknox.com,resources=scans/status,verbs=patch;update
+// +kubebuilder:rbac:groups=omni.accuknox.com,resources=scans/finalizers,verbs=update
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=persistentvolumeclaims,verbs=get;list;watch;patch;delete
 // +kubebuilder:rbac:groups=snapshot.storage.k8s.io,resources=volumesnapshots,verbs=get;list;watch;patch;delete

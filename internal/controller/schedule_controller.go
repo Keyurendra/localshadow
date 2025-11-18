@@ -56,6 +56,7 @@ type ScheduleReconciler struct {
 
 // +kubebuilder:rbac:groups=omni.accuknox.com,resources=schedules,verbs=get;list;watch;patch;update
 // +kubebuilder:rbac:groups=omni.accuknox.com,resources=schedules/status,verbs=get;patch;update
+// +kubebuilder:rbac:groups=omni.accuknox.com,resources=schedules/finalizers,verbs=update
 // +kubebuilder:rbac:groups=omni.accuknox.com,resources=scans,verbs=get;list;watch;create;delete
 // +kubebuilder:rbac:groups=batch,resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
@@ -234,6 +235,11 @@ func (r *ScheduleReconciler) ensureClusterRole(ctx context.Context, schedule *v1
 				APIGroups: []string{"omni.accuknox.com"},
 				Resources: []string{"schedules/status"},
 				Verbs:     []string{"get", "update", "patch"},
+			},
+			{
+				APIGroups: []string{"omni.accuknox.com"},
+				Resources: []string{"schedules/finalizers"},
+				Verbs:     []string{"update"},
 			},
 			{
 				APIGroups: []string{"omni.accuknox.com"},

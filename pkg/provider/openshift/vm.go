@@ -36,11 +36,8 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 				continue
 			}
 			bootDisk := findBootDisk(vm.Spec.Template.Spec.Domain.Devices.Disks)
-			if bootDisk == nil {
-				continue
-			}
 			for _, vol := range vm.Spec.Template.Spec.Volumes {
-				if vol.Name != bootDisk.Name {
+				if bootDisk != nil && vol.Name != bootDisk.Name {
 					continue
 				}
 				var uri string

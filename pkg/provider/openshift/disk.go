@@ -71,11 +71,8 @@ func (p Provider) ListVMDisks(ctx context.Context, vmURI string) ([]resource.Dis
 		return nil, fmt.Errorf("fetching vm %s from apisrv: %w", vmURI, err)
 	}
 	bootDisk := findBootDisk(vm.Spec.Template.Spec.Domain.Devices.Disks)
-	if bootDisk == nil {
-		return nil, fmt.Errorf("boot disk not found")
-	}
 	for _, vol := range vm.Spec.Template.Spec.Volumes {
-		if vol.Name != bootDisk.Name {
+		if bootDisk != nil && vol.Name != bootDisk.Name {
 			continue
 		}
 		var uri string

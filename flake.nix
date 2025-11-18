@@ -104,6 +104,7 @@
                 kubernetes-code-generator
                 goreleaser
                 golangci-lint
+                operator-sdk
               ];
           };
         });
