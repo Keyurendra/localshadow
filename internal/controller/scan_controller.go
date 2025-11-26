@@ -475,9 +475,8 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 		}},
 		securityContext: &corev1.SecurityContext{
 			Capabilities: &corev1.Capabilities{
-				Add: []corev1.Capability{
-					"SYS_ADMIN",
-				},
+				Drop: []corev1.Capability{"ALL"},
+				Add:  []corev1.Capability{"SYS_ADMIN", "MKNOD"},
 			},
 		},
 		annotations: annotations,
