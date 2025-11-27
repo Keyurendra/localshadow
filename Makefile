@@ -248,3 +248,12 @@ clientset:
 	@mkdir -p pkg/generated/clientset pkg/generated/listers pkg/generated/informers
 	CODEGEN_PKG=$(CODEGEN_PKG) hack/update-codegen.sh
 	@rm -rf $(CODEGEN_PKG)
+
+.PHONY: generate-bundle
+VERSION ?= 0.0.0
+generate-bundle:
+	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	@$(KUSTOMIZE) build config/bundle/ | operator-sdk generate bundle --overwrite --version $(VERSION)
+	@$(CONTAINER_TOOL) build . -f bundle.Dockerfile -t public.ecr.aws/k9v9d5v2/omni-operator-bundle:v$(VERSION)
+	@$(CONTAINER_TOOL) push public.ecr.aws/k9v9d5v2/omni-operator-bundle:v$(VERSION)
+	@rm -rf bundle/ bundle.Dockerfile
