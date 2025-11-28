@@ -13,6 +13,16 @@ OMNI_SKIP_DB_DOWNLOAD="${OMNI_SKIP_DB_DOWNLOAD:-false}"
 OMNI_VULN_DB_REPOSITORY=${OMNI_VULN_DB_REPOSITORY:-"ghcr.io/aquasecurity/trivy-db"}
 OMNI_JAVA_DB_REPOSITORY=${OMNI_JAVA_DB_REPOSITORY:-"ghcr.io/aquasecurity/trivy-java-db"}
 OMNI_HOME_DIR="${OMNI_HOME_DIR:-/var/lib/accuknox-omni/}"
+OMNI_SKIP_MALWARE_SCAN="${OMNI_SKIP_MALWARE_SCAN:-true}"
+OMNI_MAX_MEMORY="${OMNI_MAX_MEMORY:-""}"
+OMNI_CPU_QUOTA="${OMNI_CPU_QUOTA:-10%}"
+
+if [[ -z $OMNI_MAX_MEMORY ]]; then
+    OMNI_MAX_MEMORY="50M"
+    if [[ $OMNI_SKIP_MALWARE_SCAN == false || $OMNI_SKIP_MALWARE_SCAN == 0 ]]; then
+        OMNI_MAX_MEMORY="100M"
+    fi
+fi
 
 info() {
     echo '[INFO]' "$@"
@@ -184,6 +194,9 @@ setup_env() {
         --destination="${OMNI_HOME_DIR}" \
         --quiet)"
     AGENT_CMD_EXEC="agent scan$(quote_indent "$@")"
+    if [[ $OMNI_SKIP_MALWARE_SCAN == true || $OMNI_SKIP_MALWARE_SCAN == 1 ]]; then
+        AGENT_CMD_EXEC="$AGENT_CMD_EXEC --skip-malware-scan"
+    fi
     FILE_OMNI_SERVICE="$(filepath_join "$OMNI_INSTALL_SYSTEMD_DIR" omni.service)"
     FILE_OMNI_TIMER="$(filepath_join "$OMNI_INSTALL_SYSTEMD_DIR" omni.timer)"
     FILE_UNINSTALL_SCRIPT="$(filepath_join "$OMNI_INSTALL_PATH" omni-uninstall.sh)"
@@ -238,11 +251,18 @@ create_systemd_service_file() {
         echo "[Service]"
         echo "Type=simple"
         echo "User=root"
+        echo "CPUQuota=$OMNI_CPU_QUOTA"
+        echo "MemoryMax=$OMNI_MAX_MEMORY"
         echo "StandardOutput=journal"
         echo "StandardError=journal"
         echo "SyslogIdentifier=accuknox-omni"
         if [[ "${OMNI_SKIP_DB_DOWNLOAD}" != true && "${OMNI_SKIP_DB_DOWNLOAD}" != 1 ]]; then
             echo "ExecStartPre=${OMNI_BIN_PATH} ${DB_DOWNLOAD_CMD_EXEC}"
+            if [[ $OMNI_SKIP_MALWARE_SCAN == false || $OMNI_SKIP_MALWARE_SCAN == 0 ]]; then
+                if [[ -x "$(command -v freshclam)" ]]; then
+                    echo "ExecStartPre=freshclam"
+                fi
+            fi
         fi
         echo "ExecStart=${OMNI_BIN_PATH} ${AGENT_CMD_EXEC}"
     } | $SUDO tee "${FILE_OMNI_SERVICE}" >/dev/null
