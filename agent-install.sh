@@ -250,6 +250,7 @@ create_systemd_service_file() {
         echo
         echo "[Service]"
         echo "Type=simple"
+        echo "TimeoutStartSec=infinity"
         echo "User=root"
         echo "CPUQuota=$OMNI_CPU_QUOTA"
         echo "MemoryMax=$OMNI_MAX_MEMORY"

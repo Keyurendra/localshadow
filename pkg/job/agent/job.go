@@ -123,6 +123,11 @@ func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, e
 		if result.VulnScanError != nil {
 			errors.VulnScanError = result.VulnScanError
 		}
+		j.logger.LogAttrs(
+			ctx,
+			slog.LevelInfo,
+			"publishing results to the provided publisher",
+		)
 		err := result.Publish(ctx, j.pub)
 		if err != nil {
 			errors.ArtifactAPIError = fmt.Errorf("publishing artifact: %w", err)
