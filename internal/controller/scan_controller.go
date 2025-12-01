@@ -41,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/accuknox/omniscan/api/v1alpha1"
+	"github.com/accuknox/omniscan/pkg/util"
 )
 
 const (
@@ -474,10 +475,12 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 			ReadOnly:  true,
 		}},
 		securityContext: &corev1.SecurityContext{
+			Privileged: util.Ptr(true),
 			Capabilities: &corev1.Capabilities{
 				Drop: []corev1.Capability{"ALL"},
 				Add:  []corev1.Capability{"SYS_ADMIN", "MKNOD"},
 			},
+			RunAsUser: util.Ptr(int64(0)),
 		},
 		annotations: annotations,
 		env: []corev1.EnvVar{
@@ -715,6 +718,8 @@ func (r *ScanReconciler) ensureRole(ctx context.Context, scan *v1alpha1.Scan, ty
 
 Patch:
 	patch := client.MergeFrom(cr.DeepCopy())
+	cr.Name = desired.Name
+	cr.Namespace = desired.Namespace
 	cr.Rules = desired.Rules
 	if err := r.Patch(ctx, cr, patch); err != nil {
 		return false, fmt.Errorf("patch role: %w", err)

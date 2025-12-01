@@ -3,6 +3,9 @@
 pkgs.writeShellScriptBin "entrypoint" ''
   set -euo pipefail
 
+  # fix for openshift
+  ${pkgs.coreutils}/bin/chmod 755 /
+
   dev="$1"; shift
   mountpoint=/mnt/accuknox
   skipMalwareScan=false
@@ -55,7 +58,7 @@ pkgs.writeShellScriptBin "entrypoint" ''
   ${pkgs.multipath-tools}/bin/kpartx -av "$dev" >/dev/null
 
   echo "[*] Collecting partition candidates"
-  base=$(basename "$dev")
+  base=$(${pkgs.coreutils}/bin/basename "$dev")
   candidates=()
 
   for p in /dev/mapper/''${base}*; do

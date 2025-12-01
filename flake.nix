@@ -52,8 +52,6 @@
               copyToRoot = pkgs.buildEnv {
                 name = "rootfs";
                 paths = [
-                  pkgs.dockerTools.binSh
-                  pkgs.coreutils
                   pkgs.dockerTools.caCertificates
                   pkgs.mount
                   pkgs.ntfs3g
