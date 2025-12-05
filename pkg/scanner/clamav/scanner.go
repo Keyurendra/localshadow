@@ -65,7 +65,7 @@ func (s s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string)
 		return nil, fmt.Errorf("parsing clamscan output: %w", err)
 	}
 
-	enriched := Result{
+	enriched := &Result{
 		Platform:        platform,
 		VMUri:           vmURI,
 		OS:              osType,

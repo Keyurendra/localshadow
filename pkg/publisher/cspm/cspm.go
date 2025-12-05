@@ -1,9 +1,9 @@
 package cspm
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"log/slog"
@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/avast/retry-go/v4"
 
@@ -122,23 +123,53 @@ func (p Publisher) buildArtifactURL(dataType string) (*url.URL, error) {
 }
 
 func (p Publisher) uploadFinding(ctx context.Context, f scanner.Findings) error {
-	body, contentType, err := p.createMultipartBody(f)
-	if err != nil {
-		return fmt.Errorf("creating multipart form: %w", err)
-	}
+	pr, pw := io.Pipe()
+	mw := multipart.NewWriter(pw)
+
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	wg.Go(func() {
+		defer pw.Close()
+		defer mw.Close()
+
+		part, err := mw.CreateFormFile("file", "artifact.json")
+		if err != nil {
+			p.logger.LogAttrs(
+				ctx,
+				slog.LevelError,
+				"failed to create multipart form file",
+				slog.String("error", err.Error()),
+			)
+			pw.CloseWithError(fmt.Errorf("creating form file: %w", err))
+			return
+		}
+
+		if err := json.MarshalWrite(part, f); err != nil {
+			p.logger.LogAttrs(
+				ctx,
+				slog.LevelError,
+				"failed to encode findings into json",
+				slog.String("data_type", f.DataType()),
+				slog.String("error", err.Error()),
+			)
+			pw.CloseWithError(fmt.Errorf("encoding %q findings: %w", f.DataType(), err))
+			return
+		}
+	})
 
 	url, err := p.buildArtifactURL(f.DataType())
 	if err != nil {
 		return fmt.Errorf("building artifact URL: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url.String(), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url.String(), pr)
 	if err != nil {
 		return fmt.Errorf("creating request: %w", err)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+p.c.Token)
-	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
 
 	retryOpts := []retry.Option{
 		retry.Context(ctx),
@@ -172,26 +203,4 @@ func (p Publisher) uploadFinding(ctx context.Context, f scanner.Findings) error 
 
 		return fmt.Errorf("%s: %s", resp.Status, string(body))
 	}, retryOpts...)
-}
-
-func (p Publisher) createMultipartBody(f scanner.Findings) (io.Reader, string, error) {
-	buf := new(bytes.Buffer)
-	w := multipart.NewWriter(buf)
-
-	part, err := w.CreateFormFile("file", "artifact.json")
-	if err != nil {
-		return nil, "", fmt.Errorf("creating form file: %w", err)
-	}
-
-	_, err = io.Copy(part, f.JSONReader())
-	if err != nil {
-		return nil, "", fmt.Errorf("copying %q findings: %w", f.DataType(), err)
-	}
-
-	err = w.Close()
-	if err != nil {
-		return nil, "", fmt.Errorf("closing multipart form: %w", err)
-	}
-
-	return buf, w.FormDataContentType(), nil
 }

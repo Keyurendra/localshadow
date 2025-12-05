@@ -1,9 +1,6 @@
 package trivy
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
 	"time"
 
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
@@ -36,16 +33,6 @@ type VMMetadata struct {
 	URI      string `json:"uri,omitempty"`
 	Platform string `json:"platform,omitempty"`
 	OS       string `json:"os,omitempty"`
-}
-
-func (r Result) JSON() []byte {
-	payload, _ := json.Marshal(r)
-	return payload
-}
-
-func (r Result) JSONReader() io.Reader {
-	buf := bytes.NewBuffer(r.JSON())
-	return buf
 }
 
 func (r Result) DataType() string {

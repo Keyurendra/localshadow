@@ -108,7 +108,7 @@ func (s s) embeddedScan(ctx context.Context, mountpoint, vmURI, platform, osType
 			Quiet:    true,
 		},
 		CacheOptions: flag.CacheOptions{
-			CacheBackend: "memory",
+			CacheBackend: "fs",
 		},
 		ScanOptions: flag.ScanOptions{
 			Scanners:          []types.Scanner{types.VulnerabilityScanner},
@@ -136,7 +136,7 @@ func (s s) embeddedScan(ctx context.Context, mountpoint, vmURI, platform, osType
 		},
 		ReportOptions: flag.ReportOptions{
 			Format:      types.FormatJSON,
-			ListAllPkgs: true,
+			ListAllPkgs: false,
 			Severities: []dbTypes.Severity{
 				dbTypes.SeverityUnknown,
 				dbTypes.SeverityLow,

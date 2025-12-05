@@ -1,10 +1,6 @@
 package clamav
 
 import (
-	"bytes"
-	"encoding/json"
-	"io"
-
 	"github.com/accuknox/omniscan/pkg/scanner/clamav/hash"
 	"github.com/accuknox/omniscan/pkg/scanner/clamav/metadata"
 	"github.com/accuknox/omniscan/pkg/scanner/clamav/parser"
@@ -26,16 +22,6 @@ type MaliciousFile struct {
 	Metadata        *metadata.Metadata `json:"metadata,omitempty"`
 	Hashes          *hash.Hashes       `json:"hashes,omitempty"`
 	Errors          []string           `json:"errors,omitempty"`
-}
-
-func (r Result) JSON() []byte {
-	payload, _ := json.Marshal(r)
-	return payload
-}
-
-func (r Result) JSONReader() io.Reader {
-	buf := bytes.NewBuffer(r.JSON())
-	return buf
 }
 
 func (r Result) DataType() string {

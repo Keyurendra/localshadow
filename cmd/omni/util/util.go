@@ -29,7 +29,7 @@ func CloudScanCmdFlags() []cli.Flag {
 			Name:      "local-publisher-store-path",
 			Usage:     "Path to local publisher's store directory",
 			TakesFile: true,
-			Value:     "/var/lib/accuknox",
+			Value:     "/var/lib/accuknox-omni/",
 		},
 		&cli.StringFlag{
 			Name:  "artifact-endpoint",
@@ -111,7 +111,7 @@ func AgentScanCmdFlags() []cli.Flag {
 			Name:      "local-publisher-store-path",
 			Usage:     "Path to local publisher's store directory",
 			TakesFile: true,
-			Value:     "/var/lib/accuknox",
+			Value:     "/var/lib/accuknox-omni/",
 		},
 		&cli.StringFlag{
 			Name:  "artifact-endpoint",

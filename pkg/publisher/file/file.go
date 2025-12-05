@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"encoding/json/v2"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -32,10 +33,15 @@ func (p Publisher) Publish(ctx context.Context, findings ...scanner.Findings) er
 			p.storePath,
 			fmt.Sprintf("%s-%s.json", uuid.NewString(), f.DataType()),
 		)
-		err := os.WriteFile(path, f.JSON(), 0o644)
+		file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY, 0o600)
 		if err != nil {
+			return fmt.Errorf("failed to open file %s: %w", path, err)
+		}
+		if err := json.MarshalWrite(file, f); err != nil {
+			file.Close()
 			return fmt.Errorf("writing to %q: %w", path, err)
 		}
+		file.Close()
 	}
 
 	return nil
