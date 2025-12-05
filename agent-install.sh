@@ -14,15 +14,8 @@ OMNI_VULN_DB_REPOSITORY=${OMNI_VULN_DB_REPOSITORY:-"ghcr.io/aquasecurity/trivy-d
 OMNI_JAVA_DB_REPOSITORY=${OMNI_JAVA_DB_REPOSITORY:-"ghcr.io/aquasecurity/trivy-java-db"}
 OMNI_HOME_DIR="${OMNI_HOME_DIR:-/var/lib/accuknox-omni/}"
 OMNI_SKIP_MALWARE_SCAN="${OMNI_SKIP_MALWARE_SCAN:-true}"
-OMNI_MAX_MEMORY="${OMNI_MAX_MEMORY:-""}"
+OMNI_MAX_MEMORY="${OMNI_MAX_MEMORY:-2G}"
 OMNI_CPU_QUOTA="${OMNI_CPU_QUOTA:-10%}"
-
-if [[ -z $OMNI_MAX_MEMORY ]]; then
-    OMNI_MAX_MEMORY="50M"
-    if [[ $OMNI_SKIP_MALWARE_SCAN == false || $OMNI_SKIP_MALWARE_SCAN == 0 ]]; then
-        OMNI_MAX_MEMORY="100M"
-    fi
-fi
 
 info() {
     echo '[INFO]' "$@"
