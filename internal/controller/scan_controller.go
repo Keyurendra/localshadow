@@ -119,11 +119,6 @@ func (r *ScanReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Scan{}).
-		Owns(&batchv1.Job{}).
-		Owns(&corev1.ServiceAccount{}).
-		Owns(&rbacv1.RoleBinding{}).
-		Owns(&corev1.PersistentVolumeClaim{}).
-		Owns(&volumesnapshotv1.VolumeSnapshot{}).
 		Named("scan").
 		Complete(r)
 }
@@ -428,7 +423,13 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 		annotationSnapshot: parent.Annotations[annotationSnapshot],
 		annotationPVC:      parent.Annotations[annotationPVC],
 	}
+
 	devicePath := "/dev/" + uuid.NewString()
+
+	var skipMalwareScan bool
+	if scan.Spec.SkipMalwareScan != nil {
+		skipMalwareScan = *scan.Spec.SkipMalwareScan
+	}
 
 	return name, jobSpec{
 		ctrName: "scan",
@@ -498,7 +499,7 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 			},
 			{
 				Name:  "SKIP_MALWARE_SCAN",
-				Value: fmt.Sprint(scan.Spec.SkipMalwareScan),
+				Value: fmt.Sprint(skipMalwareScan),
 			},
 		},
 	}

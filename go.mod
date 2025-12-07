@@ -18,6 +18,7 @@ require (
 	github.com/aws/smithy-go v1.23.0
 	github.com/go-co-op/gocron/v2 v2.16.6
 	github.com/go-logr/logr v1.4.3
+	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/go-containerregistry v0.20.6
 	github.com/google/uuid v1.6.0
 	github.com/h2non/filetype v1.1.3
@@ -205,7 +206,6 @@ require (
 	github.com/goccy/go-json v0.10.3 // indirect
 	github.com/gocsaf/csaf/v3 v3.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.3 // indirect

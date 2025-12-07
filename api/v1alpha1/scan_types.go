@@ -41,7 +41,7 @@ type ScanSpec struct {
 	// by default.
 	// +kubebuilder:default:=true
 	// +optional
-	SkipMalwareScan bool `json:"skipMalwareScan"`
+	SkipMalwareScan *bool `json:"skipMalwareScan"`
 	// Image is the container image to use.
 	// More info: https://kubernetes.io/docs/concepts/containers/images
 	// +optional

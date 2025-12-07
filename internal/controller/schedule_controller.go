@@ -96,7 +96,6 @@ func (r *ScheduleReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Schedule{}).
 		Owns(&batchv1.CronJob{}).
-		Owns(&corev1.ServiceAccount{}).
 		Named("schedule").
 		Complete(r)
 }

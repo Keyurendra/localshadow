@@ -21,7 +21,6 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	omniv1alpha1 "github.com/accuknox/omniscan/api/v1alpha1"
 	"github.com/accuknox/omniscan/cmd/omni/agent"
 	"github.com/accuknox/omniscan/cmd/omni/aws"
 	"github.com/accuknox/omniscan/cmd/omni/azure"
@@ -34,6 +33,9 @@ import (
 	// import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	omniv1alpha1 "github.com/accuknox/omniscan/api/v1alpha1"
+	webhookv1alpha1 "github.com/accuknox/omniscan/internal/webhook/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -327,6 +329,19 @@ var operatorCmd = &cli.Command{
 			setupLog.Error(err, "unable to create controller", "controller", "Scan")
 			os.Exit(1)
 		}
+
+		// nolint:goconst
+		if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+			if err := webhookv1alpha1.SetupScanWebhookWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "Scan")
+				os.Exit(1)
+			}
+			if err := webhookv1alpha1.SetupScheduleWebhookWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create webhook", "webhook", "Schedule")
+				os.Exit(1)
+			}
+		}
+
 		// +kubebuilder:scaffold:builder
 
 		if metricsCertWatcher != nil {

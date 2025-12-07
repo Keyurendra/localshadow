@@ -61,16 +61,17 @@ type ScheduleSpec struct {
 	TimeZone *string `json:"timeZone"`
 	// The number of finished scans to retain. Value must be non-negative
 	// integer. Defaults to 3.
+	// +kubebuilder:default:=3
 	// +optional
 	ScansHistoryLimit *int32 `json:"scansHistoryLimit"`
 	// NamespaceSelector restricts scans to specific namespaces. This
 	// unrelated to CronJobNamespace.
 	// +optional
-	NamespaceSelector *NamespaceSelector `json:"namespaceSelector"`
+	NamespaceSelector *NamespaceSelector `json:"namespaceSelector,omitempty"`
 	// VMSelector is a label query over VMs.
 	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
 	// +optional
-	VMSelector *metav1.LabelSelector `json:"vmSelector"`
+	VMSelector *metav1.LabelSelector `json:"vmSelector,omitempty"`
 	// AccuKnox Artifact API configuration. Resulting scan artifacts are
 	// published to this endpoint.
 	ArtifactAPI ArtifactAPI `json:"artifactAPI"`
@@ -80,7 +81,7 @@ type ScheduleSpec struct {
 type ScheduleTemplate struct {
 	// Metadata carries standard object metadata for the scan.
 	// +optional
-	Metadata *metav1.ObjectMeta `json:"metadata"`
+	Metadata *metav1.ObjectMeta `json:"metadata,omitempty"`
 	// Spec defines the scan specification.
 	// +required
 	Spec ScheduleTemplateSpec `json:"spec"`
@@ -96,7 +97,7 @@ type ScheduleTemplateSpec struct {
 	// by default.
 	// +kubebuilder:default:=true
 	// +optional
-	SkipMalwareScan bool `json:"skipMalwareScan"`
+	SkipMalwareScan *bool `json:"skipMalwareScan"`
 	// Image is the container image to use.
 	// More info: https://kubernetes.io/docs/concepts/containers/images
 	// +optional

@@ -134,6 +134,7 @@ spec:
                 - values
                 type: object
               scansHistoryLimit:
+                default: 3
                 description: |-
                   The number of finished scans to retain. Value must be non-negative
                   integer. Defaults to 3.
