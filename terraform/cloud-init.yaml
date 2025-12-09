@@ -57,9 +57,16 @@ write_files:
     owner: root:root
     content: |
       #!/bin/sh
-      export TRIVY_CACHE_DIR=/root/.cache/trivy
+      export TRIVY_CACHE_DIR=/root/.cache/vulndb
       /usr/bin/trivy rootfs --no-progress --download-db-only
       /usr/bin/trivy rootfs --no-progress --download-java-db-only
+
+  - path: /etc/cron.daily/msrc-update-db
+    permissions: '0755'
+    owner: root:root
+    content: |
+      #!/bin/sh
+      /usr/local/bin/omni db download msrc --destination /root/.cache/vulndb/
 
   - path: /etc/accuknox-omni/artifact.token
     content: ${artifact_token}
@@ -137,7 +144,7 @@ runcmd:
 
       # download trivy databases
       chmod +x /etc/cron.daily/trivy-update-db
-      export TRIVY_CACHE_DIR=/root/.cache/trivy
+      export TRIVY_CACHE_DIR=/root/.cache/vulndb
       trivy rootfs --no-progress --download-db-only
       trivy rootfs --no-progress --download-java-db-only
 
@@ -151,10 +158,15 @@ runcmd:
       systemctl enable otel-collector.service --now
       %{ endif }
 
-      # install & enable omni
+      # install omni binary
       mkdir -p /etc/accuknox-omni /usr/local/bin
       curl -L https://accuknox-omni.s3.us-east-1.amazonaws.com/latest/omni-linux-amd64 -o /usr/local/bin/omni
       chmod +x /usr/local/bin/omni
+
+      # download msrc db
+      /usr/local/bin/omni db download msrc --destination /root/.cache/vulndb/
+
+      # enable omni systemd service
       systemctl enable omni.service --now
 
       # unattended upgrades

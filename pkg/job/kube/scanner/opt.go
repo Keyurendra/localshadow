@@ -42,7 +42,7 @@ func defaultOpts() opts {
 	return opts{
 		malwareScanEnabled: true,
 		vulnScanEnabled:    true,
-		vulnDBDirectory:    "/root/.cache/trivy/",
+		vulnDBDirectory:    "/root/.cache/vulndb/",
 		logger:             slog.Default(),
 	}
 }

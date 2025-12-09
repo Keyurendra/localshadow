@@ -81,7 +81,7 @@ func defaultOpts() opts {
 		baseMountPoint:        "/accuknox",
 		malwareScanEnabled:    true,
 		vulnScanEnabled:       true,
-		vulnDBDirectory:       "/root/.cache/trivy/",
+		vulnDBDirectory:       "/root/.cache/vulndb/",
 		concurrency:           uint(runtime.NumCPU()),
 		logger:                slog.Default(),
 		prometheusMetrics:     false,

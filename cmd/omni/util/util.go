@@ -57,7 +57,7 @@ func CloudScanCmdFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",
-			Value:     "/root/.cache/trivy/",
+			Value:     "/root/.cache/vulndb/",
 			TakesFile: true,
 		},
 		&cli.StringFlag{

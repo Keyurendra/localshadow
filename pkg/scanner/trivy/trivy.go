@@ -41,7 +41,7 @@ func (s s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string)
 	return s.externalScan(ctx, mountpoint, vmURI, platform, osType)
 }
 
-func (s) externalScan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
+func (s s) externalScan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
 	path, err := exec.LookPath("trivy")
 	if err != nil {
 		if errors.Is(err, exec.ErrNotFound) {
@@ -62,7 +62,8 @@ func (s) externalScan(ctx context.Context, mountpoint, vmURI, platform, osType s
 		"--scanners=vuln",
 		"--skip-db-update",
 		"--skip-java-db-update",
-		"--timeout=24h",
+		"--timeout="+s.timeout.String(),
+		"--cache-dir="+s.cacheDir,
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr

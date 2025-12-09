@@ -50,9 +50,12 @@ pkgs.writeShellScriptBin "entrypoint" ''
   fi
 
   echo "[*] Downloading Trivy DB"
-  export TRIVY_CACHE_DIR=/root/.cache/trivy
+  export TRIVY_CACHE_DIR=/root/.cache/vulndb
   ${pkgs.trivy}/bin/trivy rootfs --no-progress --download-db-only
   ${pkgs.trivy}/bin/trivy rootfs --no-progress --download-java-db-only
+
+  echo "[*] Downloading MSRC DB"
+  omni db download msrc --destination /root/.cache/vulndb/
 
   echo "[*] Creating device maps for $dev"
   ${pkgs.multipath-tools}/bin/kpartx -av "$dev" >/dev/null
