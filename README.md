@@ -7,8 +7,8 @@ software/OS scanning and compliance benchmarks (STIG, CIS) is planned.
 
 ## Documentation
 
-- [Agent-based (Linux)](./docs/agent-based/linux.md)
-- [Agent-based (Windows)](./docs/agent-based/windows.md)
+- [Agent-based](./docs/agent-based/README.md)
+- [Agent-less](./docs/agent-less/README.md)
 
 ## Useful Links
 
