@@ -86,7 +86,7 @@ type ScanReconciler struct {
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;patch
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=create
 // +kubebuilder:rbac:groups="kubevirt.io",resources=virtualmachines,verbs=get
-// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=get;patch
+// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=get;list;patch;watch
 
 // Reconcile performs the main reconciliation loop for Scan resources.
 func (r *ScanReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
