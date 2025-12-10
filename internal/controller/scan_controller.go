@@ -27,6 +27,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	volumesnapshotv1 "github.com/kubernetes-csi/external-snapshotter/client/v8/apis/volumesnapshot/v1"
+	securityv1 "github.com/openshift/api/security/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -85,6 +86,7 @@ type ScanReconciler struct {
 // +kubebuilder:rbac:groups="",resources=pods,verbs=get;patch
 // +kubebuilder:rbac:groups="snapshot.storage.k8s.io",resources=volumesnapshots,verbs=create
 // +kubebuilder:rbac:groups="kubevirt.io",resources=virtualmachines,verbs=get
+// +kubebuilder:rbac:groups=security.openshift.io,resources=securitycontextconstraints,verbs=get;patch
 
 // Reconcile performs the main reconciliation loop for Scan resources.
 func (r *ScanReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -117,6 +119,10 @@ func (r *ScanReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if err := volumesnapshotv1.AddToScheme(mgr.GetScheme()); err != nil {
 		return fmt.Errorf("add volumesnapshot scheme: %w", err)
 	}
+
+	// fail silently if not on Openshift
+	_ = securityv1.AddToScheme(mgr.GetScheme())
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Scan{}).
 		Named("scan").
@@ -172,6 +178,22 @@ func (r *ScanReconciler) cleanupJob(ctx context.Context, ns, name string) error 
 			return nil
 		}
 		return fmt.Errorf("get job: %w", err)
+	}
+
+	saName := job.Spec.Template.Spec.ServiceAccountName
+	if saName != "" {
+		sa := &corev1.ServiceAccount{}
+		saKey := types.NamespacedName{Namespace: ns, Name: saName}
+		if err := r.Get(ctx, saKey, sa); err == nil {
+			if err := r.cleanupSCCUser(ctx, sa); err != nil {
+				slog.WarnContext(
+					ctx,
+					"failed to cleanup SCC user",
+					slog.String("sa", saName),
+					slog.String("error", err.Error()),
+				)
+			}
+		}
 	}
 
 	if err := r.removeFinalizer(ctx, job, finalizerOmni); err != nil {
@@ -617,7 +639,14 @@ func (r *ScanReconciler) ensureSvcAcct(ctx context.Context, scan *v1alpha1.Scan,
 		if err != nil {
 			return nil, false, fmt.Errorf("ensure role binding: %w", err)
 		}
+		if err := r.ensureSCC(ctx, sa, typ); err != nil {
+			return nil, false, fmt.Errorf("ensure scc: %w", err)
+		}
 		return sa, isNew, nil
+	}
+
+	if err := r.ensureSCC(ctx, sa, typ); err != nil {
+		return nil, false, fmt.Errorf("ensure scc: %w", err)
 	}
 
 	return sa, true, nil

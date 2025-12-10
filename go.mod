@@ -27,6 +27,7 @@ require (
 	github.com/lmittmann/tint v1.1.2
 	github.com/onsi/ginkgo/v2 v2.26.0
 	github.com/onsi/gomega v1.38.2
+	github.com/openshift/api v0.0.0-20251208101024-c2a41ea924bd
 	github.com/prometheus/client_golang v1.23.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.11.1
