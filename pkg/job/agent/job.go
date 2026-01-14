@@ -90,9 +90,13 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) erro
 }
 
 func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, error) {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return nil, fmt.Errorf("get system hostname: %w", err)
+	hostname := j.overrideHostname
+	if hostname == "" {
+		var err error
+		hostname, err = os.Hostname()
+		if err != nil {
+			return nil, fmt.Errorf("get system hostname: %w", err)
+		}
 	}
 	j.logger.LogAttrs(
 		ctx,

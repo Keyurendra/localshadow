@@ -31,6 +31,8 @@
     Skip vulnerability scanning
 .PARAMETER SkipMalwareScan
     Skip malware scanning
+.PARAMETER OverrideHostname
+    Override hostname in the final artifact
 #>
 
 [CmdletBinding()]
@@ -48,6 +50,7 @@ param(
     [bool]$SkipDatabaseDownload = $false,
     [bool]$SkipVulnScan = $false,
     [bool]$SkipMalwareScan = $false
+    [string]$OverrideHostname = "",
 )
 
 $Global:OmniInstallPath = "C:\Program Files\Accuknox\Omni"
@@ -377,7 +380,8 @@ function New-OmniScheduledTask {
             "--artifact-token-file=$script:TokenFile",
             "--artifact-label=$ArtifactLabel",
             "--tenant-id=$TenantId",
-            "--vuln-db-directory=C:\ProgramData\AccuKnox\Omni"
+            "--vuln-db-directory=C:\ProgramData\AccuKnox\Omni",
+            "--override-hostname=$OverrideHostname"
         )
 
         $logFile = ""

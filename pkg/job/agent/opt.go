@@ -14,6 +14,7 @@ type opts struct {
 	vulnScanEnabled            bool
 	malwareScanEnabled         bool
 	malwareScanTargetDirectory string
+	overrideHostname           string
 	logger                     *slog.Logger
 }
 
@@ -38,6 +39,12 @@ func WithVulnDBDirectory(dir string) OptFunc {
 func WithMalwareScanTargetDirectory(dir string) OptFunc {
 	return func(o *opts) {
 		o.malwareScanTargetDirectory = dir
+	}
+}
+
+func WithOverrideHostname(hostname string) OptFunc {
+	return func(o *opts) {
+		o.overrideHostname = hostname
 	}
 }
 

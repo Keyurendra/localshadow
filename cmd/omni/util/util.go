@@ -103,6 +103,10 @@ func CloudScheduleCmdFlags() []cli.Flag {
 
 func AgentScanCmdFlags() []cli.Flag {
 	return []cli.Flag{
+		&cli.StringFlag{
+			Name:  "override-hostname",
+			Usage: "Override system hostname",
+		},
 		&cli.BoolFlag{
 			Name:  "local-publisher",
 			Usage: "Store artifacts locally only",

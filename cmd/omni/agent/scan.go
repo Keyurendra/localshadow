@@ -35,6 +35,7 @@ var scanCmd = &cli.Command{
 		opts := []agent.OptFunc{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
 			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
+			agent.WithOverrideHostname(c.String("override-hostname")),
 		}
 		if skipMalwareScan {
 			opts = append(opts, agent.WithMalwareScanDisabled())
