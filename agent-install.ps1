@@ -49,8 +49,8 @@ param(
     [string]$ClamavMSIInstallerFile = "",
     [bool]$SkipDatabaseDownload = $false,
     [bool]$SkipVulnScan = $false,
-    [bool]$SkipMalwareScan = $false
-    [string]$OverrideHostname = "",
+    [bool]$SkipMalwareScan = $false,
+    [string]$OverrideHostname = ""
 )
 
 $Global:OmniInstallPath = "C:\Program Files\Accuknox\Omni"
