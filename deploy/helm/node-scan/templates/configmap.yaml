@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "node-scan.fullname" . }}
+  namespace: {{ include "node-scan.namespace" . }}
+  labels:
+    {{- include "node-scan.labels" . | nindent 4 }}
+data:
+  config.yaml: |-
+    namespace: {{ include "node-scan.namespace" . }}
+    image: "{{ .Values.scanner.image.repository }}:{{ .Values.scanner.image.tag | default .Chart.AppVersion }}"
+    imagePullPolicy: {{ .Values.scanner.image.pullPolicy }}
+    {{- with .Values.scanner.imagePullSecrets }}
+    imagePullSecrets:
+      {{- toYaml . | nindent 12 }}
+    {{- end }}
+    backoffLimit: {{ .Values.scanner.backoffLimit | default 6 }}
+    skipMalwareScan: {{ .Values.scanner.skipMalwareScan }}
+    skipVulnScan: {{ .Values.scanner.skipVulnScan }}
+    useFreshclam: {{ .Values.scanner.useFreshclam }}
+    repository:
+      vulnDB: {{ .Values.scanner.repository.vulnDB }}
+      clamavDB: {{ .Values.scanner.repository.clamavDB }}
+      msrcDB: {{ .Values.scanner.repository.msrcDB }}
+      plainHTTP: {{ .Values.scanner.repository.plainHTTP }}
+      skipTLSVerification: {{ .Values.scanner.repository.skipTLSVerification }}
+    {{- if .Values.scanner.nodeSelector }}
+    nodeSelector:
+      {{- toYaml .Values.scanner.nodeSelector | nindent 6 }}
+    {{- end }}
+    tolerations:
+      {{- with .Values.scanner.tolerations }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
+    resources:
+      {{- toYaml .Values.scanner.resources | nindent 6 }}
+    artifactAPI:
+      endpoint: {{ .Values.artifactAPI.endpoint }}
+      {{- if .Values.artifactAPI.tenantID }}
+      tenantID: {{ .Values.artifactAPI.tenantID }}
+      {{- end }}
+      {{- if .Values.artifactAPI.label }}
+      label: {{ .Values.artifactAPI.label }}
+      {{- end }}
+      tokenSecretName: {{ .Values.artifactAPI.existingTokenSecretName | default "artifact-token" }}
+      skipTLSVerification: {{ .Values.artifactAPI.skipTLSVerification }}

@@ -14,8 +14,9 @@ import (
 )
 
 var scanCmd = &cli.Command{
-	Name:  "scan",
-	Flags: cmdUtil.AgentScanCmdFlags(),
+	Name:      "scan",
+	Flags:     cmdUtil.AgentScanCmdFlags(),
+	Arguments: cmdUtil.AgentScanCmdArgs(),
 	Action: func(ctx context.Context, c *cli.Command) error {
 		publisher := file.NewPublisher(c.String("local-publisher-store-path"))
 		if !c.Bool("local-publisher") {
@@ -34,6 +35,7 @@ var scanCmd = &cli.Command{
 
 		opts := []agent.OptFunc{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
+			agent.WithClamAVDBDirectory(c.String("clamav-db-directory")),
 			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
 			agent.WithOverrideHostname(c.String("override-hostname")),
 		}
@@ -49,9 +51,12 @@ var scanCmd = &cli.Command{
 			return fmt.Errorf("creating job: %w", err)
 		}
 
-		rootfs, err := util.FindRootFS()
-		if err != nil {
-			return fmt.Errorf("determining rootfs: %w", err)
+		rootfs := c.StringArg("rootfs")
+		if rootfs == "" {
+			rootfs, err = util.FindRootFS()
+			if err != nil {
+				return fmt.Errorf("determining rootfs: %w", err)
+			}
 		}
 
 		summary, err := job.Run(ctx, rootfs)

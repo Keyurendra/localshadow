@@ -10,14 +10,7 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/publisher/cspm"
-	"github.com/accuknox/omniscan/pkg/util"
 )
-
-var rootfs string
-
-func init() {
-	rootfs, _ = util.FindRootFS()
-}
 
 func CloudScanCmdFlags() []cli.Flag {
 	return []cli.Flag{
@@ -122,6 +115,11 @@ func AgentScanCmdFlags() []cli.Flag {
 			Usage: "AccuKnox artifact API endpoint",
 			Value: "https://cspm.accuknox.com/api/v1/artifact/",
 		},
+		&cli.BoolFlag{
+			Name:  "skip-tls-verification",
+			Usage: "Skip TLS verification for artifact API",
+			Value: false,
+		},
 		&cli.UintFlag{
 			Name:        "tenant-id",
 			Usage:       "AccuKnox tenant ID",
@@ -151,9 +149,15 @@ func AgentScanCmdFlags() []cli.Flag {
 			TakesFile: true,
 		},
 		&cli.StringFlag{
+			Name:      "clamav-db-directory",
+			Usage:     "Path to ClamAV database directory",
+			Value:     "/var/lib/clamav",
+			TakesFile: true,
+		},
+		&cli.StringFlag{
 			Name:      "malware-scan-target-directory",
 			Usage:     "Limit malware scan to a specific directory",
-			Value:     rootfs,
+			Value:     "",
 			TakesFile: true,
 		},
 	}
@@ -172,6 +176,19 @@ func AgentScheduleCmdFlags() []cli.Flag {
 			Usage: "Trigger the first scan right after scheduling",
 		},
 	}, AgentScanCmdFlags()...)
+}
+
+func AgentScanCmdArgs() []cli.Argument {
+	return []cli.Argument{
+		&cli.StringArg{
+			Name:      "rootfs",
+			UsageText: "[MOUNTPOINT]",
+		},
+	}
+}
+
+func AgentScheduleCmdArgs() []cli.Argument {
+	return AgentScanCmdArgs()
 }
 
 func CreateCSPMPublisher(c *cli.Command) (publisher.Publisher, error) {
@@ -201,9 +218,10 @@ func CreateCSPMPublisher(c *cli.Command) (publisher.Publisher, error) {
 	}
 
 	return cspm.NewPublisher(cspm.Config{
-		Endpoint: endpoint,
-		TenantID: tenantID,
-		LabelID:  label,
-		Token:    strings.TrimSpace(string(tkn)),
+		Endpoint:            endpoint,
+		TenantID:            tenantID,
+		LabelID:             label,
+		Token:               strings.TrimSpace(string(tkn)),
+		SkipTLSVerification: c.Bool("skip-tls-verification"),
 	}, nil)
 }

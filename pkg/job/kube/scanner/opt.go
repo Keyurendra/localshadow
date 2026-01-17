@@ -8,6 +8,7 @@ type opts struct {
 	malwareScanEnabled bool
 	vulnScanEnabled    bool
 	vulnDBDirectory    string
+	clamavDBDirectory  string
 	logger             *slog.Logger
 }
 
@@ -29,6 +30,12 @@ func WithVulnDBDirectory(dir string) OptFunc {
 	}
 }
 
+func WithClamAVDBDirectory(dir string) OptFunc {
+	return func(o *opts) {
+		o.clamavDBDirectory = dir
+	}
+}
+
 func WithLogger(l *slog.Logger) OptFunc {
 	return func(o *opts) {
 		if l == nil {
@@ -43,6 +50,7 @@ func defaultOpts() opts {
 		malwareScanEnabled: true,
 		vulnScanEnabled:    true,
 		vulnDBDirectory:    "/root/.cache/vulndb/",
+		clamavDBDirectory:  "/var/lib/clamav",
 		logger:             slog.Default(),
 	}
 }

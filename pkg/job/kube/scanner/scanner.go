@@ -152,6 +152,7 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		MalwareScan:                j.malwareScanEnabled,
 		MalwareScanTargetDirectory: mountpoint,
 		UseClamAVDaemon:            false,
+		DaemonlessClamavDBDir:      j.clamavDBDirectory,
 		OfflineWinVulnScan:         true,
 	})
 	return run.ScanMountPoint(ctx, osType, mountpoint, vmURI, j.prov.GetName())

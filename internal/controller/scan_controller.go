@@ -455,7 +455,7 @@ func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, pare
 
 	return name, jobSpec{
 		ctrName: "scan",
-		command: []string{"entrypoint"},
+		command: []string{"entrypoint-openshift"},
 		args: []string{
 			devicePath,
 			"--name=" + scan.Name,

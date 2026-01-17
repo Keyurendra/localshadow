@@ -21,6 +21,7 @@ type RunConfig struct {
 	MalwareScan                bool
 	MalwareScanTargetDirectory string
 	UseClamAVDaemon            bool
+	DaemonlessClamavDBDir      string
 	OfflineWinVulnScan         bool
 }
 
@@ -61,7 +62,7 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 			slog.String("target_vm_uri", vmURI),
 		)
 		result.MalwareScanFindings, result.MalwareScanError = clamav.
-			NewScanner(r.UseClamAVDaemon).
+			NewScanner(r.UseClamAVDaemon, r.DaemonlessClamavDBDir).
 			Scan(
 				ctx,
 				r.MalwareScanTargetDirectory,
@@ -82,7 +83,7 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 			slog.String("target_vm_uri", vmURI),
 		)
 		opts := []winvuln.OptFunc{
-			winvuln.WithDBPath(filepath.Join(r.VulnScanDBDir, "msrc", "msrc.sqlite")),
+			winvuln.WithDBPath(filepath.Join(r.VulnScanDBDir, "msrc", "db.sqlite3")),
 		}
 		if r.OfflineWinVulnScan {
 			opts = append(opts, winvuln.WithUseOfflineMode())

@@ -78,6 +78,12 @@ var scanCmd = &cli.Command{
 			Value:     "/root/.cache/vulndb/",
 			TakesFile: true,
 		},
+		&cli.StringFlag{
+			Name:      "clamav-db-directory",
+			Value:     "/var/lib/clamav",
+			Usage:     "Path to ClamAV database directory",
+			TakesFile: true,
+		},
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
 		namespace := c.String("namespace")
@@ -128,6 +134,7 @@ var scanCmd = &cli.Command{
 
 		scOpts := []scanner.OptFunc{
 			scanner.WithVulnDBDirectory(c.String("vuln-db-directory")),
+			scanner.WithClamAVDBDirectory(c.String("clamav-db-directory")),
 		}
 		if c.Bool("skip-malware-scan") {
 			scOpts = append(scOpts, scanner.WithMalwareScanDisabled())

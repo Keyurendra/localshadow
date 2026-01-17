@@ -39,7 +39,9 @@ require (
 	k8s.io/client-go v0.34.1
 	kubevirt.io/api v1.6.2
 	kubevirt.io/client-go v1.6.2
+	oras.land/oras-go/v2 v2.6.0
 	sigs.k8s.io/controller-runtime v0.22.2
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
@@ -446,14 +448,12 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.39.0 // indirect
 	mvdan.cc/sh/v3 v3.11.0 // indirect
-	oras.land/oras-go/v2 v2.6.0 // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.31.2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
-	sigs.k8s.io/yaml v1.6.0 // indirect
 	www.velocidex.com/golang/regparser v0.0.0-20250203141505-31e704a67ef7 // indirect
 )
 

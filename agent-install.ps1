@@ -481,7 +481,7 @@ try {
         }
         else {
             Write-Info "Skipping downloading MSRC database"
-            $dbPath = Join-Path -Path $Global:OmniHomeDir -ChildPath "msrc\msrc.sqlite"
+            $dbPath = Join-Path -Path $Global:OmniHomeDir -ChildPath "msrc\db.sqlite3"
             if (-not (Test-Path $dbPath)) {
                 Write-Fatal "MSRC database not found at $dbPath and download was skipped"
             }

@@ -32,7 +32,7 @@ func NewJob(pub publisher.Publisher, optFns ...OptFunc) (*Job, error) {
 	}, nil
 }
 
-func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) error {
+func (j Job) Schedule(ctx context.Context, rootfs, crontab string, triggerNow bool) error {
 	j.logger.LogAttrs(ctx, slog.LevelInfo, "creating scheduler")
 	s, err := gocron.NewScheduler()
 	if err != nil {
@@ -46,11 +46,6 @@ func (j Job) Schedule(ctx context.Context, crontab string, triggerNow bool) erro
 	}
 	if triggerNow {
 		opts = append(opts, gocron.WithStartAt(gocron.WithStartImmediately()))
-	}
-
-	rootfs, err := util.FindRootFS()
-	if err != nil {
-		return fmt.Errorf("determining rootfs: %w", err)
 	}
 
 	j.logger.LogAttrs(
@@ -169,6 +164,7 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		VulnScanDBDir:              j.vulnDBDirectory,
 		UseEmbeddedTrivy:           true,
 		MalwareScan:                j.malwareScanEnabled,
+		DaemonlessClamavDBDir:      j.clamavDBDirectory,
 		MalwareScanTargetDirectory: targetDir,
 		UseClamAVDaemon:            false,
 		OfflineWinVulnScan:         false,

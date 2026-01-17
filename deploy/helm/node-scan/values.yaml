@@ -1,0 +1,123 @@
+# Default values for node-scan.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: ""
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""
+
+schedule: "@daily"
+timeZone: ""
+
+dispatcher:
+  failedJobHistoryLimit: 3
+  successfulJobHistoryLimit: 3
+  backoffLimit: 6
+  affinity: {}
+  tolerations: []
+  # This is for the secrets for pulling an image from a private repository more
+  # information can be found here:
+  # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  imagePullSecrets: []
+  # Pod-level security context.
+  #
+  # Do NOT change this unless you know what you are doing.
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+    runAsGroup: 1000
+    runAsUser: 1000
+    fsGroup: 1000
+    runAsNonRoot: true
+  # Container-level security context.
+  #
+  # Do NOT change this unless you know what you are doing.
+  securityContext:
+    allowPrivilegeEscalation: false
+    privileged: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+  # This sets the container image more information can be found here:
+  # https://kubernetes.io/docs/concepts/containers/images/
+  image:
+    repository: public.ecr.aws/k9v9d5v2/omni-operator
+    # This sets the pull policy for images.
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  # We usually recommend not to specify default resources and to leave this as a
+  # conscious choice for the user. This also increases chances charts run on
+  # environments with little resources, such as Minikube. If you do want to
+  # specify resources, uncomment the following lines, adjust them as necessary,
+  # and remove the curly braces after 'resources:'.
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  # This section builds out the service account more information can be found
+  # here: https://kubernetes.io/docs/concepts/security/service-accounts/
+  serviceAccount:
+    # Specifies whether a service account should be created
+    create: true
+    # Annotations to add to the service account
+    annotations: {}
+    # The name of the service account to use.
+    # If not set and create is true, a name is generated using the fullname template
+    name: accuknox-omni-dispatcher
+  rbac:
+    # Specifies whether RBAC role and rolebinding must be created.
+    create: true
+
+scanner:
+  skipMalwareScan: true
+  skipVulnScan: false
+  useFreshclam: false
+  repository:
+    vulnDB: "ghcr.io/aquasecurity/trivy-db"
+    clamavDB: "public.ecr.aws/k9v9d5v2/clamav-db"
+    msrcDB: "public.ecr.aws/k9v9d5v2/msrc-db"
+    plainHTTP: true
+    skipTLSVerification: false
+  backoffLimit: 6
+  nodeSelector: {}
+  tolerations: []
+  # This is for the secrets for pulling an image from a private repository more
+  # information can be found here:
+  # https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  imagePullSecrets: []
+  # This sets the container image more information can be found here:
+  # https://kubernetes.io/docs/concepts/containers/images/
+  image:
+    repository: public.ecr.aws/k9v9d5v2/omni
+    # This sets the pull policy for images.
+    pullPolicy: IfNotPresent
+    # Overrides the image tag whose default is the chart appVersion.
+    tag: ""
+  # We usually recommend not to specify default resources and to leave this as a
+  # conscious choice for the user. This also increases chances charts run on
+  # environments with little resources, such as Minikube. If you do want to
+  # specify resources, uncomment the following lines, adjust them as necessary,
+  # and remove the curly braces after 'resources:'.
+  resources: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+artifactAPI:
+  endpoint: https://cspm.accuknox.com/api/v1/artifact/
+  tenantID:
+  label: ""
+  existingTokenSecretName: ""
+  token: ""
+  skipTLSVerification: false

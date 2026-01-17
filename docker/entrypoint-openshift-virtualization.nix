@@ -1,6 +1,6 @@
 { pkgs }:
 
-pkgs.writeShellScriptBin "entrypoint" ''
+pkgs.writeShellScriptBin "entrypoint-openshift" ''
   set -euo pipefail
 
   # fix for openshift

@@ -1,0 +1,50 @@
+{{- if .Values.dispatcher.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "node-scan.serviceAccountName" . }}
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["list", "get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "node-scan.serviceAccountName" . }}
+  namespace: {{ include "node-scan.namespace" . }}
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create", "get", "list"]
+- apiGroups: ["batch"]
+  resources: ["cronjobs"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "node-scan.serviceAccountName" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "node-scan.serviceAccountName" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "node-scan.serviceAccountName" . }}
+  namespace: {{ include "node-scan.namespace" . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "node-scan.serviceAccountName" . }}
+  namespace: {{ include "node-scan.namespace" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "node-scan.serviceAccountName" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "node-scan.serviceAccountName" . }}
+  namespace: {{ include "node-scan.namespace" . }}
+{{- end }}

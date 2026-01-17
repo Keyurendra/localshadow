@@ -2,6 +2,7 @@ package cspm
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
@@ -22,10 +23,11 @@ import (
 )
 
 type Config struct {
-	Endpoint string
-	TenantID uint
-	LabelID  string
-	Token    string
+	Endpoint            string
+	TenantID            uint
+	LabelID             string
+	Token               string
+	SkipTLSVerification bool
 }
 
 func (c Config) Validate() error {
@@ -213,7 +215,14 @@ func (p Publisher) uploadFinding(ctx context.Context, f scanner.Findings) error 
 		req.Header.Set("Authorization", "Bearer "+p.c.Token)
 		req.Header.Set("Content-Type", contentType)
 
-		resp, err := http.DefaultClient.Do(req)
+		client := http.DefaultClient
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: p.c.SkipTLSVerification,
+			},
+		}
+
+		resp, err := client.Do(req)
 		if err != nil {
 			return fmt.Errorf("http request failed: %w", err)
 		}

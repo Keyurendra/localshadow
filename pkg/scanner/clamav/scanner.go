@@ -18,16 +18,24 @@ import (
 )
 
 type s struct {
-	useDaemon bool
+	useDaemon       bool
+	daemonlessDBDir string
 }
 
-func NewScanner(useDaemon bool) scanner.Scanner {
-	return s{useDaemon: useDaemon}
+func NewScanner(useDaemon bool, daemonlessDBDir string) scanner.Scanner {
+	if daemonlessDBDir == "" {
+		daemonlessDBDir = "/var/lib/clamav"
+	}
+	return s{useDaemon: useDaemon, daemonlessDBDir: daemonlessDBDir}
 }
 
 func (s s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
 	execName := "clamscan"
-	args := []string{"--infected", "--recursive"}
+	args := []string{
+		"--infected",
+		"--recursive",
+		fmt.Sprintf("--database=%s", s.daemonlessDBDir),
+	}
 	if s.useDaemon {
 		execName = "clamdscan"
 		args = []string{"--infected", "--multiscan", "--fdpass"}

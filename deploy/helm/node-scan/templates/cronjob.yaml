@@ -1,0 +1,66 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "node-scan.fullname" . }}
+  namespace: {{ include "node-scan.namespace" . }}
+  labels:
+    {{- include "node-scan.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  {{- if .Values.timeZone }}
+  timeZone: {{ .Values.timeZone }}
+  {{- end }}
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: {{ .Values.dispatcher.failedJobHistoryLimit | default 3 }}
+  successfulJobsHistoryLimit: {{ .Values.dispatcher.successfulJobHistoryLimit | default 3 }}
+  jobTemplate:
+    metadata:
+      labels:
+        {{- include "node-scan.labels" . | nindent 8 }}
+    spec:
+      backoffLimit: {{ .Values.dispatcher.backoffLimit | default 6 }}
+      template:
+        spec:
+          restartPolicy: OnFailure
+          affinity:
+            {{- toYaml .Values.dispatcher.affinity | nindent 12 }}
+          tolerations:
+            {{- with .Values.dispatcher.tolerations }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
+          serviceAccountName: {{ include "node-scan.serviceAccountName" . }}
+          {{- with .Values.dispatcher.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.dispatcher.podSecurityContext | nindent 12 }}
+          containers:
+          - name: {{ .Chart.Name }}
+            securityContext:
+              {{- toYaml .Values.dispatcher.securityContext | nindent 16 }}
+            image: "{{ .Values.dispatcher.image.repository }}:{{ .Values.dispatcher.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.dispatcher.image.pullPolicy }}
+            command:
+            - omni
+            - agent
+            - dispatch
+            args:
+            - --config=/etc/accuknox-omni/config.yaml
+            env:
+            - name: DISPATCHER_JOB_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['job-name']
+            resources:
+              {{- toYaml .Values.dispatcher.resources | nindent 16 }}
+            volumeMounts:
+            - name: config
+              readOnly: true
+              mountPath: /etc/accuknox-omni/config.yaml
+              subPath: config.yaml
+          volumes:
+          - name: config
+            configMap:
+              name: {{ include "node-scan.fullname" . }}
+              optional: false

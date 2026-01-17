@@ -13,6 +13,7 @@ type opts struct {
 	vulnDBDirectory            string
 	vulnScanEnabled            bool
 	malwareScanEnabled         bool
+	clamavDBDirectory          string
 	malwareScanTargetDirectory string
 	overrideHostname           string
 	logger                     *slog.Logger
@@ -33,6 +34,12 @@ func WithVulnScanDisabled() OptFunc {
 func WithVulnDBDirectory(dir string) OptFunc {
 	return func(o *opts) {
 		o.vulnDBDirectory = dir
+	}
+}
+
+func WithClamAVDBDirectory(dir string) OptFunc {
+	return func(o *opts) {
+		o.clamavDBDirectory = dir
 	}
 }
 
@@ -69,6 +76,7 @@ func defaultOpts() opts {
 	}
 	return opts{
 		vulnDBDirectory:            "/var/lib/accuknox-omni/",
+		clamavDBDirectory:          "/var/lib/clamav",
 		malwareScanEnabled:         true,
 		vulnScanEnabled:            true,
 		malwareScanTargetDirectory: rootfs,

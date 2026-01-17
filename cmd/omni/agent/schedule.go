@@ -6,19 +6,21 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"github.com/accuknox/omniscan/cmd/omni/util"
+	cmdUtil "github.com/accuknox/omniscan/cmd/omni/util"
 	"github.com/accuknox/omniscan/pkg/job/agent"
 	"github.com/accuknox/omniscan/pkg/publisher/file"
+	"github.com/accuknox/omniscan/pkg/util"
 )
 
 var scheduleCmd = &cli.Command{
-	Name:  "schedule",
-	Flags: util.AgentScheduleCmdFlags(),
+	Name:      "schedule",
+	Flags:     cmdUtil.AgentScheduleCmdFlags(),
+	Arguments: cmdUtil.AgentScheduleCmdArgs(),
 	Action: func(ctx context.Context, c *cli.Command) error {
 		publisher := file.NewPublisher(c.String("local-publisher-store-path"))
 		if !c.Bool("local-publisher") {
 			var err error
-			publisher, err = util.CreateCSPMPublisher(c)
+			publisher, err = cmdUtil.CreateCSPMPublisher(c)
 			if err != nil {
 				return err
 			}
@@ -47,9 +49,14 @@ var scheduleCmd = &cli.Command{
 			return fmt.Errorf("creating job: %w", err)
 		}
 
-		return job.Schedule(
-			ctx,
-			c.String("crontab"), c.Bool("trigger-immediately"),
-		)
+		rootfs := c.StringArg("rootfs")
+		if rootfs == "" {
+			rootfs, err = util.FindRootFS()
+			if err != nil {
+				return fmt.Errorf("determining rootfs: %w", err)
+			}
+		}
+
+		return job.Schedule(ctx, rootfs, c.String("crontab"), c.Bool("trigger-immediately"))
 	},
 }

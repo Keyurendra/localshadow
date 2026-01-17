@@ -184,8 +184,7 @@ setup_env() {
     DB_DOWNLOAD_CMD_EXEC="db download vuln$(quote_indent \
         --vuln-db-repository=${OMNI_VULN_DB_REPOSITORY} \
         --java-db-repository=${OMNI_JAVA_DB_REPOSITORY} \
-        --destination="${OMNI_HOME_DIR}" \
-        --quiet)"
+        --destination="${OMNI_HOME_DIR}")"
     AGENT_CMD_EXEC="agent scan$(quote_indent "$@")"
     if [[ $OMNI_SKIP_MALWARE_SCAN == true || $OMNI_SKIP_MALWARE_SCAN == 1 ]]; then
         AGENT_CMD_EXEC="$AGENT_CMD_EXEC --skip-malware-scan"

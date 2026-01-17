@@ -14,7 +14,8 @@
               "terraform"
             ];
           };
-          entrypoint = import ./docker/entrypoint.nix { inherit pkgs; };
+          entrypointOpenshiftVirtualization = import ./docker/entrypoint-openshift-virtualization.nix { inherit pkgs; };
+          entrypointKubernetesNodeScan = import ./docker/entrypoint-kubernetes-node-scan.nix { inherit pkgs; };
         in
         {
           formatter = pkgs.nixpkgs-fmt;
@@ -23,7 +24,7 @@
               pname = "omni";
               version = "0.0.0";
               src = ./.;
-              vendorHash = "sha256-fZlayuOpmbv/ZdkpCNVzPg/XbSElMCB8FbOl0iLts40=";
+              vendorHash = "sha256-iu2h3xAD4lFJRtxKmo59rWMY0mVFh76g+ByUC2rgo8Y=";
               ldflags = [ "-s" "-w" ];
               env = {
                 CGO_ENABLED = 0;
@@ -58,7 +59,8 @@
                   pkgs.trivy
                   pkgs.clamav
                   omni
-                  entrypoint
+                  entrypointOpenshiftVirtualization
+                  entrypointKubernetesNodeScan
                   (pkgs.runCommand "freshclam-conf" { } ''
                     mkdir -p $out/etc/clamav
                     cp ${./docker/freshclam.conf} $out/etc/clamav/freshclam.conf
@@ -86,24 +88,23 @@
             default = omni;
           };
           devShells.default = pkgs.mkShell {
-            packages = with pkgs;
-              [
-                nixd
-                nixpkgs-fmt
-                go
-                go-tools
-                gotools
-                gofumpt
-                gopls
-                terraform-ls
-                terraform
-                kubebuilder
-                kubevirt
-                kubernetes-code-generator
-                goreleaser
-                golangci-lint
-                operator-sdk
-              ];
+            packages = with pkgs; [
+              nixd
+              nixpkgs-fmt
+              go
+              go-tools
+              gotools
+              gofumpt
+              gopls
+              terraform-ls
+              terraform
+              kubebuilder
+              kubevirt
+              kubernetes-code-generator
+              goreleaser
+              golangci-lint
+              operator-sdk
+            ];
           };
         });
 }

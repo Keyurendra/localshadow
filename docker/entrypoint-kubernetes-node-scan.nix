@@ -1,0 +1,119 @@
+{ pkgs }:
+
+pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
+  set -euo pipefail
+
+  rootfs=/mnt/rootfs
+  skipMalwareScan=false
+  skipVulnScan=false
+  useFreshclam=false
+  clamavDBDirectory=/var/lib/clamav
+  artifactAPISkipTLSVerification=false
+  repoSkipTLSVerification=false
+  repoUsePlainHTTP=false
+
+  if [[ -z "$ARTIFACT_API_ENDPOINT" ]]; then
+    echo "env variable ARTIFACT_API_ENDPOINT not set"
+    exit 1
+  fi
+
+  if [[ -z "$ARTIFACT_API_TENANT_ID" ]]; then
+    echo "env variable ARTIFACT_API_TENANT_ID not set"
+    exit 1
+  fi
+
+  if [[ -z "$ARTIFACT_API_LABEL" ]]; then
+    echo "env variable ARTIFACT_API_LABEL not set"
+    exit 1
+  fi
+
+  if [[ $ARTIFACT_API_SKIP_TLS_VERIFICATION == true || $ARTIFACT_API_SKIP_TLS_VERIFICATION == 1 ]]; then
+    artifactAPISkipTLSVerification=true
+  fi
+
+  if [[ -z "$NODE_NAME" ]]; then
+    echo "env variable NODE_NAME not set"
+    exit 1
+  fi
+
+  if [[ "$SKIP_MALWARE_SCAN" == "true" || "$SKIP_MALWARE_SCAN" == "1" ]]; then
+    skipMalwareScan=true
+  fi
+
+  if [[ "$SKIP_VULN_SCAN" == "true" || "$SKIP_VULN_SCAN" == "1" ]]; then
+    skipVulnScan=true
+  fi
+
+  if [[ -z "$VULN_DB_REPOSITORY" ]]; then
+    VULN_DB_REPOSITORY="ghcr.io/aquasecurity/trivy-db"
+  fi
+
+  if [[ -z $MSRC_DB_REPOSITORY ]]; then
+    MSRC_DB_REPOSITORY="public.ecr.aws/k9v9d5v2/msrc-db"
+  fi
+
+  if [[ -z $CLAMAV_DB_REPOSITORY ]]; then
+    CLAMAV_DB_REPOSITORY="public.ecr.aws/k9v9d5v2/clamav-db"
+  fi
+
+  if [[ "$USE_FRESHCLAM" == "true" || "$USE_FRESHCLAM" == "1" ]]; then
+    useFreshclam=true
+  fi
+
+  if [[ $REPOSITORY_SKIP_TLS_VERIFICATION == true || $REPOSITORY_SKIP_TLS_VERIFICATION == 1 ]]; then
+    repoSkipTLSVerification=true
+  fi
+
+  if [[ $REPOSITORY_PLAIN_HTTP == true || $REPOSITORY_PLAIN_HTTP == 1 ]]; then
+    repoUsePlainHTTP=true
+  fi
+
+  if [[ $skipMalwareScan == false ]]; then
+    echo "[*] Downloading ClamAV DB"
+
+    if [[ $useFreshclam == true ]]; then
+      ${pkgs.clamav}/bin/freshclam
+    else
+      omni db download clamav --clamav-db-repository="$CLAMAV_DB_REPOSITORY" \
+        --skip-tls-verification=$repoSkipTLSVerification \
+        --plain-http=$repoUsePlainHTTP
+      clamavDBDirectory=/var/lib/accuknox-omni/clamav
+    fi
+  fi
+
+  if [[ $skipVulnScan == false ]]; then
+    if [[ -z $OS ]]; then
+      echo "[*] Downloading Vuln & MSRC DB"
+      omni db download vuln msrc \
+        --vuln-db-repository "$VULN_DB_REPOSITORY" \
+        --msrc-db-repository "MSRC_DB_REPOSITORY" \
+        --skip-tls-verification=$repoSkipTLSVerification \
+        --plain-http=$repoUsePlainHTTP
+    fi
+    if [[ $OS == linux ]]; then
+      echo "[*] Downloading Vuln DB"
+      omni db download vuln \
+        --vuln-db-repository "$VULN_DB_REPOSITORY" \
+        --skip-tls-verification=$repoSkipTLSVerification \
+        --plain-http=$repoUsePlainHTTP
+    fi
+    if [[ $OS == windows ]]; then
+      echo "[*] Downloading MSRC DB"
+      omni db download msrc \
+        --msrc-db-repository "MSRC_DB_REPOSITORY" \
+        --skip-tls-verification=$repoSkipTLSVerification \
+        --plain-http=$repoUsePlainHTTP
+    fi
+  fi
+
+  echo "[*] Starting Omni"
+  omni agent scan "$rootfs" \
+    --artifact-endpoint="$ARTIFACT_API_ENDPOINT" \
+    --skip-tls-verification=$artifactAPISkipTLSVerification \
+    --tenant-id="$ARTIFACT_API_TENANT_ID" \
+    --artifact-label="$ARTIFACT_API_LABEL" \
+    --artifact-token-file=/etc/accuknox-omni/artifact.tok \
+    --skip-malware-scan=$skipMalwareScan --skip-vuln-scan=$skipVulnScan \
+    --clamav-db-directory=$clamavDBDirectory \
+    --override-hostname=$NODE_NAME
+''
