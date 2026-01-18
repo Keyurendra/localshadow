@@ -1,6 +1,6 @@
 apiVersion: v2
-name: node-scan
-description: A Helm chart for Kubernetes
+name: omni-kubernetes-node-scan-chart
+description: Helm chart for deploying Omni on Kubernetes for scanning underlying nodes
 
 # A chart can be either an 'application' or a 'library' chart.
 #
