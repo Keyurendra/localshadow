@@ -17,7 +17,6 @@ data:
     backoffLimit: {{ .Values.scanner.backoffLimit | default 6 }}
     skipMalwareScan: {{ .Values.scanner.skipMalwareScan }}
     skipVulnScan: {{ .Values.scanner.skipVulnScan }}
-    useFreshclam: {{ .Values.scanner.useFreshclam }}
     repository:
       vulnDB: {{ .Values.scanner.repository.vulnDB }}
       clamavDB: {{ .Values.scanner.repository.clamavDB }}

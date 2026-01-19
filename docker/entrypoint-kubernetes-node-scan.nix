@@ -6,8 +6,7 @@ pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
   rootfs=/mnt/rootfs
   skipMalwareScan=false
   skipVulnScan=false
-  useFreshclam=false
-  clamavDBDirectory=/var/lib/clamav
+  clamavDBDirectory=/var/lib/accuknox-omni/clamav
   artifactAPISkipTLSVerification=false
   repoSkipTLSVerification=false
   repoUsePlainHTTP=false
@@ -56,10 +55,6 @@ pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
     CLAMAV_DB_REPOSITORY="public.ecr.aws/k9v9d5v2/clamav-db"
   fi
 
-  if [[ "$USE_FRESHCLAM" == "true" || "$USE_FRESHCLAM" == "1" ]]; then
-    useFreshclam=true
-  fi
-
   if [[ $REPOSITORY_SKIP_TLS_VERIFICATION == true || $REPOSITORY_SKIP_TLS_VERIFICATION == 1 ]]; then
     repoSkipTLSVerification=true
   fi
@@ -70,15 +65,9 @@ pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
 
   if [[ $skipMalwareScan == false ]]; then
     echo "[*] Downloading ClamAV DB"
-
-    if [[ $useFreshclam == true ]]; then
-      ${pkgs.clamav}/bin/freshclam
-    else
-      omni db download clamav --clamav-db-repository="$CLAMAV_DB_REPOSITORY" \
-        --skip-tls-verification=$repoSkipTLSVerification \
-        --plain-http=$repoUsePlainHTTP
-      clamavDBDirectory=/var/lib/accuknox-omni/clamav
-    fi
+    omni db download clamav --clamav-db-repository="$CLAMAV_DB_REPOSITORY" \
+      --skip-tls-verification=$repoSkipTLSVerification \
+      --plain-http=$repoUsePlainHTTP
   fi
 
   if [[ $skipVulnScan == false ]]; then

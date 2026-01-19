@@ -18,7 +18,6 @@ type NodeScanConfig struct {
 	BackoffLimit     *int32                        `json:"backoffLimit"`
 	SkipMalwareScan  bool                          `json:"skipMalwareScan"`
 	SkipVulnScan     bool                          `json:"skipVulnScan"`
-	UseFreshclam     bool                          `json:"useFreshclam"`
 	Repository       Repository                    `json:"repository"`
 	NodeSelector     *metav1.LabelSelector         `json:"nodeSelector"`
 	Tolerations      []corev1.Toleration           `json:"tolerations"`

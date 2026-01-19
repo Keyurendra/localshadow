@@ -271,11 +271,6 @@ func generateJobName(nodeName string) string {
 }
 
 func buildNodeScanJob(cfg *config.NodeScanConfig, nodeName, jobName, os string, ownerRef *metav1.OwnerReference) *batchv1.Job {
-	privileged := true
-	runAsUser := int64(0)
-	hostPathType := corev1.HostPathDirectory
-	ttlSeconds := int32(86400)
-
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: jobName,
@@ -286,7 +281,7 @@ func buildNodeScanJob(cfg *config.NodeScanConfig, nodeName, jobName, os string, 
 			},
 		},
 		Spec: batchv1.JobSpec{
-			TTLSecondsAfterFinished: &ttlSeconds,
+			TTLSecondsAfterFinished: util.Ptr(int32(86400)),
 			BackoffLimit:            cfg.BackoffLimit,
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
@@ -308,8 +303,11 @@ func buildNodeScanJob(cfg *config.NodeScanConfig, nodeName, jobName, os string, 
 						Command:         []string{"entrypoint-kubernetes-node-scan"},
 						Resources:       cfg.Resources,
 						SecurityContext: &corev1.SecurityContext{
-							Privileged: &privileged,
-							RunAsUser:  &runAsUser,
+							Privileged: util.Ptr(false),
+							RunAsUser:  util.Ptr(int64(0)),
+							Capabilities: &corev1.Capabilities{
+								Drop: []corev1.Capability{"ALL"},
+							},
 						},
 						Env: buildEnvVars(cfg, nodeName, os),
 						VolumeMounts: []corev1.VolumeMount{
@@ -332,7 +330,7 @@ func buildNodeScanJob(cfg *config.NodeScanConfig, nodeName, jobName, os string, 
 							VolumeSource: corev1.VolumeSource{
 								HostPath: &corev1.HostPathVolumeSource{
 									Path: "/",
-									Type: &hostPathType,
+									Type: util.Ptr(corev1.HostPathDirectory),
 								},
 							},
 						},
@@ -403,10 +401,6 @@ func buildEnvVars(cfg *config.NodeScanConfig, nodeName, os string) []corev1.EnvV
 		{
 			Name:  "CLAMAV_DB_REPOSITORY",
 			Value: cfg.Repository.ClamavDB,
-		},
-		{
-			Name:  "USE_FRESHCLAM",
-			Value: fmt.Sprint(cfg.UseFreshclam),
 		},
 		{
 			Name:  "REPOSITORY_SKIP_TLS_VERIFICATION",
