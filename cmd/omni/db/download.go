@@ -70,6 +70,14 @@ var downloadCmd = &cli.Command{
 			Name:  "skip-tls-verification",
 			Value: false,
 		},
+		&cli.StringFlag{
+			Name:   "username",
+			Config: cli.StringConfig{TrimSpace: true},
+		},
+		&cli.StringFlag{
+			Name:   "password",
+			Config: cli.StringConfig{TrimSpace: true},
+		},
 	},
 	Arguments: []cli.Argument{
 		&cli.StringArgs{
@@ -94,6 +102,8 @@ var downloadCmd = &cli.Command{
 		force := c.Bool("force")
 		skipTLSVerification := c.Bool("skip-tls-verification")
 		plainHTTP := c.Bool("plain-http")
+		username := c.String("username")
+		password := c.String("password")
 
 		for _, database := range databases {
 			switch database {
@@ -116,7 +126,7 @@ var downloadCmd = &cli.Command{
 					return fmt.Errorf("creating directory %s: %w", destination, err)
 				}
 
-				err = download(ctx, vulnDBRepo, vulnDBVersion, destination, plainHTTP, skipTLSVerification)
+				err = download(ctx, vulnDBRepo, vulnDBVersion, destination, plainHTTP, skipTLSVerification, username, password)
 				if err != nil {
 					return err
 				}
@@ -144,7 +154,7 @@ var downloadCmd = &cli.Command{
 					return fmt.Errorf("creating directory %s: %w", destination, err)
 				}
 
-				err = download(ctx, javaDBRepo, javaDBVersion, destination, plainHTTP, skipTLSVerification)
+				err = download(ctx, javaDBRepo, javaDBVersion, destination, plainHTTP, skipTLSVerification, username, password)
 				if err != nil {
 					return err
 				}
@@ -172,7 +182,7 @@ var downloadCmd = &cli.Command{
 					return fmt.Errorf("creating directory %s: %w", dst, err)
 				}
 
-				err = download(ctx, msrcDBRepo, msrcDBVersion, dst, plainHTTP, skipTLSVerification)
+				err = download(ctx, msrcDBRepo, msrcDBVersion, dst, plainHTTP, skipTLSVerification, username, password)
 				if err != nil {
 					return err
 				}
@@ -195,7 +205,7 @@ var downloadCmd = &cli.Command{
 					return fmt.Errorf("creating directory %s: %w", dst, err)
 				}
 
-				err = download(ctx, clamavDBRepo, clamavDBVersion, dst, plainHTTP, skipTLSVerification)
+				err = download(ctx, clamavDBRepo, clamavDBVersion, dst, plainHTTP, skipTLSVerification, username, password)
 				if err != nil {
 					return err
 				}
@@ -239,7 +249,7 @@ func needsUpdate(dir string, typ string) (bool, error) {
 	return time.Since(info.ModTime()) > threshold, nil
 }
 
-func download(ctx context.Context, repo, tag, dst string, plainHTTP, skipTLSVerification bool) error {
+func download(ctx context.Context, repo, tag, dst string, plainHTTP, skipTLSVerification bool, username, password string) error {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.TLSClientConfig = &tls.Config{
 		InsecureSkipVerify: skipTLSVerification,
@@ -250,11 +260,20 @@ func download(ctx context.Context, repo, tag, dst string, plainHTTP, skipTLSVeri
 		return fmt.Errorf("creating repo %s client: %w", repo, err)
 	}
 	remote.PlainHTTP = plainHTTP
-	remote.Client = &auth.Client{
+
+	authClient := &auth.Client{
 		Client: &http.Client{
 			Transport: transport,
 		},
+		Cache: auth.NewCache(),
 	}
+	if username != "" && password != "" {
+		authClient.Credential = auth.StaticCredential(remote.Reference.Registry, auth.Credential{
+			Username: username,
+			Password: password,
+		})
+	}
+	remote.Client = authClient
 
 	target, err := file.New(dst)
 	if err != nil {
