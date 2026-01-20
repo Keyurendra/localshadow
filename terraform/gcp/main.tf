@@ -46,8 +46,6 @@ resource "google_project_iam_custom_role" "omni_compute_role" {
     "compute.snapshots.create",
     "compute.snapshots.delete",
     "compute.snapshots.useReadOnly",
-    "compute.zones.get",
-    "compute.projects.get",
     "compute.globalOperations.get",
     "compute.zoneOperations.get",
   ]

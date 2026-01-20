@@ -192,7 +192,6 @@ resource "aws_iam_role_policy" "omni_policy" {
           "ec2:DetachVolume",
           "ec2:CreateVolume",
           "ec2:DeleteVolume",
-          "ec2:DescribeAvailabilityZones",
           "ec2:CreateTags"
         ]
         Resource = "*"

@@ -35,12 +35,9 @@ resource "azurerm_role_definition" "omni" {
       "Microsoft.Compute/disks/write",
       "Microsoft.Compute/disks/delete",
       "Microsoft.Compute/disks/beginGetAccess/action",
-      "Microsoft.Compute/disks/endGetAccess/action",
       "Microsoft.Compute/snapshots/read",
       "Microsoft.Compute/snapshots/write",
       "Microsoft.Compute/snapshots/delete",
-      "Microsoft.Compute/snapshots/beginGetAccess/action",
-      "Microsoft.Compute/snapshots/endGetAccess/action",
       "Microsoft.Network/networkInterfaces/join/action",
       "Microsoft.ManagedIdentity/userAssignedIdentities/assign/action",
     ]
