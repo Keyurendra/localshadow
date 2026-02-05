@@ -112,6 +112,11 @@ scanner:
     # requests:
     #   cpu: 100m
     #   memory: 128Mi
+  additionalEnv: []
+  # - name: HTTP_PROXY
+  #   value: http://localhost:8080
+  # - name: HTTPS_PROXY
+  #   value: https://localhost:8080
 
 artifactAPI:
   endpoint: https://cspm.accuknox.com/api/v1/artifact/

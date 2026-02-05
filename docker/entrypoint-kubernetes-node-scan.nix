@@ -1,7 +1,7 @@
 { pkgs }:
 
 pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
-  set -euo pipefail
+  set -eo pipefail
 
   rootfs=/mnt/rootfs
   skipMalwareScan=false
@@ -65,7 +65,8 @@ pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
 
   if [[ $skipMalwareScan == false ]]; then
     echo "[*] Downloading ClamAV DB"
-    omni db download clamav --clamav-db-repository="$CLAMAV_DB_REPOSITORY" \
+    omni db download clamav \
+      --clamav-db-repository="$CLAMAV_DB_REPOSITORY" \
       --skip-tls-verification=$repoSkipTLSVerification \
       --plain-http=$repoUsePlainHTTP
   fi

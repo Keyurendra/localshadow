@@ -216,11 +216,11 @@ func (p Publisher) uploadFinding(ctx context.Context, f scanner.Findings) error 
 		req.Header.Set("Content-Type", contentType)
 
 		client := http.DefaultClient
-		client.Transport = &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: p.c.SkipTLSVerification,
-			},
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = &tls.Config{
+			InsecureSkipVerify: p.c.SkipTLSVerification,
 		}
+		client.Transport = transport
 
 		resp, err := client.Do(req)
 		if err != nil {

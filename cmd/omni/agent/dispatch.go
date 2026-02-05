@@ -411,7 +411,7 @@ func buildEnvVars(cfg *config.NodeScanConfig, nodeName, os string) []corev1.EnvV
 			Value: fmt.Sprint(cfg.Repository.PlainHTTP),
 		},
 	}
-	return env
+	return append(env, cfg.AdditionalEnv...)
 }
 
 func isNotFoundError(err error) bool {

@@ -22,6 +22,7 @@ type NodeScanConfig struct {
 	NodeSelector     *metav1.LabelSelector         `json:"nodeSelector"`
 	Tolerations      []corev1.Toleration           `json:"tolerations"`
 	Resources        corev1.ResourceRequirements   `json:"resources"`
+	AdditionalEnv    []corev1.EnvVar               `json:"additionalEnv"`
 	ArtifactAPI      ArtifactAPIConfig             `json:"artifactAPI"`
 }
 

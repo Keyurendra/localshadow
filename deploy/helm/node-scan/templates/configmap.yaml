@@ -33,6 +33,10 @@ data:
       {{- end }}
     resources:
       {{- toYaml .Values.scanner.resources | nindent 6 }}
+    additionalEnv:
+      {{- with .Values.scanner.additionalEnv }}
+        {{- toYaml . | nindent 6 }}
+      {{- end }}
     artifactAPI:
       endpoint: {{ .Values.artifactAPI.endpoint }}
       {{- if .Values.artifactAPI.tenantID }}
