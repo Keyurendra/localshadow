@@ -13,6 +13,7 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/job"
 	"github.com/accuknox/omniscan/pkg/publisher"
+	"github.com/accuknox/omniscan/pkg/scanner"
 	"github.com/accuknox/omniscan/pkg/util"
 )
 
@@ -122,14 +123,11 @@ func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, e
 		if result.VulnScanError != nil {
 			errors.VulnScanError = result.VulnScanError
 		}
-		j.logger.LogAttrs(
-			ctx,
-			slog.LevelInfo,
-			"publishing results to the provided publisher",
-		)
-		err := result.Publish(ctx, j.pub)
-		if err != nil {
-			errors.ArtifactAPIError = fmt.Errorf("publishing artifact: %w", err)
+		if result.ContainerVulnScanError != nil {
+			errors.ContainerVulnScanError = result.ContainerVulnScanError
+		}
+		if result.ArtifactPublishError != nil {
+			errors.ArtifactAPIError = fmt.Errorf("publishing artifact: %w", result.ArtifactPublishError)
 		}
 	}
 
@@ -159,15 +157,30 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		slog.String("os", osType),
 	)
 	run := job.NewRun(job.RunConfig{
-		Logger:                     j.logger,
-		VulnScan:                   j.vulnScanEnabled,
-		VulnScanDBDir:              j.vulnDBDirectory,
-		UseEmbeddedTrivy:           true,
-		MalwareScan:                j.malwareScanEnabled,
-		DaemonlessClamavDBDir:      j.clamavDBDirectory,
-		MalwareScanTargetDirectory: targetDir,
-		UseClamAVDaemon:            false,
-		OfflineWinVulnScan:         false,
+		Logger:                           j.logger,
+		VulnScan:                         j.vulnScanEnabled,
+		ContainerVulnScan:                j.containerVulnScanEnabled,
+		ContainerImageScanRemoteFallback: j.containerImageScanRemoteFallback,
+		VulnScanDBDir:                    j.vulnDBDirectory,
+		CRISockets:                       j.criSockets,
+		UseEmbeddedTrivy:                 true,
+		MalwareScan:                      j.malwareScanEnabled,
+		DaemonlessClamavDBDir:            j.clamavDBDirectory,
+		MalwareScanTargetDirectory:       targetDir,
+		UseClamAVDaemon:                  false,
+		OfflineWinVulnScan:               false,
 	})
-	return run.ScanMountPoint(ctx, osType, mountpoint, vmURI, "agent")
+	return run.ScanMountPoint(
+		ctx,
+		osType,
+		mountpoint,
+		vmURI,
+		"agent",
+		func(ctx context.Context, f scanner.Findings) error {
+			if f == nil {
+				return nil
+			}
+			return j.pub.Publish(ctx, f)
+		},
+	)
 }

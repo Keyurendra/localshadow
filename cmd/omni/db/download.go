@@ -284,7 +284,7 @@ func download(ctx context.Context, repo, tag, dst string, plainHTTP, skipTLSVeri
 
 	_, err = oras.Copy(ctx, remote, tag, target, "", oras.DefaultCopyOptions)
 	if err != nil {
-		return fmt.Errorf("pulling ClamAV DB: %w", err)
+		return fmt.Errorf("pulling DB: %w", err)
 	}
 
 	slog.InfoContext(ctx, "Artifact successfully downloaded", slog.String("repo", repo))

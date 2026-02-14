@@ -70,3 +70,5 @@ terraform.rc
 
 ### nix ###
 /result
+
+AGENTS.md

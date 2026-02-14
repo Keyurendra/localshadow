@@ -20,6 +20,7 @@ import (
 	"github.com/accuknox/omniscan/pkg/provider"
 	"github.com/accuknox/omniscan/pkg/publisher"
 	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/accuknox/omniscan/pkg/scanner"
 	"github.com/accuknox/omniscan/pkg/util"
 )
 
@@ -184,19 +185,7 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 				errors.OS = res.OS
 				errors.MalwareScanError = res.MalwareScanError
 				errors.VulnScanError = res.VulnScanError
-				j.logger.LogAttrs(
-					ctx,
-					slog.LevelInfo,
-					"publishing scan results",
-					slog.String("target_vm_uri", target.URI),
-				)
-				err := res.Publish(ctx, j.pub)
-				if err != nil {
-					errors.ArtifactAPIError = fmt.Errorf(
-						"publishing artifact: %w",
-						err,
-					)
-				}
+				errors.ArtifactAPIError = res.ArtifactPublishError
 			}
 
 			if anyNonNil(errors.OrchestrationError, errors.VulnScanError, errors.MalwareScanError) {
@@ -502,7 +491,19 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		UseClamAVDaemon:            true,
 		OfflineWinVulnScan:         true,
 	})
-	return run.ScanMountPoint(ctx, osType, mountPoint, targetVMURI, j.prov.GetName())
+	return run.ScanMountPoint(
+		ctx,
+		osType,
+		mountPoint,
+		targetVMURI,
+		j.prov.GetName(),
+		func(ctx context.Context, f scanner.Findings) error {
+			if f == nil {
+				return nil
+			}
+			return j.pub.Publish(ctx, f)
+		},
+	)
 }
 
 func (j Job) mountPartition(ctx context.Context, dev, fsType string) (string, error) {

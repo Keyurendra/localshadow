@@ -288,7 +288,7 @@ create_uninstall_script() {
         echo "set -euo pipefail"
         echo
         echo "$SUDO systemctl disable omni.timer omni.service --now 2>/dev/null || true"
-        echo "$SUDO rm -rf $FILE_OMNI_SERVICE $FILE_OMNI_TIMER $OMNI_BIN_PATH $OMNI_HOME_DIR"
+        echo "$SUDO rm -rf $FILE_OMNI_SERVICE $FILE_OMNI_TIMER $OMNI_BIN_PATH $OMNI_HOME_DIR $FILE_UNINSTALL_SCRIPT"
     } | $SUDO tee "${FILE_UNINSTALL_SCRIPT}" >/dev/null
     $SUDO chmod 755 "${FILE_UNINSTALL_SCRIPT}"
 }

@@ -29,7 +29,8 @@ var scanCmd = &cli.Command{
 
 		skipMalwareScan := c.Bool("skip-malware-scan")
 		skipVulnScan := c.Bool("skip-vuln-scan")
-		if skipVulnScan && skipMalwareScan {
+		enableContainerImageScan := c.Bool("enable-container-image-scan")
+		if skipVulnScan && skipMalwareScan && !enableContainerImageScan {
 			return fmt.Errorf("atleast one scaner should be enabled")
 		}
 
@@ -37,6 +38,8 @@ var scanCmd = &cli.Command{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
 			agent.WithClamAVDBDirectory(c.String("clamav-db-directory")),
 			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
+			agent.WithCRISockets(c.StringSlice("cri-sockets")...),
+			agent.WithContainerImageScanRemoteFallback(c.Bool("container-image-scan-remote-fallback")),
 			agent.WithOverrideHostname(c.String("override-hostname")),
 		}
 		if skipMalwareScan {
@@ -44,6 +47,9 @@ var scanCmd = &cli.Command{
 		}
 		if skipVulnScan {
 			opts = append(opts, agent.WithVulnScanDisabled())
+		}
+		if enableContainerImageScan {
+			opts = append(opts, agent.WithContainerVulnScanEnabled())
 		}
 
 		job, err := agent.NewJob(publisher, opts...)

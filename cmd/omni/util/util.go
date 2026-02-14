@@ -142,6 +142,22 @@ func AgentScanCmdFlags() []cli.Flag {
 			Name:  "skip-vuln-scan",
 			Usage: "Scan only for malware",
 		},
+		&cli.BoolFlag{
+			Name:  "enable-container-image-scan",
+			Usage: "Enable container image scan. Supported runtimes: docker, podman, containerd, crio",
+			Value: false,
+		},
+		&cli.StringSliceFlag{
+			Name:        "cri-sockets",
+			Usage:       "Comma-separated container runtime sockets",
+			DefaultText: "docker: /var/run/docker.sock,/run/docker.sock; podman: /run/podman/podman.sock,/var/run/podman/podman.sock; containerd: /run/containerd/containerd.sock,/var/run/containerd/containerd.sock; crio: /var/run/crio/crio.sock,/run/crio/crio.sock",
+			TakesFile:   true,
+		},
+		&cli.BoolFlag{
+			Name:  "container-image-scan-remote-fallback",
+			Usage: "Retry failed local container image scan via remote registry",
+			Value: false,
+		},
 		&cli.StringFlag{
 			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",

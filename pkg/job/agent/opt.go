@@ -10,13 +10,16 @@ import (
 type OptFunc func(*opts)
 
 type opts struct {
-	vulnDBDirectory            string
-	vulnScanEnabled            bool
-	malwareScanEnabled         bool
-	clamavDBDirectory          string
-	malwareScanTargetDirectory string
-	overrideHostname           string
-	logger                     *slog.Logger
+	vulnDBDirectory                  string
+	vulnScanEnabled                  bool
+	containerVulnScanEnabled         bool
+	containerImageScanRemoteFallback bool
+	malwareScanEnabled               bool
+	clamavDBDirectory                string
+	malwareScanTargetDirectory       string
+	criSockets                       []string
+	overrideHostname                 string
+	logger                           *slog.Logger
 }
 
 func WithMalwareScanDisabled() OptFunc {
@@ -28,6 +31,24 @@ func WithMalwareScanDisabled() OptFunc {
 func WithVulnScanDisabled() OptFunc {
 	return func(o *opts) {
 		o.vulnScanEnabled = false
+	}
+}
+
+func WithContainerVulnScanDisabled() OptFunc {
+	return func(o *opts) {
+		o.containerVulnScanEnabled = false
+	}
+}
+
+func WithContainerVulnScanEnabled() OptFunc {
+	return func(o *opts) {
+		o.containerVulnScanEnabled = true
+	}
+}
+
+func WithContainerImageScanRemoteFallback(enabled bool) OptFunc {
+	return func(o *opts) {
+		o.containerImageScanRemoteFallback = enabled
 	}
 }
 
@@ -46,6 +67,12 @@ func WithClamAVDBDirectory(dir string) OptFunc {
 func WithMalwareScanTargetDirectory(dir string) OptFunc {
 	return func(o *opts) {
 		o.malwareScanTargetDirectory = dir
+	}
+}
+
+func WithCRISockets(sockets ...string) OptFunc {
+	return func(o *opts) {
+		o.criSockets = append(o.criSockets, sockets...)
 	}
 }
 
@@ -79,6 +106,7 @@ func defaultOpts() opts {
 		clamavDBDirectory:          "/var/lib/clamav",
 		malwareScanEnabled:         true,
 		vulnScanEnabled:            true,
+		containerVulnScanEnabled:   false,
 		malwareScanTargetDirectory: rootfs,
 		logger:                     slog.Default(),
 	}

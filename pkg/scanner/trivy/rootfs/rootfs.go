@@ -1,4 +1,4 @@
-package trivy
+package rootfs
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 	"github.com/aquasecurity/trivy/pkg/types"
 
 	"github.com/accuknox/omniscan/pkg/scanner"
+	"github.com/accuknox/omniscan/pkg/scanner/trivy"
 )
 
 type s struct {
@@ -77,13 +78,13 @@ func (s s) externalScan(ctx context.Context, mountpoint, vmURI, platform, osType
 		return nil, fmt.Errorf("decoding trivy report: %w", err)
 	}
 
-	return &Result{
+	return &trivy.Result{
 		SchemaVersion: report.SchemaVersion,
 		CreatedAt:     report.CreatedAt,
 		ArtifactName:  report.ArtifactName,
 		ArtifactType:  "rootfs",
 		Results:       report.Results,
-		Metadata: Metadata{
+		Metadata: trivy.Metadata{
 			Size:        report.Metadata.Size,
 			OS:          report.Metadata.OS,
 			ImageID:     report.Metadata.ImageID,
@@ -92,7 +93,7 @@ func (s s) externalScan(ctx context.Context, mountpoint, vmURI, platform, osType
 			RepoDigests: report.Metadata.RepoDigests,
 			ImageConfig: report.Metadata.ImageConfig,
 			Layers:      report.Metadata.Layers,
-			VM: VMMetadata{
+			VM: trivy.VMMetadata{
 				URI:      vmURI,
 				Platform: platform,
 				OS:       osType,
@@ -159,13 +160,13 @@ func (s s) embeddedScan(ctx context.Context, mountpoint, vmURI, platform, osType
 		return nil, fmt.Errorf("scanning rootfs %s: %w", mountpoint, err)
 	}
 
-	return &Result{
+	return &trivy.Result{
 		SchemaVersion: report.SchemaVersion,
 		CreatedAt:     report.CreatedAt,
 		ArtifactName:  report.ArtifactName,
 		ArtifactType:  "rootfs",
 		Results:       report.Results,
-		Metadata: Metadata{
+		Metadata: trivy.Metadata{
 			Size:        report.Metadata.Size,
 			OS:          report.Metadata.OS,
 			ImageID:     report.Metadata.ImageID,
@@ -174,7 +175,7 @@ func (s s) embeddedScan(ctx context.Context, mountpoint, vmURI, platform, osType
 			RepoDigests: report.Metadata.RepoDigests,
 			ImageConfig: report.Metadata.ImageConfig,
 			Layers:      report.Metadata.Layers,
-			VM: VMMetadata{
+			VM: trivy.VMMetadata{
 				URI:      vmURI,
 				Platform: platform,
 				OS:       osType,

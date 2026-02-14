@@ -13,6 +13,7 @@ import (
 	kubeUtil "github.com/accuknox/omniscan/pkg/job/kube/util"
 	"github.com/accuknox/omniscan/pkg/provider"
 	"github.com/accuknox/omniscan/pkg/publisher"
+	"github.com/accuknox/omniscan/pkg/scanner"
 	"github.com/accuknox/omniscan/pkg/util"
 )
 
@@ -105,15 +106,14 @@ func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, e
 			errors.VulnScanError = result.VulnScanError
 		}
 
-		err := result.Publish(ctx, j.pub)
-		if err != nil {
+		if result.ArtifactPublishError != nil {
 			artifactPublishedCond = v1alpha1.ScanCondition{
 				Type:    v1alpha1.ScanConditionArtifactPublished,
 				Status:  corev1.ConditionFalse,
 				Reason:  "ArtifactFailedToPublish",
-				Message: err.Error(),
+				Message: result.ArtifactPublishError.Error(),
 			}
-			errors.ArtifactAPIError = fmt.Errorf("publishing artifact: %w", err)
+			errors.ArtifactAPIError = fmt.Errorf("publishing artifact: %w", result.ArtifactPublishError)
 		}
 	}
 
@@ -155,5 +155,17 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		DaemonlessClamavDBDir:      j.clamavDBDirectory,
 		OfflineWinVulnScan:         true,
 	})
-	return run.ScanMountPoint(ctx, osType, mountpoint, vmURI, j.prov.GetName())
+	return run.ScanMountPoint(
+		ctx,
+		osType,
+		mountpoint,
+		vmURI,
+		j.prov.GetName(),
+		func(ctx context.Context, f scanner.Findings) error {
+			if f == nil {
+				return nil
+			}
+			return j.pub.Publish(ctx, f)
+		},
+	)
 }
