@@ -7,6 +7,7 @@ metadata:
     {{- include "node-scan.labels" . | nindent 4 }}
 data:
   config.yaml: |-
+    clusterName: {{ .Values.scanner.clusterName }}
     namespace: {{ include "node-scan.namespace" . }}
     image: "{{ .Values.scanner.image.repository }}:{{ .Values.scanner.image.tag | default .Chart.AppVersion }}"
     imagePullPolicy: {{ .Values.scanner.image.pullPolicy }}

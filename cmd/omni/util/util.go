@@ -100,6 +100,15 @@ func AgentScanCmdFlags() []cli.Flag {
 			Name:  "override-hostname",
 			Usage: "Override system hostname",
 		},
+		&cli.StringFlag{
+			Name:  "platform",
+			Usage: "Platform name",
+			Value: "agent",
+		},
+		&cli.StringFlag{
+			Name:  "vm-uri-prefix",
+			Usage: "Prefix to prepend to the node's hostname",
+		},
 		&cli.BoolFlag{
 			Name:  "local-publisher",
 			Usage: "Store artifacts locally only",

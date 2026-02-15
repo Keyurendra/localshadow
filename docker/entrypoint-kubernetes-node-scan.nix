@@ -30,6 +30,11 @@ pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
     artifactAPISkipTLSVerification=true
   fi
 
+  if [[ -z "$CLUSTER_NAME" ]]; then
+    echo "env variable CLUSTER_NAME not set"
+    exit 1
+  fi
+
   if [[ -z "$NODE_NAME" ]]; then
     echo "env variable NODE_NAME not set"
     exit 1
@@ -105,5 +110,7 @@ pkgs.writeShellScriptBin "entrypoint-kubernetes-node-scan" ''
     --artifact-token-file=/etc/accuknox-omni/artifact.tok \
     --skip-malware-scan=$skipMalwareScan --skip-vuln-scan=$skipVulnScan \
     --clamav-db-directory=$clamavDBDirectory \
-    --override-hostname=$NODE_NAME
+    --override-hostname="''${CLUSTER_NAME}/''${NODE_NAME}" \
+    --platform=kubernetes \
+    --vm-uri-prefix="''${CLUSTER_NAME}://"
 ''

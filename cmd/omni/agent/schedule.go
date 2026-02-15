@@ -39,6 +39,8 @@ var scheduleCmd = &cli.Command{
 			agent.WithCRISockets(c.StringSlice("cri-sockets")...),
 			agent.WithContainerImageScanRemoteFallback(c.Bool("container-image-scan-remote-fallback")),
 			agent.WithOverrideHostname(c.String("override-hostname")),
+			agent.WithPlatform(c.String("platform")),
+			agent.WithVMURIPrefix(c.String("vm-uri-prefix")),
 		}
 		if skipMalwareScan {
 			opts = append(opts, agent.WithMalwareScanDisabled())

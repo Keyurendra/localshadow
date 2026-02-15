@@ -375,6 +375,10 @@ func buildEnvVars(cfg *config.NodeScanConfig, nodeName, os string) []corev1.EnvV
 			Value: fmt.Sprint(cfg.ArtifactAPI.SkipTLSVerification),
 		},
 		{
+			Name:  "CLUSTER_NAME",
+			Value: cfg.ClusterName,
+		},
+		{
 			Name:  "NODE_NAME",
 			Value: nodeName,
 		},

@@ -19,6 +19,8 @@ type opts struct {
 	malwareScanTargetDirectory       string
 	criSockets                       []string
 	overrideHostname                 string
+	vmURIPrefix                      string
+	platform                         string
 	logger                           *slog.Logger
 }
 
@@ -82,6 +84,18 @@ func WithOverrideHostname(hostname string) OptFunc {
 	}
 }
 
+func WithPlatform(platform string) OptFunc {
+	return func(o *opts) {
+		o.platform = platform
+	}
+}
+
+func WithVMURIPrefix(prefix string) OptFunc {
+	return func(o *opts) {
+		o.vmURIPrefix = prefix
+	}
+}
+
 func WithLogger(l *slog.Logger) OptFunc {
 	return func(o *opts) {
 		if l == nil {
@@ -108,6 +122,7 @@ func defaultOpts() opts {
 		vulnScanEnabled:            true,
 		containerVulnScanEnabled:   false,
 		malwareScanTargetDirectory: rootfs,
+		platform:                   "agent",
 		logger:                     slog.Default(),
 	}
 }

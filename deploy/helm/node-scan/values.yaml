@@ -77,6 +77,7 @@ dispatcher:
     create: true
 
 scanner:
+  clusterName: "" # required
   skipMalwareScan: true
   skipVulnScan: false
   repository:

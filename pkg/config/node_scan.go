@@ -11,6 +11,7 @@ import (
 )
 
 type NodeScanConfig struct {
+	ClusterName      string                        `json:"clusterName"`
 	Namespace        string                        `json:"namespace"`
 	Image            string                        `json:"image"`
 	ImagePullPolicy  corev1.PullPolicy             `json:"imagePullPolicy"`
@@ -87,6 +88,10 @@ func (c *NodeScanConfig) applyDefaults() {
 
 func (c *NodeScanConfig) Validate() error {
 	var errs []error
+
+	if c.ClusterName == "" {
+		errs = append(errs, errors.New("clusterName is required"))
+	}
 
 	if c.Image == "" {
 		errs = append(errs, errors.New("dispatcher.image is required"))

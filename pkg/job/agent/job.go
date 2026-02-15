@@ -101,7 +101,8 @@ func (j Job) Run(ctx context.Context, mountpoint string) (job.ErrorSummaryMap, e
 		slog.String("hostname", hostname),
 	)
 
-	result, err := j.scanMountPoint(ctx, mountpoint, hostname)
+	vmURI := j.vmURIPrefix + hostname
+	result, err := j.scanMountPoint(ctx, mountpoint, vmURI)
 	j.logger.LogAttrs(
 		ctx,
 		slog.LevelInfo,
