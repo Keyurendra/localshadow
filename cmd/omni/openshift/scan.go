@@ -75,7 +75,7 @@ var scanCmd = &cli.Command{
 		&cli.StringFlag{
 			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",
-			Value:     "/root/.cache/vulndb/",
+			Value:     "/var/lib/accuknox-omni",
 			TakesFile: true,
 		},
 		&cli.StringFlag{
@@ -83,6 +83,10 @@ var scanCmd = &cli.Command{
 			Value:     "/var/lib/clamav",
 			Usage:     "Path to ClamAV database directory",
 			TakesFile: true,
+		},
+		&cli.BoolFlag{
+			Name:  "use-external-trivy",
+			Usage: "Use external trivy. Must be in PATH",
 		},
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
@@ -138,6 +142,9 @@ var scanCmd = &cli.Command{
 		}
 		if c.Bool("skip-malware-scan") {
 			scOpts = append(scOpts, scanner.WithMalwareScanDisabled())
+		}
+		if c.Bool("use-external-trivy") {
+			scOpts = append(scOpts, scanner.WithUseExternalTrivy())
 		}
 
 		job := scanner.New(obj.Name, obj.Namespace, provider, publisher, scOpts...)

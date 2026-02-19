@@ -181,7 +181,7 @@ setup_env() {
     fi
 
     OMNI_BIN_PATH="$(filepath_join "$OMNI_INSTALL_PATH" omni)"
-    DB_DOWNLOAD_CMD_EXEC="db download vuln$(quote_indent \
+    DB_DOWNLOAD_CMD_EXEC="db download vuln java$(quote_indent \
         --vuln-db-repository=${OMNI_VULN_DB_REPOSITORY} \
         --java-db-repository=${OMNI_JAVA_DB_REPOSITORY} \
         --destination="${OMNI_HOME_DIR}")"

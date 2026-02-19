@@ -33,22 +33,26 @@ func NewScanner(fns ...OptFunc) (scanner.MultiScanner, error) {
 }
 
 func (s *s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string, pub scanner.Publish) error {
-	cts, err := s.listRunning(ctx)
+	if s.mountpoint != "" {
+		return s.scanAgentless(ctx, s.mountpoint, vmURI, platform, osType, pub)
+	}
+
+	infos, err := s.listRunning(ctx)
 	if err != nil {
 		return fmt.Errorf("listing running containers: %w", err)
 	}
 	s.resetNamespaceCache()
 
-	tgts := dedup(cts)
+	targets := dedup(infos)
 	slog.InfoContext(
 		ctx,
 		"prepared deduplicated container scan targets",
-		slog.Int("containers", len(cts)),
-		slog.Int("unique_images", len(tgts)),
+		slog.Int("containers", len(infos)),
+		slog.Int("unique_images", len(targets)),
 	)
 
 	var scanErr error
-	for _, t := range tgts {
+	for _, t := range targets {
 		f, err := s.scanTarget(ctx, t, vmURI, platform, osType)
 		if err != nil {
 			scanErr = errors.Join(scanErr, fmt.Errorf(
@@ -109,16 +113,7 @@ func (s *s) scanTarget(ctx context.Context, t target, vmURI, platform, osType st
 			)
 		}
 
-		f, err := s.scanOne(
-			ctx,
-			src.img,
-			src.runtime,
-			src.host,
-			ns,
-			vmURI,
-			platform,
-			osType,
-		)
+		f, err := s.scanOne(ctx, src.img, src.runtime, src.host, ns, vmURI, platform, osType)
 		if err == nil {
 			return f, nil
 		}

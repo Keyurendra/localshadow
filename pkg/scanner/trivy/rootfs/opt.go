@@ -11,7 +11,7 @@ type OptFunc func(*opts)
 type opts struct {
 	timeout          time.Duration
 	cacheDir         string
-	useEmbeddedTrivy bool
+	useExternalTrivy bool
 }
 
 func WithTimeout(timeout time.Duration) OptFunc {
@@ -26,9 +26,9 @@ func WithCacheDirectory(cacheDir string) OptFunc {
 	}
 }
 
-func WithUseEmbeddedTrivy(use bool) OptFunc {
+func WithExternalTrivy() OptFunc {
 	return func(o *opts) {
-		o.useEmbeddedTrivy = use
+		o.useExternalTrivy = true
 	}
 }
 
@@ -40,6 +40,6 @@ func defaultOpts() (*opts, error) {
 	return &opts{
 		timeout:          time.Hour * 12,
 		cacheDir:         cacheDir,
-		useEmbeddedTrivy: false,
+		useExternalTrivy: false,
 	}, nil
 }

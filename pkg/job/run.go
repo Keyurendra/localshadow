@@ -20,13 +20,14 @@ type RunConfig struct {
 	VulnScanDBDir                    string
 	CRISockets                       []string
 	ContainerImageScanRemoteFallback bool
-	UseEmbeddedTrivy                 bool
+	UseExternalTrivy                 bool
 	MalwareScan                      bool
 	MalwareScanTargetDirectory       string
 	UseClamAVDaemon                  bool
 	DaemonlessClamavDBDir            string
 	OfflineWinVulnScan               bool
 	ContainerVulnScan                bool
+	ContainerImageScanModeAgentless  bool
 }
 
 type Run struct {
@@ -109,7 +110,6 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 			slog.String("os", os),
 			slog.String("target_vm_uri", vmURI),
 		)
-
 		opts := []winvuln.OptFunc{
 			winvuln.WithDBPath(filepath.Join(r.VulnScanDBDir, "msrc", "db.sqlite3")),
 		}
@@ -152,6 +152,9 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 		if r.ContainerImageScanRemoteFallback {
 			opts = append(opts, container.WithRemoteFallback())
 		}
+		if r.ContainerImageScanModeAgentless {
+			opts = append(opts, container.WithMountpoint(mount))
+		}
 
 		s, err := container.NewScanner(opts...)
 		if err != nil {
@@ -179,7 +182,10 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 			slog.String("target_vm_uri", vmURI),
 		)
 
-		opts := []rootfs.OptFunc{rootfs.WithUseEmbeddedTrivy(r.UseEmbeddedTrivy)}
+		var opts []rootfs.OptFunc
+		if r.UseExternalTrivy {
+			opts = append(opts, rootfs.WithExternalTrivy())
+		}
 		if r.VulnScanDBDir != "" {
 			opts = append(opts, rootfs.WithCacheDirectory(r.VulnScanDBDir))
 		}

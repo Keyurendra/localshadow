@@ -5,11 +5,18 @@ import "log/slog"
 type OptFunc func(*opts)
 
 type opts struct {
+	useExternalTrivy   bool
 	malwareScanEnabled bool
 	vulnScanEnabled    bool
 	vulnDBDirectory    string
 	clamavDBDirectory  string
 	logger             *slog.Logger
+}
+
+func WithUseExternalTrivy() OptFunc {
+	return func(o *opts) {
+		o.useExternalTrivy = true
+	}
 }
 
 func WithMalwareScanDisabled() OptFunc {
@@ -47,9 +54,10 @@ func WithLogger(l *slog.Logger) OptFunc {
 
 func defaultOpts() opts {
 	return opts{
+		useExternalTrivy:   false,
 		malwareScanEnabled: true,
 		vulnScanEnabled:    true,
-		vulnDBDirectory:    "/root/.cache/vulndb/",
+		vulnDBDirectory:    "/var/lib/accuknox-omni",
 		clamavDBDirectory:  "/var/lib/clamav",
 		logger:             slog.Default(),
 	}

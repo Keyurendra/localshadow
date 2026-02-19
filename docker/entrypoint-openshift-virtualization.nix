@@ -50,12 +50,12 @@ pkgs.writeShellScriptBin "entrypoint-openshift" ''
   fi
 
   echo "[*] Downloading Trivy DB"
-  export TRIVY_CACHE_DIR=/root/.cache/vulndb
+  export TRIVY_CACHE_DIR=/var/lib/accuknox-omni
   ${pkgs.trivy}/bin/trivy rootfs --no-progress --download-db-only
   ${pkgs.trivy}/bin/trivy rootfs --no-progress --download-java-db-only
 
   echo "[*] Downloading MSRC DB"
-  omni db download msrc --destination /root/.cache/vulndb/
+  omni db download msrc
 
   echo "[*] Creating device maps for $dev"
   ${pkgs.multipath-tools}/bin/kpartx -av "$dev" >/dev/null

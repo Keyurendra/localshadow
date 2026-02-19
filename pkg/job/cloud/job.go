@@ -185,10 +185,11 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 				errors.OS = res.OS
 				errors.MalwareScanError = res.MalwareScanError
 				errors.VulnScanError = res.VulnScanError
+				errors.ContainerVulnScanError = res.ContainerVulnScanError
 				errors.ArtifactAPIError = res.ArtifactPublishError
 			}
 
-			if anyNonNil(errors.OrchestrationError, errors.VulnScanError, errors.MalwareScanError) {
+			if anyNonNil(errors.OrchestrationError, errors.VulnScanError, errors.ContainerVulnScanError, errors.MalwareScanError) {
 				j.logger.LogAttrs(
 					ctx,
 					slog.LevelError,
@@ -198,6 +199,7 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 						"errors",
 						slog.Any("orchestration", errors.OrchestrationError),
 						slog.Any("vuln", errors.VulnScanError),
+						slog.Any("container_vuln", errors.ContainerVulnScanError),
 						slog.Any("malware", errors.MalwareScanError),
 					),
 				)
@@ -225,6 +227,10 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 				j.collector.RecordError(metric.ErrorTypeVulnScan, osTyp)
 			}
 
+			if errors.ContainerVulnScanError != nil {
+				j.collector.RecordError(metric.ErrorTypeVulnScan, osTyp)
+			}
+
 			if errors.MalwareScanError != nil {
 				j.collector.RecordError(metric.ErrorTypeMalwareScan, osTyp)
 			}
@@ -233,7 +239,7 @@ func (j Job) Run(ctx context.Context) (job.ErrorSummaryMap, error) {
 				j.collector.RecordError(metric.ErrorTypeArtifactAPI, osTyp)
 			}
 
-			if errors.ArtifactAPIError == nil && errors.VulnScanError == nil {
+			if errors.ArtifactAPIError == nil && errors.VulnScanError == nil && errors.ContainerVulnScanError == nil {
 				j.collector.RecordSuccessfulScan(metric.ScanTypeVulnScan, osTyp)
 			}
 
@@ -482,14 +488,17 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 	)
 
 	run := job.NewRun(job.RunConfig{
-		Logger:                     j.logger,
-		VulnScan:                   j.vulnScanEnabled,
-		VulnScanDBDir:              j.vulnDBDirectory,
-		UseEmbeddedTrivy:           false,
-		MalwareScan:                j.malwareScanEnabled,
-		MalwareScanTargetDirectory: mountPoint,
-		UseClamAVDaemon:            true,
-		OfflineWinVulnScan:         true,
+		Logger:                           j.logger,
+		VulnScan:                         j.vulnScanEnabled,
+		ContainerVulnScan:                j.containerVulnScanEnabled,
+		ContainerImageScanRemoteFallback: j.containerImageScanRemoteFallback,
+		ContainerImageScanModeAgentless:  true,
+		VulnScanDBDir:                    j.vulnDBDirectory,
+		UseExternalTrivy:                 j.useExternalTrivy,
+		MalwareScan:                      j.malwareScanEnabled,
+		MalwareScanTargetDirectory:       mountPoint,
+		UseClamAVDaemon:                  true,
+		OfflineWinVulnScan:               true,
 	})
 	return run.ScanMountPoint(
 		ctx,

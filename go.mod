@@ -16,7 +16,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.16
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.254.1
 	github.com/aws/smithy-go v1.24.0
+	github.com/containerd/containerd v1.7.29
 	github.com/containerd/containerd/api v1.9.0
+	github.com/containerd/platforms v1.0.0-rc.1
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/go-co-op/gocron/v2 v2.16.6
 	github.com/go-logr/logr v1.4.3
@@ -27,11 +29,14 @@ require (
 	github.com/jaypipes/ghw v0.19.1
 	github.com/kubernetes-csi/external-snapshotter/client/v8 v8.2.0
 	github.com/lmittmann/tint v1.1.2
+	github.com/opencontainers/go-digest v1.0.0
+	github.com/opencontainers/image-spec v1.1.1
 	github.com/openshift/api v0.0.0-20251208101024-c2a41ea924bd
 	github.com/prometheus/client_golang v1.23.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.4.1
+	go.etcd.io/bbolt v1.4.3
 	golang.org/x/sys v0.39.0
 	google.golang.org/api v0.260.0
 	google.golang.org/grpc v1.78.0
@@ -129,14 +134,12 @@ require (
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cncf/xds/go v0.0.0-20251022180443-0feb69152e9f // indirect
 	github.com/containerd/cgroups/v3 v3.0.5 // indirect
-	github.com/containerd/containerd v1.7.29 // indirect
 	github.com/containerd/containerd/v2 v2.1.5 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
-	github.com/containerd/platforms v1.0.0-rc.1 // indirect
 	github.com/containerd/plugin v1.0.0 // indirect
 	github.com/containerd/stargz-snapshotter/estargz v0.18.1 // indirect
 	github.com/containerd/ttrpc v1.2.7 // indirect
@@ -310,8 +313,6 @@ require (
 	github.com/onsi/ginkgo/v2 v2.26.0 // indirect
 	github.com/onsi/gomega v1.38.2 // indirect
 	github.com/open-policy-agent/opa v1.8.0 // indirect
-	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runtime-spec v1.2.1 // indirect
 	github.com/opencontainers/selinux v1.13.0 // indirect
 	github.com/openshift/custom-resource-status v1.1.2 // indirect
@@ -395,7 +396,6 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	github.com/zclconf/go-cty v1.17.0 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
-	go.etcd.io/bbolt v1.4.3 // indirect
 	go.mongodb.org/mongo-driver v1.17.6 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

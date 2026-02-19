@@ -8,19 +8,28 @@ import (
 type OptFunc func(*opts)
 
 type opts struct {
-	baseMountPoint        string
-	vulnScanEnabled       bool
-	malwareScanEnabled    bool
-	vulnDBDirectory       string
-	concurrency           uint
-	logger                *slog.Logger
-	prometheusMetrics     bool
-	prometheusMetricsPort uint16
+	baseMountPoint                   string
+	useExternalTrivy                 bool
+	vulnScanEnabled                  bool
+	malwareScanEnabled               bool
+	containerVulnScanEnabled         bool
+	containerImageScanRemoteFallback bool
+	vulnDBDirectory                  string
+	concurrency                      uint
+	logger                           *slog.Logger
+	prometheusMetrics                bool
+	prometheusMetricsPort            uint16
 }
 
 func WithBaseMountPoint(baseMountPoint string) OptFunc {
 	return func(o *opts) {
 		o.baseMountPoint = baseMountPoint
+	}
+}
+
+func WithUseExternalTrivy() OptFunc {
+	return func(o *opts) {
+		o.useExternalTrivy = true
 	}
 }
 
@@ -39,6 +48,18 @@ func WithVulnScanDisabled() OptFunc {
 func WithVulnDBDirectory(dir string) OptFunc {
 	return func(o *opts) {
 		o.vulnDBDirectory = dir
+	}
+}
+
+func WithContainerVulnScanEnabled() OptFunc {
+	return func(o *opts) {
+		o.containerVulnScanEnabled = true
+	}
+}
+
+func WithContainerImageScanRemoteFallback() OptFunc {
+	return func(o *opts) {
+		o.containerImageScanRemoteFallback = true
 	}
 }
 
@@ -78,13 +99,16 @@ func WithPrometheusMetricsPort(port uint16) OptFunc {
 
 func defaultOpts() opts {
 	return opts{
-		baseMountPoint:        "/accuknox",
-		malwareScanEnabled:    true,
-		vulnScanEnabled:       true,
-		vulnDBDirectory:       "/root/.cache/vulndb/",
-		concurrency:           uint(runtime.NumCPU()),
-		logger:                slog.Default(),
-		prometheusMetrics:     false,
-		prometheusMetricsPort: 9100,
+		baseMountPoint:                   "/accuknox",
+		useExternalTrivy:                 false,
+		malwareScanEnabled:               true,
+		vulnScanEnabled:                  true,
+		containerVulnScanEnabled:         false,
+		containerImageScanRemoteFallback: false,
+		vulnDBDirectory:                  "/var/lib/accuknox-omni",
+		concurrency:                      uint(runtime.NumCPU()),
+		logger:                           slog.Default(),
+		prometheusMetrics:                false,
+		prometheusMetricsPort:            9100,
 	}
 }

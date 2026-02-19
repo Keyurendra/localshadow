@@ -36,10 +36,10 @@ func NewScanner(fns ...OptFunc) (scanner.Scanner, error) {
 }
 
 func (s s) Scan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
-	if s.useEmbeddedTrivy {
-		return s.embeddedScan(ctx, mountpoint, vmURI, platform, osType)
+	if s.useExternalTrivy {
+		return s.externalScan(ctx, mountpoint, vmURI, platform, osType)
 	}
-	return s.externalScan(ctx, mountpoint, vmURI, platform, osType)
+	return s.embeddedScan(ctx, mountpoint, vmURI, platform, osType)
 }
 
 func (s s) externalScan(ctx context.Context, mountpoint, vmURI, platform, osType string) (scanner.Findings, error) {
@@ -127,7 +127,7 @@ func (s s) embeddedScan(ctx context.Context, mountpoint, vmURI, platform, osType
 			SkipJavaDBUpdate: true,
 		},
 		PackageOptions: flag.PackageOptions{
-			PkgTypes: []string{"os"},
+			PkgTypes: []string{"os", "library"},
 			PkgRelationships: []flanalTypes.Relationship{
 				flanalTypes.RelationshipUnknown,
 				flanalTypes.RelationshipRoot,

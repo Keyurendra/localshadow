@@ -44,8 +44,17 @@ var scheduleCmd = &cli.Command{
 		if c.Bool("skip-malware-scan") {
 			opts = append(opts, cloud.WithMalwareScanDisabled())
 		}
+		if c.Bool("enable-container-image-scan") {
+			opts = append(opts, cloud.WithContainerVulnScanEnabled())
+		}
+		if c.Bool("container-image-scan-remote-fallback") {
+			opts = append(opts, cloud.WithContainerImageScanRemoteFallback())
+		}
 		if c.Bool("enable-prometheus-metrics") {
 			opts = append(opts, cloud.WithPrometheusMetrics())
+		}
+		if c.Bool("use-external-trivy") {
+			opts = append(opts, cloud.WithUseExternalTrivy())
 		}
 
 		job, err := cloud.NewJob(provider, publisher, opts...)

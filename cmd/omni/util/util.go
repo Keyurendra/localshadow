@@ -50,7 +50,7 @@ func CloudScanCmdFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",
-			Value:     "/root/.cache/vulndb/",
+			Value:     "/var/lib/accuknox-omni",
 			TakesFile: true,
 		},
 		&cli.StringFlag{
@@ -65,6 +65,21 @@ func CloudScanCmdFlags() []cli.Flag {
 			Name:  "concurrency",
 			Usage: "Number of concurrent scans",
 			Value: uint(runtime.NumCPU()),
+		},
+		&cli.BoolFlag{
+			Name:  "enable-container-image-scan",
+			Usage: "Enable container image scan",
+			Value: false,
+		},
+		&cli.BoolFlag{
+			Name:  "container-image-scan-remote-fallback",
+			Usage: "Retry failed local container image scan via remote registry",
+			Value: false,
+		},
+		&cli.BoolFlag{
+			Name:  "use-external-trivy",
+			Usage: "Use external trivy. Must be in PATH",
+			Value: false,
 		},
 	}
 }

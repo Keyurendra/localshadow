@@ -67,15 +67,14 @@ func (s *s) detectRuntimes() ([]runtimeConfig, error) {
 }
 
 func (s *s) detectWithStat(statFn func(string) (os.FileInfo, error), hosts []runtimeHost) ([]runtimeConfig, error) {
-	sockets := parseSockets(s.criSockets)
-	if len(sockets) > 0 {
-		return detectFromSockets(statFn, hosts, sockets)
+	if len(s.criSockets) > 0 {
+		return detectFromSockets(statFn, hosts, s.criSockets)
 	}
 
 	var cfgs []runtimeConfig
 	seen := make(map[string]struct{})
-	for _, rt := range hosts {
-		for _, host := range rt.hosts {
+	for _, runtime := range hosts {
+		for _, host := range runtime.hosts {
 			path := strings.TrimPrefix(host, "unix://")
 			if _, err := statFn(path); err != nil {
 				continue
@@ -86,9 +85,9 @@ func (s *s) detectWithStat(statFn func(string) (os.FileInfo, error), hosts []run
 			}
 			seen[k] = struct{}{}
 			cfgs = append(cfgs, runtimeConfig{
-				name:     rt.name,
+				name:     runtime.name,
 				host:     host,
-				cri:      rt.cri,
+				cri:      runtime.cri,
 				explicit: false,
 			})
 		}
@@ -99,6 +98,7 @@ func (s *s) detectWithStat(statFn func(string) (os.FileInfo, error), hosts []run
 			"no supported container runtime detected: docker, podman, containerd, crio",
 		)
 	}
+
 	return cfgs, nil
 }
 
@@ -108,10 +108,11 @@ func detectFromSockets(statFn func(string) (os.FileInfo, error), hosts []runtime
 	seen := make(map[string]struct{})
 
 	for _, socket := range sockets {
-		host, path := normSocket(socket)
+		host, path := normalizeSocket(socket)
 		if path == "" {
 			continue
 		}
+
 		if _, err := statFn(path); err != nil {
 			detectErr = errors.Join(detectErr, fmt.Errorf(
 				"stat socket %q: %w",
@@ -121,7 +122,7 @@ func detectFromSockets(statFn func(string) (os.FileInfo, error), hosts []runtime
 			continue
 		}
 
-		rt, ok := runtimeFromPath(path, hosts)
+		runtime, ok := runtimeFromPath(path, hosts)
 		if !ok {
 			detectErr = errors.Join(detectErr, fmt.Errorf(
 				"failed to determine runtime from socket path %q, supported runtimes: docker, podman, containerd, crio",
@@ -136,9 +137,9 @@ func detectFromSockets(statFn func(string) (os.FileInfo, error), hosts []runtime
 		}
 		seen[k] = struct{}{}
 		cfgs = append(cfgs, runtimeConfig{
-			name:     rt.name,
+			name:     runtime.name,
 			host:     host,
-			cri:      rt.cri,
+			cri:      runtime.cri,
 			explicit: true,
 		})
 	}
@@ -146,24 +147,11 @@ func detectFromSockets(statFn func(string) (os.FileInfo, error), hosts []runtime
 	if len(cfgs) == 0 && detectErr == nil {
 		return nil, fmt.Errorf("no sockets provided in --cri-sockets")
 	}
+
 	return cfgs, detectErr
 }
 
-func parseSockets(values []string) []string {
-	var sockets []string
-	for _, value := range values {
-		for socket := range strings.SplitSeq(value, ",") {
-			socket = strings.TrimSpace(socket)
-			if socket == "" {
-				continue
-			}
-			sockets = append(sockets, socket)
-		}
-	}
-	return sockets
-}
-
-func normSocket(socket string) (host, path string) {
+func normalizeSocket(socket string) (host, path string) {
 	path = strings.TrimSpace(socket)
 	path = strings.TrimPrefix(path, "unix://")
 	if path == "" {
@@ -172,10 +160,10 @@ func normSocket(socket string) (host, path string) {
 	return "unix://" + path, path
 }
 
-// sockKey canonicalizes equivalent socket paths (for example /var/run
-// and /run) to prevent duplicate runtime probing.
+// sockKey canonicalizes equivalent socket paths (for example /var/run and /run)
+// to prevent duplicate runtime probing.
 func sockKey(host string) string {
-	_, path := normSocket(host)
+	_, path := normalizeSocket(host)
 	path = filepath.Clean(path)
 	if after, ok := strings.CutPrefix(path, "/var/run/"); ok {
 		path = "/run/" + after
@@ -184,15 +172,24 @@ func sockKey(host string) string {
 }
 
 func runtimeFromPath(path string, hosts []runtimeHost) (*runtimeHost, bool) {
-	path = strings.ToLower(path)
-	for _, rt := range hosts {
-		for _, token := range rt.tokens {
-			if strings.Contains(path, token) {
-				r := rt
-				return &r, true
+	key := sockKey("unix://" + path)
+	for _, runtime := range hosts {
+		for _, host := range runtime.hosts {
+			if sockKey(host) == key {
+				return &runtime, true
 			}
 		}
 	}
+
+	lowerPath := strings.ToLower(path)
+	for _, runtime := range hosts {
+		for _, token := range runtime.tokens {
+			if strings.Contains(lowerPath, token) {
+				return &runtime, true
+			}
+		}
+	}
+
 	return nil, false
 }
 
@@ -203,6 +200,5 @@ func isCRIUnavailable(err error) bool {
 		return false
 	}
 	msg := err.Error()
-	return strings.Contains(msg, "code = Unimplemented") &&
-		strings.Contains(msg, "runtime.v1.RuntimeService")
+	return strings.Contains(msg, "code = Unimplemented") && strings.Contains(msg, "runtime.v1.RuntimeService")
 }

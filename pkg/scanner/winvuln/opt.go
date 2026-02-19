@@ -22,6 +22,6 @@ func WithDBPath(dbPath string) OptFunc {
 func defaultOpts() opts {
 	return opts{
 		useOfflineMode: false,
-		dbPath:         "/root/.cache/msrc/db.sqlite3",
+		dbPath:         "/var/lib/accuknox-omni/msrc/db.sqlite3",
 	}
 }

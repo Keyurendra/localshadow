@@ -164,7 +164,7 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		ContainerImageScanRemoteFallback: j.containerImageScanRemoteFallback,
 		VulnScanDBDir:                    j.vulnDBDirectory,
 		CRISockets:                       j.criSockets,
-		UseEmbeddedTrivy:                 true,
+		UseExternalTrivy:                 false,
 		MalwareScan:                      j.malwareScanEnabled,
 		DaemonlessClamavDBDir:            j.clamavDBDirectory,
 		MalwareScanTargetDirectory:       targetDir,

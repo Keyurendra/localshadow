@@ -37,11 +37,11 @@ func TestDedupByDigestAcrossRuntimes(t *testing.T) {
 		},
 	}
 
-	tgts := dedup(cts)
-	if assert.Len(t, tgts, 1) {
-		assert.Equal(t, "digest:"+d, tgts[0].key)
-		assert.Equal(t, 2, tgts[0].n)
-		assert.Len(t, tgts[0].srcs, 2)
+	targets := dedup(cts)
+	if assert.Len(t, targets, 1) {
+		assert.Equal(t, "digest:"+d, targets[0].key)
+		assert.Equal(t, 2, targets[0].n)
+		assert.Len(t, targets[0].srcs, 2)
 	}
 }
 
@@ -63,11 +63,11 @@ func TestDedupUsesRefFallbackWhenDigestMissing(t *testing.T) {
 		},
 	}
 
-	tgts := dedup(cts)
-	if assert.Len(t, tgts, 1) {
-		assert.Equal(t, "ref:repo/app:v1", tgts[0].key)
-		assert.Equal(t, 2, tgts[0].n)
-		assert.Len(t, tgts[0].srcs, 1)
+	targets := dedup(cts)
+	if assert.Len(t, targets, 1) {
+		assert.Equal(t, "ref:repo/app:v1", targets[0].key)
+		assert.Equal(t, 2, targets[0].n)
+		assert.Len(t, targets[0].srcs, 1)
 	}
 }
 

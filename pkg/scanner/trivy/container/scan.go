@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
 	"github.com/aquasecurity/trivy/pkg/commands/artifact"
@@ -14,10 +15,86 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/scanner"
 	"github.com/accuknox/omniscan/pkg/scanner/trivy"
+	"github.com/accuknox/omniscan/pkg/scanner/trivy/container/agentless"
 )
 
 func (s *s) scanOne(ctx context.Context, imageRef, runtime, runtimeHost string, namespaces []string, vmURI, platform, osType string) (scanner.Findings, error) {
-	opts := flag.Options{
+	opts := s.scanOpts(imageRef)
+
+	restore := setContainerdEnv(runtime, runtimeHost)
+	defer restore()
+
+	report, err := s.scanLocal(ctx, opts, runtime, namespaces)
+	if err != nil && s.remoteFallback && retryRemote(runtime, err) {
+		slog.WarnContext(
+			ctx,
+			"retrying scan with remote image source",
+			slog.String("image", imageRef),
+			slog.String("runtime", runtime),
+		)
+		opts.ImageSources = []flanalTypes.ImageSource{
+			flanalTypes.RemoteImageSource,
+		}
+		report, err = s.scanReport(ctx, opts)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("scanning image %s: %w", imageRef, err)
+	}
+
+	return findingsFromReport(report, "container_image", vmURI, platform, osType), nil
+}
+
+func (s *s) scanRemoteImage(ctx context.Context, imageRef, vmURI, platform, osType string) (scanner.Findings, error) {
+	opts := s.scanOpts(imageRef)
+	opts.ImageSources = []flanalTypes.ImageSource{
+		flanalTypes.RemoteImageSource,
+	}
+	report, err := s.scanReport(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("remote image scan %s: %w", imageRef, err)
+	}
+	return findingsFromReport(report, "container_image", vmURI, platform, osType), nil
+}
+
+func (s *s) scanAgentlessRootFS(ctx context.Context, targetPath string, meta agentless.ImageMeta, vmURI, platform, osType string) (scanner.Findings, error) {
+	opts := s.scanOpts(targetPath)
+	runner, err := artifact.NewRunner(ctx, opts, artifact.TargetRootfs)
+	if err != nil {
+		return nil, fmt.Errorf("initializing scanner: %w", err)
+	}
+	defer runner.Close(ctx)
+
+	report, err := runner.ScanRootfs(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("scanning reconstructed rootfs %s: %w", targetPath, err)
+	}
+
+	f := findingsFromReport(&report, "container_image", vmURI, platform, osType)
+	if r, ok := f.(*trivy.Result); ok {
+		if strings.TrimSpace(meta.ImageRef) != "" {
+			r.ArtifactName = meta.ImageRef
+		}
+		if strings.TrimSpace(r.Metadata.ImageID) == "" {
+			r.Metadata.ImageID = meta.ImageID
+		}
+		if len(r.Metadata.DiffIDs) == 0 && len(meta.DiffIDs) > 0 {
+			r.Metadata.DiffIDs = meta.DiffIDs
+		}
+		if len(r.Metadata.RepoTags) == 0 && len(meta.RepoTags) > 0 {
+			r.Metadata.RepoTags = meta.RepoTags
+		}
+		if len(r.Metadata.RepoDigests) == 0 && len(meta.RepoDigests) > 0 {
+			r.Metadata.RepoDigests = meta.RepoDigests
+		}
+		if r.Metadata.ImageConfig.RootFS.Type == "" && meta.HasConfig {
+			r.Metadata.ImageConfig = meta.ImageConfig
+		}
+	}
+	return f, nil
+}
+
+func (s *s) scanOpts(target string) flag.Options {
+	return flag.Options{
 		GlobalOptions: flag.GlobalOptions{
 			Timeout:  s.timeout,
 			CacheDir: s.cacheDir,
@@ -29,7 +106,7 @@ func (s *s) scanOne(ctx context.Context, imageRef, runtime, runtimeHost string, 
 		ScanOptions: flag.ScanOptions{
 			Scanners:          []types.Scanner{types.VulnerabilityScanner},
 			DisableTelemetry:  true,
-			Target:            imageRef,
+			Target:            target,
 			DetectionPriority: flanalTypes.PriorityPrecise,
 			Parallel:          0,
 		},
@@ -41,7 +118,7 @@ func (s *s) scanOne(ctx context.Context, imageRef, runtime, runtimeHost string, 
 			SkipJavaDBUpdate: true,
 		},
 		PackageOptions: flag.PackageOptions{
-			PkgTypes: []string{"os"},
+			PkgTypes: []string{"os", "library"},
 			PkgRelationships: []flanalTypes.Relationship{
 				flanalTypes.RelationshipUnknown,
 				flanalTypes.RelationshipRoot,
@@ -65,30 +142,14 @@ func (s *s) scanOne(ctx context.Context, imageRef, runtime, runtimeHost string, 
 			ImageSources: flanalTypes.AllImageSources,
 		},
 	}
+}
 
-	restore := setCtrdEnv(runtime, runtimeHost)
-	defer restore()
-
-	report, err := s.scanLocal(ctx, opts, runtime, namespaces)
-	if err != nil && s.remoteFallback && retryRemote(runtime, err) {
-		slog.WarnContext(
-			ctx,
-			"retrying scan with remote image source",
-			slog.String("image", imageRef),
-			slog.String("runtime", runtime),
-		)
-		opts.ImageSources = []flanalTypes.ImageSource{flanalTypes.RemoteImageSource}
-		report, err = s.scanReport(ctx, opts)
-	}
-	if err != nil {
-		return nil, fmt.Errorf("scanning rootfs %s: %w", imageRef, err)
-	}
-
+func findingsFromReport(report *types.Report, artifactType, vmURI, platform, osType string) scanner.Findings {
 	return &trivy.Result{
 		SchemaVersion: report.SchemaVersion,
 		CreatedAt:     report.CreatedAt,
 		ArtifactName:  report.ArtifactName,
-		ArtifactType:  "container_image",
+		ArtifactType:  artifactType,
 		Results:       report.Results,
 		Metadata: trivy.Metadata{
 			Size:        report.Metadata.Size,
@@ -105,7 +166,7 @@ func (s *s) scanOne(ctx context.Context, imageRef, runtime, runtimeHost string, 
 				OS:       osType,
 			},
 		},
-	}, nil
+	}
 }
 
 // scanLocal enforces namespace-based lookup for containerd to avoid
@@ -130,7 +191,7 @@ func (s *s) scanNS(ctx context.Context, opts flag.Options, namespaces []string) 
 
 	var scanErr error
 	for _, n := range ns {
-		restore := setCtrdNS(n)
+		restore := setContainerdNS(n)
 		report, err := s.scanReport(ctx, opts)
 		restore()
 		if err == nil {

@@ -57,7 +57,7 @@ write_files:
     owner: root:root
     content: |
       #!/bin/sh
-      export TRIVY_CACHE_DIR=/root/.cache/vulndb
+      export TRIVY_CACHE_DIR=/var/lib/accuknox-omni
       /usr/bin/trivy rootfs --no-progress --download-db-only
       /usr/bin/trivy rootfs --no-progress --download-java-db-only
 
@@ -66,7 +66,7 @@ write_files:
     owner: root:root
     content: |
       #!/bin/sh
-      /usr/local/bin/omni db download msrc --destination /root/.cache/vulndb/
+      /usr/local/bin/omni db download msrc
 
   - path: /etc/accuknox-omni/artifact.token
     content: ${artifact_token}
@@ -144,7 +144,7 @@ runcmd:
 
       # download trivy databases
       chmod +x /etc/cron.daily/trivy-update-db
-      export TRIVY_CACHE_DIR=/root/.cache/vulndb
+      export TRIVY_CACHE_DIR=/var/lib/accuknox-omni
       trivy rootfs --no-progress --download-db-only
       trivy rootfs --no-progress --download-java-db-only
 
@@ -164,7 +164,7 @@ runcmd:
       chmod +x /usr/local/bin/omni
 
       # download msrc db
-      /usr/local/bin/omni db download msrc --destination /root/.cache/vulndb/
+      /usr/local/bin/omni db download msrc
 
       # enable omni systemd service
       systemctl enable omni.service --now

@@ -13,13 +13,12 @@ func retryRemote(runtime string, err error) bool {
 		return false
 	}
 	msg := err.Error()
-	return strings.Contains(msg, "content digest") &&
-		strings.Contains(msg, "not found")
+	return strings.Contains(msg, "content digest") && strings.Contains(msg, "not found")
 }
 
-// setCtrdEnv pins Trivy to the runtime socket that produced the image
+// setContainerdEnv pins Trivy to the runtime socket that produced the image
 // so local scans use the same containerd instance.
-func setCtrdEnv(runtime, runtimeHost string) func() {
+func setContainerdEnv(runtime, runtimeHost string) func() {
 	if runtime != "containerd" {
 		return func() {}
 	}
@@ -30,7 +29,7 @@ func setCtrdEnv(runtime, runtimeHost string) func() {
 	return withEnv("CONTAINERD_ADDRESS", address)
 }
 
-func setCtrdNS(namespace string) func() {
+func setContainerdNS(namespace string) func() {
 	if namespace == "" {
 		return func() {}
 	}

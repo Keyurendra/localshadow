@@ -23,19 +23,20 @@ type containerInfo struct {
 	State       string
 	Ports       []dockerContainer.Port
 	Mounts      []dockerContainer.MountPoint
+	GraphDriver string
 	Runtime     string
 	RuntimeHost string
 }
 
 func (s *s) listRunning(ctx context.Context) ([]containerInfo, error) {
-	rts, detectErr := s.detectRuntimes()
-	if detectErr != nil && len(rts) == 0 {
+	runtimes, detectErr := s.detectRuntimes()
+	if detectErr != nil && len(runtimes) == 0 {
 		return nil, detectErr
 	}
 
 	scanErr := detectErr
 	var running []containerInfo
-	for _, c := range rts {
+	for _, c := range runtimes {
 		if c.cri {
 			cts, err := listCRI(ctx, c.host, c.name)
 			if err != nil {

@@ -18,15 +18,28 @@ func TestDetectRuntimeWithSocket(t *testing.T) {
 		runtime string
 		cri     bool
 	}{
-		{name: "docker", socket: "/tmp/docker.sock", runtime: "docker"},
-		{name: "podman", socket: "/tmp/podman.sock", runtime: "podman"},
+		{
+			name:    "docker",
+			socket:  "/run/docker.sock",
+			runtime: "docker",
+		},
+		{
+			name:    "podman",
+			socket:  "/run/podman/podman.sock",
+			runtime: "podman",
+		},
 		{
 			name:    "containerd",
-			socket:  "/tmp/containerd.sock",
+			socket:  "/run/containerd/containerd.sock",
 			runtime: "containerd",
 			cri:     true,
 		},
-		{name: "crio", socket: "/tmp/crio.sock", runtime: "crio", cri: true},
+		{
+			name:    "crio",
+			socket:  "/run/crio/crio.sock",
+			runtime: "crio",
+			cri:     true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -52,6 +65,46 @@ func TestDetectRuntimeUnknownSocket(t *testing.T) {
 	require.Empty(t, cfgs)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "supported runtimes")
+}
+
+func TestDetectRuntimeCustomSocketPathByToken(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		socket  string
+		runtime string
+		cri     bool
+	}{
+		{
+			name:    "rootless podman",
+			socket:  "/run/user/1001/podman/podman.sock",
+			runtime: "podman",
+		},
+		{
+			name:    "custom mounted containerd",
+			socket:  "/mnt/custom/runtime/containerd.sock",
+			runtime: "containerd",
+			cri:     true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			scanner := s{opts: opts{criSockets: []string{tt.socket}}}
+			cfgs, err := scanner.detectWithStat(
+				fakeStat(tt.socket),
+				runtimeHosts,
+			)
+			require.NoError(t, err)
+			require.Len(t, cfgs, 1)
+			assert.Equal(t, tt.runtime, cfgs[0].name)
+			assert.Equal(t, tt.cri, cfgs[0].cri)
+			assert.Equal(t, "unix://"+tt.socket, cfgs[0].host)
+		})
+	}
 }
 
 func TestDetectRuntimePriority(t *testing.T) {
@@ -129,27 +182,33 @@ func TestDetectRuntimeNoneFound(t *testing.T) {
 func TestDetectRuntimeWithSocketPartialFailure(t *testing.T) {
 	t.Parallel()
 
-	scanner := s{opts: opts{criSockets: []string{"/tmp/containerd.sock, /tmp/missing.sock"}}}
-	cfgs, err := scanner.detectWithStat(fakeStat("/tmp/containerd.sock"), runtimeHosts)
+	scanner := s{
+		opts: opts{
+			criSockets: []string{
+				"/run/containerd/containerd.sock",
+				"/tmp/missing.sock",
+			},
+		},
+	}
+	cfgs, err := scanner.detectWithStat(
+		fakeStat("/run/containerd/containerd.sock"),
+		runtimeHosts,
+	)
 	require.Error(t, err)
 	require.Len(t, cfgs, 1)
 	assert.Equal(t, "containerd", cfgs[0].name)
 	assert.Contains(t, err.Error(), `stat socket "/tmp/missing.sock"`)
 }
 
-func TestParseSockets(t *testing.T) {
+func TestDetectRuntimeWithSocketVarRunAlias(t *testing.T) {
 	t.Parallel()
 
-	sockets := parseSockets([]string{
-		" /tmp/containerd.sock , unix:///tmp/crio.sock ",
-		"",
-		" /tmp/docker.sock ",
-	})
-	require.Equal(t, []string{
-		"/tmp/containerd.sock",
-		"unix:///tmp/crio.sock",
-		"/tmp/docker.sock",
-	}, sockets)
+	scanner := s{opts: opts{criSockets: []string{"/var/run/docker.sock"}}}
+	cfgs, err := scanner.detectWithStat(fakeStat("/var/run/docker.sock"), runtimeHosts)
+	require.NoError(t, err)
+	require.Len(t, cfgs, 1)
+	assert.Equal(t, "docker", cfgs[0].name)
+	assert.Equal(t, "unix:///var/run/docker.sock", cfgs[0].host)
 }
 
 func fakeStat(paths ...string) func(string) (os.FileInfo, error) {

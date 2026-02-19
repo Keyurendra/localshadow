@@ -15,6 +15,7 @@ type opts struct {
 	runtimeArtifactDB string
 	criSockets        []string
 	remoteFallback    bool
+	mountpoint        string
 }
 
 func WithTimeout(timeout time.Duration) OptFunc {
@@ -50,6 +51,13 @@ func WithCRISockets(socketPaths ...string) OptFunc {
 func WithRemoteFallback() OptFunc {
 	return func(o *opts) {
 		o.remoteFallback = true
+	}
+}
+
+// WithMountpoint should only be used for agent-less scanning.
+func WithMountpoint(mountpoint string) OptFunc {
+	return func(o *opts) {
+		o.mountpoint = mountpoint
 	}
 }
 
