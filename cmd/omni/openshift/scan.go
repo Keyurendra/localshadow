@@ -88,6 +88,14 @@ var scanCmd = &cli.Command{
 			Name:  "use-external-trivy",
 			Usage: "Use external trivy. Must be in PATH",
 		},
+		&cli.IntFlag{
+			Name:  "cluster-id",
+			Usage: "Cluster ID to include in Trivy artifact",
+		},
+		&cli.StringFlag{
+			Name:  "cluster-name",
+			Usage: "Cluster name to include in Trivy artifact",
+		},
 	},
 	Action: func(ctx context.Context, c *cli.Command) error {
 		namespace := c.String("namespace")
@@ -139,6 +147,16 @@ var scanCmd = &cli.Command{
 		scOpts := []scanner.OptFunc{
 			scanner.WithVulnDBDirectory(c.String("vuln-db-directory")),
 			scanner.WithClamAVDBDirectory(c.String("clamav-db-directory")),
+		}
+		if c.IsSet("cluster-id") {
+			scOpts = append(scOpts, scanner.WithClusterID(c.Int("cluster-id")))
+		}
+		clusterName := c.String("cluster-name")
+		if !c.IsSet("cluster-name") {
+			clusterName = obj.Spec.ClusterName
+		}
+		if clusterName != "" {
+			scOpts = append(scOpts, scanner.WithClusterName(clusterName))
 		}
 		if c.Bool("skip-malware-scan") {
 			scOpts = append(scOpts, scanner.WithMalwareScanDisabled())

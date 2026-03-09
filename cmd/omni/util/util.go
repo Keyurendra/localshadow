@@ -81,6 +81,14 @@ func CloudScanCmdFlags() []cli.Flag {
 			Usage: "Use external trivy. Must be in PATH",
 			Value: false,
 		},
+		&cli.IntFlag{
+			Name:  "cluster-id",
+			Usage: "Cluster ID to include in Trivy artifact",
+		},
+		&cli.StringFlag{
+			Name:  "cluster-name",
+			Usage: "Cluster name to include in Trivy artifact",
+		},
 	}
 }
 
@@ -199,6 +207,14 @@ func AgentScanCmdFlags() []cli.Flag {
 			Usage:     "Limit malware scan to a specific directory",
 			Value:     "",
 			TakesFile: true,
+		},
+		&cli.IntFlag{
+			Name:  "cluster-id",
+			Usage: "Cluster ID to include in Trivy artifact",
+		},
+		&cli.StringFlag{
+			Name:  "cluster-name",
+			Usage: "Cluster name to include in Trivy artifact",
 		},
 	}
 }

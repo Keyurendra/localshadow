@@ -41,6 +41,12 @@ var scanCmd = &cli.Command{
 			cloud.WithConcurrency(c.Uint("concurrency")),
 			cloud.WithVulnDBDirectory(c.String("vuln-db-directory")),
 		}
+		if c.IsSet("cluster-id") {
+			opts = append(opts, cloud.WithClusterID(c.Int("cluster-id")))
+		}
+		if c.IsSet("cluster-name") {
+			opts = append(opts, cloud.WithClusterName(c.String("cluster-name")))
+		}
 		if c.Bool("skip-malware-scan") {
 			opts = append(opts, cloud.WithMalwareScanDisabled())
 		}

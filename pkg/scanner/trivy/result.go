@@ -13,6 +13,8 @@ type Result struct {
 	CreatedAt     time.Time
 	ArtifactName  string
 	ArtifactType  string
+	ClusterID     *int   `json:"cluster_id,omitempty"`
+	ClusterName   string `json:"cluster_name,omitempty"`
 	Metadata      Metadata
 	Results       types.Results
 }

@@ -149,6 +149,8 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		VulnScan:                   j.vulnScanEnabled,
 		VulnScanDBDir:              j.vulnDBDirectory,
 		UseExternalTrivy:           j.useExternalTrivy,
+		ClusterID:                  j.clusterID,
+		ClusterName:                j.clusterName,
 		MalwareScan:                j.malwareScanEnabled,
 		MalwareScanTargetDirectory: mountpoint,
 		UseClamAVDaemon:            false,

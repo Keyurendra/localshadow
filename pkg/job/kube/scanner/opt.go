@@ -10,6 +10,8 @@ type opts struct {
 	vulnScanEnabled    bool
 	vulnDBDirectory    string
 	clamavDBDirectory  string
+	clusterID          *int
+	clusterName        string
 	logger             *slog.Logger
 }
 
@@ -40,6 +42,18 @@ func WithVulnDBDirectory(dir string) OptFunc {
 func WithClamAVDBDirectory(dir string) OptFunc {
 	return func(o *opts) {
 		o.clamavDBDirectory = dir
+	}
+}
+
+func WithClusterID(clusterID int) OptFunc {
+	return func(o *opts) {
+		o.clusterID = &clusterID
+	}
+}
+
+func WithClusterName(clusterName string) OptFunc {
+	return func(o *opts) {
+		o.clusterName = clusterName
 	}
 }
 

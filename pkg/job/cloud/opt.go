@@ -14,6 +14,8 @@ type opts struct {
 	malwareScanEnabled               bool
 	containerVulnScanEnabled         bool
 	containerImageScanRemoteFallback bool
+	clusterID                        *int
+	clusterName                      string
 	vulnDBDirectory                  string
 	concurrency                      uint
 	logger                           *slog.Logger
@@ -60,6 +62,18 @@ func WithContainerVulnScanEnabled() OptFunc {
 func WithContainerImageScanRemoteFallback() OptFunc {
 	return func(o *opts) {
 		o.containerImageScanRemoteFallback = true
+	}
+}
+
+func WithClusterID(clusterID int) OptFunc {
+	return func(o *opts) {
+		o.clusterID = &clusterID
+	}
+}
+
+func WithClusterName(clusterName string) OptFunc {
+	return func(o *opts) {
+		o.clusterName = clusterName
 	}
 }
 

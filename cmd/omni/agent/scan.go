@@ -44,6 +44,12 @@ var scanCmd = &cli.Command{
 			agent.WithPlatform(c.String("platform")),
 			agent.WithVMURIPrefix(c.String("vm-uri-prefix")),
 		}
+		if c.IsSet("cluster-id") {
+			opts = append(opts, agent.WithClusterID(c.Int("cluster-id")))
+		}
+		if c.IsSet("cluster-name") {
+			opts = append(opts, agent.WithClusterName(c.String("cluster-name")))
+		}
 		if skipMalwareScan {
 			opts = append(opts, agent.WithMalwareScanDisabled())
 		}

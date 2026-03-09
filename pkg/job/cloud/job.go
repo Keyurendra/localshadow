@@ -493,6 +493,8 @@ func (j Job) scanPartition(ctx context.Context, p ghw.Partition, diskURI, target
 		ContainerVulnScan:                j.containerVulnScanEnabled,
 		ContainerImageScanRemoteFallback: j.containerImageScanRemoteFallback,
 		ContainerImageScanModeAgentless:  true,
+		ClusterID:                        j.clusterID,
+		ClusterName:                      j.clusterName,
 		VulnScanDBDir:                    j.vulnDBDirectory,
 		UseExternalTrivy:                 j.useExternalTrivy,
 		MalwareScan:                      j.malwareScanEnabled,

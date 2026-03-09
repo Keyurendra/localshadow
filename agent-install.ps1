@@ -1,5 +1,3 @@
-#Requires -RunAsAdministrator
-
 <#
 .SYNOPSIS
     Install and configure AccuKnox Omni for Windows
@@ -74,6 +72,45 @@ function Write-Warn {
 function Write-Fatal {
     param([string]$Message)
     Write-Error "[ERROR] $Message" -ErrorAction Stop
+}
+
+function Test-Admin {
+    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $p = New-Object Security.Principal.WindowsPrincipal($id)
+    $admin = [Security.Principal.WindowsBuiltInRole]::Administrator
+    if (-not $p.IsInRole($admin)) {
+        Write-Fatal "Run this script as Administrator"
+    }
+}
+
+function Test-Prerequisites {
+    Test-Admin
+
+    if ($PSVersionTable.PSVersion.Major -lt 3) {
+        Write-Fatal "PowerShell 3.0 or later is required"
+    }
+
+    if ($PSVersionTable.PSVersion.Major -le 4) {
+        Write-Info ("Running on PowerShell {0} compatibility mode" -f `
+            $PSVersionTable.PSVersion)
+    }
+
+    # Windows Server 2012/2012 R2 + PowerShell 3/4 often needs
+    # explicit TLS 1.2 for HTTPS downloads.
+    try {
+        $p = [Net.ServicePointManager]::SecurityProtocol
+        [Net.ServicePointManager]::SecurityProtocol = $p -bor 3072
+    }
+    catch {
+        Write-Warn "Unable to force TLS 1.2. HTTPS download may fail: $_"
+    }
+
+    try {
+        Import-Module ScheduledTasks -ErrorAction Stop
+    }
+    catch {
+        Write-Fatal "ScheduledTasks module is required: $_"
+    }
 }
 
 function Test-Architecture {
@@ -201,9 +238,8 @@ function New-FreshClamScheduledTask {
     $trigger = New-ScheduledTaskTrigger `
         -Once `
         -At 12am `
-        -RepetitionInterval (New-TimeSpan -Hours 6)
-
-    $trigger.Repetition.Duration = "" # empty string means indefinite
+        -RepetitionInterval (New-TimeSpan -Hours 6) `
+        -RepetitionDuration (New-TimeSpan -Days 3650)
 
     $settings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries `
@@ -248,9 +284,8 @@ function New-MSRCDatabaseUpdateScheduledTask {
     $trigger = New-ScheduledTaskTrigger `
         -Once `
         -At 12am `
-        -RepetitionInterval (New-TimeSpan -Hours 12)
-
-    $trigger.Repetition.Duration = "" # empty string means indefinite
+        -RepetitionInterval (New-TimeSpan -Hours 12) `
+        -RepetitionDuration (New-TimeSpan -Days 3650)
 
     $settings = New-ScheduledTaskSettingsSet `
         -AllowStartIfOnBatteries `
@@ -313,7 +348,10 @@ function Save-Token {
     New-Item -ItemType Directory -Path $Global:OmniHomeDir -Force | Out-Null
 
     Write-Info "Saving token at $script:TokenFile"
-    $script:ArtifactApiToken | Out-File -FilePath $script:TokenFile -NoNewline -Encoding ASCII
+    $enc = [System.Text.Encoding]::ASCII
+    [System.IO.File]::WriteAllText(
+        $script:TokenFile, $script:ArtifactApiToken, $enc
+    )
 
     $acl = Get-Acl $script:TokenFile
     $acl.SetAccessRuleProtection($true, $false)
@@ -380,9 +418,12 @@ function New-OmniScheduledTask {
             "--artifact-token-file=$script:TokenFile",
             "--artifact-label=$ArtifactLabel",
             "--tenant-id=$TenantId",
-            "--vuln-db-directory=C:\ProgramData\AccuKnox\Omni",
-            "--override-hostname=$OverrideHostname"
+            "--vuln-db-directory=C:\ProgramData\AccuKnox\Omni"
         )
+
+        if (-not [string]::IsNullOrWhiteSpace($OverrideHostname)) {
+            $argsList.Add("--override-hostname=$OverrideHostname")
+        }
 
         $logFile = ""
         if ($task -eq $Global:TaskMalwareScan) {
@@ -448,6 +489,7 @@ DatabaseMirror database.clamav.net
 
 try {
     Write-Info "Starting AccuKnox Omni installation for Windows..."
+    Test-Prerequisites
     Initialize-Environment
     Test-Url
     if (-not $SkipMalwareScan) {

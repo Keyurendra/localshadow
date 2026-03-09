@@ -9,6 +9,7 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/scanner"
 	"github.com/accuknox/omniscan/pkg/scanner/clamav"
+	trivyScanner "github.com/accuknox/omniscan/pkg/scanner/trivy"
 	"github.com/accuknox/omniscan/pkg/scanner/trivy/container"
 	"github.com/accuknox/omniscan/pkg/scanner/trivy/rootfs"
 	"github.com/accuknox/omniscan/pkg/scanner/winvuln"
@@ -21,6 +22,8 @@ type RunConfig struct {
 	CRISockets                       []string
 	ContainerImageScanRemoteFallback bool
 	UseExternalTrivy                 bool
+	ClusterID                        *int
+	ClusterName                      string
 	MalwareScan                      bool
 	MalwareScanTargetDirectory       string
 	UseClamAVDaemon                  bool
@@ -58,6 +61,10 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 	trackedPub := func(ctx context.Context, f scanner.Findings) error {
 		if f == nil {
 			return nil
+		}
+		if tf, ok := f.(*trivyScanner.Result); ok {
+			tf.ClusterID = r.ClusterID
+			tf.ClusterName = r.ClusterName
 		}
 		r.Logger.LogAttrs(
 			ctx,
