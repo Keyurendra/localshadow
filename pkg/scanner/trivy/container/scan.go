@@ -129,7 +129,7 @@ func (s *s) scanOpts(target string) flag.Options {
 		},
 		ReportOptions: flag.ReportOptions{
 			Format:      types.FormatJSON,
-			ListAllPkgs: false,
+			ListAllPkgs: true,
 			Severities: []dbTypes.Severity{
 				dbTypes.SeverityUnknown,
 				dbTypes.SeverityLow,

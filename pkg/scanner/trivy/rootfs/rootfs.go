@@ -138,7 +138,7 @@ func (s s) embeddedScan(ctx context.Context, mountpoint, vmURI, platform, osType
 		},
 		ReportOptions: flag.ReportOptions{
 			Format:      types.FormatJSON,
-			ListAllPkgs: false,
+			ListAllPkgs: true,
 			Severities: []dbTypes.Severity{
 				dbTypes.SeverityUnknown,
 				dbTypes.SeverityLow,

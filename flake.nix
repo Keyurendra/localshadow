@@ -24,7 +24,7 @@
               pname = "omni";
               version = "0.0.0";
               src = ./.;
-              vendorHash = "sha256-t9EU5CSPHtuzo4bZ3GlZ7oeEgpqaixc/XKjQjwPKg14=";
+              vendorHash = "sha256-SJ1vrxB9VjlnW9g8ysyu8b5J9cUiHMjIMKkr4AdNwiM=";
               ldflags = [ "-s" "-w" ];
               env = {
                 CGO_ENABLED = 0;
