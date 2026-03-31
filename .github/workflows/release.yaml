@@ -18,6 +18,7 @@ env:
   GITHUB_TOKEN: ${{ secrets.GH_ORG_TOKEN }}
   GOPRIVATE: "github.com/accuknox/*"
   GOEXPERIMENT: jsonv2
+  GOTOOLCHAIN: local
 
 jobs:
   lint:
@@ -100,3 +101,65 @@ jobs:
 
           echo "pushing blobs to s3..."
           aws s3 sync ./build/ s3://accuknox-omni/
+
+  docker:
+    runs-on: omni-telemetry
+    needs:
+      - lint
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEV_ACCESS_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_SECRET_ID }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR Public
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | \
+            docker login --username AWS --password-stdin public.ecr.aws
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Determine image tag
+        id: tag
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push omni-operator image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile.omni-operator
+          push: true
+          tags: |
+            public.ecr.aws/k9v9d5v2/omni-operator:latest
+            ${{ steps.tag.outputs.tag != 'latest' && format('public.ecr.aws/k9v9d5v2/omni-operator:{0}', steps.tag.outputs.tag) || '' }}
+          secrets: |
+            gh_token=${{ secrets.GH_ORG_TOKEN }}
+          cache-from: type=gha,scope=omni-operator
+          cache-to: type=gha,scope=omni-operator,mode=max
+
+      - name: Build and push omni image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: docker/Dockerfile.omni
+          push: true
+          tags: |
+            public.ecr.aws/k9v9d5v2/omni:latest
+            ${{ steps.tag.outputs.tag != 'latest' && format('public.ecr.aws/k9v9d5v2/omni:{0}', steps.tag.outputs.tag) || '' }}
+          secrets: |
+            gh_token=${{ secrets.GH_ORG_TOKEN }}
+          cache-from: type=gha,scope=omni
+          cache-to: type=gha,scope=omni,mode=max

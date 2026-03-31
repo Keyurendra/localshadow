@@ -1,0 +1,22 @@
+FROM golang:1.25-bookworm AS builder
+
+ENV GOPRIVATE=github.com/accuknox/*
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN --mount=type=secret,id=gh_token \
+    git config --global url."https://$(cat /run/secrets/gh_token)@github.com/".insteadOf "https://github.com/" && \
+    go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOEXPERIMENT=jsonv2 \
+    go build -trimpath -ldflags="-s -w" -o omni ./cmd/omni
+
+FROM gcr.io/distroless/static-debian12:nonroot
+
+COPY --from=builder /app/omni /bin/omni
+
+USER 65532:65532
+
+ENTRYPOINT ["/bin/omni"]

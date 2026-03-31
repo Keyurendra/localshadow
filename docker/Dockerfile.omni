@@ -1,0 +1,41 @@
+FROM golang:1.25-bookworm AS builder
+
+ENV GOPRIVATE=github.com/accuknox/*
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN --mount=type=secret,id=gh_token \
+    git config --global url."https://$(cat /run/secrets/gh_token)@github.com/".insteadOf "https://github.com/" && \
+    go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOEXPERIMENT=jsonv2 \
+    go build -trimpath -ldflags="-s -w" -o omni ./cmd/omni
+
+FROM public.ecr.aws/k9v9d5v2/accuknox/trivy:latest AS trivy
+
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    clamav \
+    clamav-freshclam \
+    mount \
+    ntfs-3g \
+    multipath-tools \
+    ca-certificates \
+    bash \
+    && groupadd -r clamav || true \
+    && useradd -r -g clamav clamav || true \
+    && install -d -o clamav -g clamav /var/lib/clamav \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/omni /bin/omni
+COPY --from=trivy /usr/local/bin/trivy /usr/local/bin/trivy
+COPY docker/entrypoint-kubernetes-node-scan.sh /bin/entrypoint-kubernetes-node-scan
+COPY docker/entrypoint-openshift-virtualization.sh /bin/entrypoint-openshift
+COPY docker/freshclam.conf /etc/clamav/freshclam.conf
+
+RUN chmod +x /bin/entrypoint-kubernetes-node-scan /bin/entrypoint-openshift
+
+CMD ["/bin/omni"]
