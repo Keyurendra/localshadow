@@ -460,3 +460,5 @@ require (
 )
 
 replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912
+
+replace github.com/aquasecurity/trivy => github.com/accuknox/trivy v0.67.0

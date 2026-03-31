@@ -111,6 +111,8 @@ github.com/VividCortex/ewma v1.2.0 h1:f58SaIzcDXrSy3kWaHNvuJgJ3Nmz59Zji6XoJR/q1o
 github.com/VividCortex/ewma v1.2.0/go.mod h1:nz4BbCtbLyFDeC9SUHbtcT5644juEuWfUAUnGx7j5l4=
 github.com/accuknox/accuknox-windows-scanner v0.0.0-20251028053147-9b3adbdb6d1a h1:mZ1Da3acEzDDPb8JUMctO7qExzI6/MczJdyJHjGHDvc=
 github.com/accuknox/accuknox-windows-scanner v0.0.0-20251028053147-9b3adbdb6d1a/go.mod h1:ebYgWKW75w7Ut4lEaUjDsHv49S8Em5oQ7dutVHrkC8Y=
+github.com/accuknox/trivy v0.67.0 h1:WRQ1ABw1tgEHfUHfUQD9+125eduHmyPb3h5RVl/RAis=
+github.com/accuknox/trivy v0.67.0/go.mod h1:jz7tY/h1pvocQyGoDpPyOECgwSigVvKNCiXmeWFlJIM=
 github.com/agext/levenshtein v1.2.3 h1:YB2fHEn0UJagG8T1rrWknE3ZQzWM06O8AMAatNn7lmo=
 github.com/agext/levenshtein v1.2.3/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agnivade/levenshtein v1.2.1 h1:EHBY3UOn1gwdy/VbFwgo4cxecRznFk7fKWN1KOX7eoM=
@@ -155,8 +157,6 @@ github.com/aquasecurity/testdocker v0.0.0-20250616060700-ba6845ac6d17 h1:/xWTD1Y
 github.com/aquasecurity/testdocker v0.0.0-20250616060700-ba6845ac6d17/go.mod h1:6kYuX29QyBWHJejvbKkA4yzz8EUX/Fn+GmQ09JAZ5lY=
 github.com/aquasecurity/tml v0.6.1 h1:y2ZlGSfrhnn7t4ZJ/0rotuH+v5Jgv6BDDO5jB6A9gwo=
 github.com/aquasecurity/tml v0.6.1/go.mod h1:OnYMWY5lvI9ejU7yH9LCberWaaTBW7hBFsITiIMY2yY=
-github.com/aquasecurity/trivy v0.67.0 h1:aRzrsWu6RL7tm978uGpQtA2Z2Imx6gsMiod86qEvEhk=
-github.com/aquasecurity/trivy v0.67.0/go.mod h1:jz7tY/h1pvocQyGoDpPyOECgwSigVvKNCiXmeWFlJIM=
 github.com/aquasecurity/trivy-checks v1.12.2-0.20251219190323-79d27547baf5 h1:8HnXyjgCiJwVX1mTKeqdyizd7ZBmXMPL+BMQ5UZd0Nk=
 github.com/aquasecurity/trivy-checks v1.12.2-0.20251219190323-79d27547baf5/go.mod h1:hBSA3ziBFwGENK6/PYNIKm6N24SFg0wsv1VXeqPG/3M=
 github.com/aquasecurity/trivy-db v0.0.0-20251222105351-a833f47f8f0d h1:mwCxwhDRnW5UkSQdZfekTCjaLyWp1rqfIa6KKRdMDAo=
