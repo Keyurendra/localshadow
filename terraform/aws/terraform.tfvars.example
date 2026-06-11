@@ -12,6 +12,7 @@ omni_additional_flags = {
   "log-format"          = "text"
   "trigger-immediately" = "true"
   "crontab"             = "@daily"
+  "multi-az-support"    = false
   # "vm-name-regex"       = "^target-vm$"
   # "vm-label-regex"      = "foo=bar"
   # "vm-label-regex"      = "bar=bazz"

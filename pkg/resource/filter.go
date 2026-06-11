@@ -13,11 +13,14 @@ type Filter struct {
 	// metadata in GCP. Both key & value must be a regular expression or an
 	// empty string.
 	Labels map[string]string
+	// MultiAZ indicates whether to include VMs from all availability zones in the scan.
+	MultiAZ bool
 }
 
 type PrecompiledFilter struct {
-	Name   *regexp.Regexp
-	Labels []PrecompiledLabelFilter
+	Name    *regexp.Regexp
+	Labels  []PrecompiledLabelFilter
+	MultiAZ bool
 }
 
 type PrecompiledLabelFilter struct {
@@ -55,7 +58,8 @@ func (rf Filter) Precompile() (*PrecompiledFilter, error) {
 	}
 
 	return &PrecompiledFilter{
-		Name:   name,
-		Labels: labels,
+		Name:    name,
+		Labels:  labels,
+		MultiAZ: rf.MultiAZ,
 	}, nil
 }

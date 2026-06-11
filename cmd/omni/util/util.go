@@ -47,6 +47,10 @@ func CloudScanCmdFlags() []cli.Flag {
 			Name:  "skip-malware-scan",
 			Usage: "Scan only for vulnerabilities",
 		},
+		&cli.BoolFlag{
+			Name:  "multi-az-support",
+			Usage: "Authorizes Pulling VMs from all Availability Zones in the Region",
+		},
 		&cli.StringFlag{
 			Name:      "vuln-db-directory",
 			Usage:     "Path to vulnerability scanner's database directory",

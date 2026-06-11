@@ -15,7 +15,24 @@ import (
 )
 
 func (p *Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
-	iter := ec2.NewDescribeInstancesPaginator(p.ec2, &ec2.DescribeInstancesInput{})
+	var iter *ec2.DescribeInstancesPaginator
+	if !p.vmFilter.MultiAZ {
+		host, err := p.imds.GetInstanceIdentityDocument(ctx, &imds.GetInstanceIdentityDocumentInput{})
+		if err != nil {
+			return nil, fmt.Errorf("querying host instance identity: %w", err)
+		}
+		input := &ec2.DescribeInstancesInput{
+			Filters: []types.Filter{
+				{
+					Name:   aws.String("availability-zone"),
+					Values: []string{host.AvailabilityZone},
+				},
+			},
+		}
+		iter = ec2.NewDescribeInstancesPaginator(p.ec2, input)
+	} else {
+		iter = ec2.NewDescribeInstancesPaginator(p.ec2, &ec2.DescribeInstancesInput{})
+	}
 
 	var vms []resource.VM
 

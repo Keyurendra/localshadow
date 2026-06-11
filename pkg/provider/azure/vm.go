@@ -10,7 +10,10 @@ import (
 
 func (p *Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 	var vms []resource.VM
-
+	id, err := queryIMDS(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("querying azure imds: %w", err)
+	}
 	pager := p.vmClient.NewListByLocationPager(p.location, nil)
 	for pager.More() {
 		page, err := pager.NextPage(ctx)
@@ -24,7 +27,25 @@ func (p *Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 			if vm.Properties == nil || vm.Properties.StorageProfile == nil {
 				continue
 			}
+			if !p.vmFilter.MultiAZ {
+				skipVM := true
+				for _, z := range vm.Zones {
+					p.logger.LogAttrs(
+						ctx,
+						slog.LevelDebug,
+						"comparing zones",
+						slog.String("vm_zone", *z),
+						slog.String("omni_zone", id.Zone),
+					)
 
+					if *z == id.Zone {
+						skipVM = false
+					}
+				}
+				if skipVM {
+					continue
+				}
+			}
 			storage := vm.Properties.StorageProfile
 			if storage.OSDisk == nil {
 				continue

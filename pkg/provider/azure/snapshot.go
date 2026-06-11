@@ -119,6 +119,7 @@ func (p *Provider) ConvertSnapshot2Disk(ctx context.Context, snapshotURI string)
 		name,
 		armcompute.Disk{
 			Location: &p.location,
+			Zones:    []*string{&p.zone},
 			Properties: &armcompute.DiskProperties{
 				CreationData: &armcompute.CreationData{
 					CreateOption:     &createOpt,

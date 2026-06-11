@@ -20,8 +20,9 @@ var scanCmd = &cli.Command{
 	Flags: util.CloudScanCmdFlags(),
 	Action: func(ctx context.Context, c *cli.Command) error {
 		provider, err := azure.NewProvider(azure.WithVMFilter(resource.Filter{
-			Name:   c.String("vm-name-regex"),
-			Labels: c.StringMap("vm-label-regex"),
+			Name:    c.String("vm-name-regex"),
+			Labels:  c.StringMap("vm-label-regex"),
+			MultiAZ: c.Bool("multi-az-support"),
 		}))
 		if err != nil {
 			return fmt.Errorf("setting up provider: %w", err)

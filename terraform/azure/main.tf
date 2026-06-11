@@ -82,6 +82,7 @@ resource "azurerm_public_ip" "omni" {
   resource_group_name = azurerm_resource_group.omni.name
   allocation_method   = "Static"
   sku                 = "Standard"
+  zones               = [var.zone]
 }
 
 resource "azurerm_nat_gateway" "omni" {
@@ -169,6 +170,7 @@ resource "azurerm_linux_virtual_machine" "omni" {
   resource_group_name             = azurerm_resource_group.omni.name
   location                        = azurerm_resource_group.omni.location
   size                            = "Standard_B2s"
+  zone                            = var.zone
   network_interface_ids           = [azurerm_network_interface.omni.id]
   disable_password_authentication = true
   admin_username                  = "ubuntu"

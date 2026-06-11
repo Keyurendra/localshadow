@@ -14,6 +14,7 @@ type identity struct {
 	ResourceGroupName string `json:"resourceGroupName"`
 	SubscriptionID    string `json:"subscriptionId"`
 	Name              string `json:"name"`
+	Zone              string `json:"zone"`
 }
 
 func queryIMDS(ctx context.Context) (*identity, error) {

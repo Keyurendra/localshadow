@@ -72,7 +72,6 @@ func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (strin
 			Properties: host.Properties,
 			Plan:       host.Plan,
 			Tags:       host.Tags,
-			Zones:      host.Zones,
 		},
 		nil,
 	)

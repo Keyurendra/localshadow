@@ -30,6 +30,7 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 
 		for _, i := range page.Value.GetInstances() {
 			vmRegion := regionFromZone(zoneFromURI(i.GetZone()))
+			vmZone := zoneFromURI(i.GetZone())
 			if p.region != vmRegion {
 				p.logger.LogAttrs(
 					ctx,
@@ -42,7 +43,18 @@ func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {
 				)
 				continue
 			}
-
+			if p.zone != vmZone && !p.vmFilter.MultiAZ {
+				p.logger.LogAttrs(
+					ctx,
+					slog.LevelDebug,
+					"instance out of host availability zone. Skipping...",
+					slog.String("vm_uri", i.GetSelfLink()),
+					slog.String("vm_name", i.GetName()),
+					slog.String("vm_zone", vmZone),
+					slog.String("host_zone", p.zone),
+				)
+				continue
+			}
 			if r := p.vmFilter.Name; r != nil && !r.MatchString(i.GetName()) {
 				p.logger.LogAttrs(
 					ctx,

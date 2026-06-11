@@ -19,8 +19,9 @@ var scheduleCmd = &cli.Command{
 	Flags: util.CloudScheduleCmdFlags(),
 	Action: func(ctx context.Context, c *cli.Command) error {
 		provider, err := gcp.NewProvider(gcp.WithVMFilter(resource.Filter{
-			Name:   c.String("vm-name-regex"),
-			Labels: c.StringMap("vm-label-regex"),
+			Name:    c.String("vm-name-regex"),
+			Labels:  c.StringMap("vm-label-regex"),
+			MultiAZ: c.Bool("multi-az-support"),
 		}))
 		if err != nil {
 			return fmt.Errorf("setting up provider: %w", err)

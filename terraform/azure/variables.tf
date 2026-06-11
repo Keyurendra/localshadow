@@ -8,7 +8,11 @@ variable "location" {
   type        = string
   default     = "East US"
 }
-
+variable "zone" {
+  description = "Azure Availability Zone"
+  type        = string
+  default     = "1"
+}
 variable "enable_public_ip" {
   description = "Enable public IP"
   type        = bool

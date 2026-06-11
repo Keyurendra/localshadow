@@ -17,6 +17,7 @@ import (
 type Provider struct {
 	opts
 	location   string
+	zone       string
 	vmClient   *armcompute.VirtualMachinesClient
 	diskClient *armcompute.DisksClient
 	snapClient *armcompute.SnapshotsClient
@@ -44,6 +45,7 @@ func (p *Provider) Init(ctx context.Context) error {
 		return fmt.Errorf("querying azure imds: %w", err)
 	}
 	p.location = id.Location
+	p.zone = id.Zone
 	p.logger.LogAttrs(
 		ctx,
 		slog.LevelInfo,
