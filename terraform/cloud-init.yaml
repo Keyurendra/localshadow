@@ -52,21 +52,12 @@ write_files:
       Unattended-Upgrade::Automatic-Reboot "true";
       Unattended-Upgrade::Automatic-Reboot-Time "23:45";
 
-  - path: /etc/cron.daily/trivy-update-db
+  - path: /etc/cron.daily/omni-update-db
     permissions: '0755'
     owner: root:root
     content: |
       #!/bin/sh
-      export TRIVY_CACHE_DIR=/var/lib/accuknox-omni
-      /usr/bin/trivy rootfs --no-progress --download-db-only
-      /usr/bin/trivy rootfs --no-progress --download-java-db-only
-
-  - path: /etc/cron.daily/msrc-update-db
-    permissions: '0755'
-    owner: root:root
-    content: |
-      #!/bin/sh
-      /usr/local/bin/omni db download msrc
+      /usr/local/bin/omni db download vuln java msrc
 
   - path: /etc/accuknox-omni/artifact.token
     content: ${artifact_token}
@@ -142,12 +133,6 @@ runcmd:
       systemctl start clamav-freshclam.service
       systemctl start clamav-daemon.service
 
-      # download trivy databases
-      chmod +x /etc/cron.daily/trivy-update-db
-      export TRIVY_CACHE_DIR=/var/lib/accuknox-omni
-      trivy rootfs --no-progress --download-db-only
-      trivy rootfs --no-progress --download-java-db-only
-
       systemctl daemon-reload
 
       # install & enable otel collector
@@ -163,8 +148,9 @@ runcmd:
       curl -L https://accuknox-omni.s3.us-east-1.amazonaws.com/latest/omni-linux-amd64 -o /usr/local/bin/omni
       chmod +x /usr/local/bin/omni
 
-      # download msrc db
-      /usr/local/bin/omni db download msrc
+      # download vuln, java and msrc db
+      chmod +x /etc/cron.daily/omni-update-db
+      /usr/local/bin/omni db download vuln java msrc
 
       # enable omni systemd service
       systemctl enable omni.service --now

@@ -83,7 +83,7 @@ func CloudScanCmdFlags() []cli.Flag {
 		&cli.BoolFlag{
 			Name:  "use-external-trivy",
 			Usage: "Use external trivy. Must be in PATH",
-			Value: false,
+			Value: true,
 		},
 		&cli.IntFlag{
 			Name:  "cluster-id",

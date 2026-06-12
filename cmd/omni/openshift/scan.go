@@ -87,6 +87,7 @@ var scanCmd = &cli.Command{
 		&cli.BoolFlag{
 			Name:  "use-external-trivy",
 			Usage: "Use external trivy. Must be in PATH",
+			Value: true,
 		},
 		&cli.IntFlag{
 			Name:  "cluster-id",

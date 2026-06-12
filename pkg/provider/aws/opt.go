@@ -48,6 +48,6 @@ func defaultOpts() opts {
 	return opts{
 		vmFilter:     resource.PrecompiledFilter{},
 		logger:       slog.Default().With("provider", "aws"),
-		waitDeadline: time.Hour,
+		waitDeadline: time.Hour * 3,
 	}
 }
