@@ -68,6 +68,50 @@ spec:
       outputClaimToHeaders:
         - header: x-issuer
           claim: iss
+    - issuer: "cspm.me.accuknox.com"
+      jwksUri: "https://cspm.me.accuknox.com/api/v1/jwks/"
+      timeout: 1m
+      outputClaimToHeaders:
+        - header: x-issuer
+          claim: iss
+    - issuer: "cspm.eu.accuknox.com"
+      jwksUri: "https://cspm.eu.accuknox.com/api/v1/jwks/"
+      timeout: 1m
+      outputClaimToHeaders:
+        - header: x-issuer
+          claim: iss
+    - issuer: "cspm.in.accuknox.com"
+      jwksUri: "https://cspm.in.accuknox.com/api/v1/jwks/"
+      timeout: 1m
+      outputClaimToHeaders:
+        - header: x-issuer
+          claim: iss
+---
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: otel-collector-gateway
+  namespace: opentelemetry
+spec:
+  selector:
+    matchLabels:
+      app: otel-collector-gateway
+  action: ALLOW
+  rules:
+    - from:
+        - source:
+            requestPrincipals:
+              - "*"
+      when:
+        - key: request.headers[x-issuer]
+          values:
+            - "cspm.dev.accuknox.com"
+            - "cspm.stage.accuknox.com"
+            - "cspm.demo.accuknox.com"
+            - "cspm.accuknox.com"
+            - "cspm.me.accuknox.com"
+            - "cspm.eu.accuknox.com"
+            - "cspm.in.accuknox.com"
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
