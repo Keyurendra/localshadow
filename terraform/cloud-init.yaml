@@ -114,7 +114,7 @@ runcmd:
       %{ endif }
 
       # install trivy
-      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/latest/contrib/install.sh | sh -s -- -b /usr/local/bin
+      curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
 
       # install omni binary
       mkdir -p /etc/accuknox-omni /usr/local/bin
