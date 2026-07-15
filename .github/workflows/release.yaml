@@ -101,7 +101,49 @@ jobs:
 
           echo "pushing blobs to s3..."
           aws s3 sync ./build/ s3://accuknox-omni/
+  docker-image-scan:
+    runs-on: omni-telemetry
+    needs:
+      - lint
+    steps:
+      - name: Checkout source
+        uses: accuknox/common-gh-actions/actions/checkout-source@main
 
+      - name: Set up Go
+        uses: actions/setup-go@v6.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Include a GH token in the URL when interacting with GH repos
+        run: git config --global url.https://$GITHUB_TOKEN@github.com/.insteadOf https://github.com/
+
+      - name: Docker build and Trivy scan (omni-operator)
+        uses: accuknox/common-gh-actions/actions/docker-scan@main
+        with:
+          docker_context: .
+          dockerfile_path: docker/Dockerfile.omni-operator
+          repository_name: public.ecr.aws/k9v9d5v2
+          image_name: omni-operator
+          tag: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+          label: "DGFD"
+          cspm_endpoint: "cspm.accuknox.com"
+          cspm_token: ${{ secrets.AK_PROD_ACCUKNOXTECH_TOKEN }}
+          tenant_id: ${{ secrets.AK_PROD_ACCUKNOXTECH_TENANT_ID }}
+          disable_scan: false
+
+      - name: Docker build and Trivy scan (omni)
+        uses: accuknox/common-gh-actions/actions/docker-scan@main
+        with:
+          docker_context: .
+          dockerfile_path: docker/Dockerfile.omni
+          repository_name: public.ecr.aws/k9v9d5v2
+          image_name: omni
+          tag: ${{ github.ref_type == 'tag' && github.ref_name || 'latest' }}
+          label: "DGFD"
+          cspm_endpoint: "cspm.accuknox.com"
+          cspm_token: ${{ secrets.AK_PROD_ACCUKNOXTECH_TOKEN }}
+          tenant_id: ${{ secrets.AK_PROD_ACCUKNOXTECH_TENANT_ID }}
+          disable_scan: false
   docker:
     runs-on: omni-telemetry
     needs:
