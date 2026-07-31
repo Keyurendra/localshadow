@@ -251,9 +251,31 @@ clientset:
 
 .PHONY: generate-bundle
 VERSION ?= 0.0.0
+BUNDLE_IMG ?= public.ecr.aws/k9v9d5v2/omni-operator-bundle
+INDEX_IMG ?= public.ecr.aws/k9v9d5v2/omni-operator-index
+OPM ?= bin/opm
 generate-bundle:
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	@$(KUSTOMIZE) build config/bundle/ | operator-sdk generate bundle --overwrite --version $(VERSION)
-	@$(CONTAINER_TOOL) build . -f bundle.Dockerfile -t public.ecr.aws/k9v9d5v2/omni-operator-bundle:v$(VERSION)
-	@$(CONTAINER_TOOL) push public.ecr.aws/k9v9d5v2/omni-operator-bundle:v$(VERSION)
+	@$(CONTAINER_TOOL) build . -f bundle.Dockerfile -t $(BUNDLE_IMG):v$(VERSION)
+	@$(CONTAINER_TOOL) push $(BUNDLE_IMG):v$(VERSION)
 	@rm -rf bundle/ bundle.Dockerfile
+
+.PHONY: build-index
+build-index:
+	@version=$$(git tag --list --sort=version:refname 'v0.*' | \
+		awk '/^v0\.[0-9]+\.[0-9]+$$/' | tail -1); \
+	[ -n "$$version" ] || { echo "no v0.X.X tags found"; exit 1; }; \
+	$(CONTAINER_TOOL) pull $(INDEX_IMG):v0; \
+	output=$$($(OPM) index add --from-index $(INDEX_IMG):v0 \
+		--bundles $(BUNDLE_IMG):$$version --tag $(INDEX_IMG):v0 \
+		--container-tool $(CONTAINER_TOOL) 2>&1) || { \
+		case "$$output" in \
+			*"Bundle already added that provides package and csv"*) \
+				echo "$(INDEX_IMG):v0 already contains $$version"; \
+				exit 0 ;; \
+			*) echo "$$output"; exit 1 ;; \
+		esac; \
+	}; \
+	echo "$$output"; \
+	$(CONTAINER_TOOL) push $(INDEX_IMG):v0
