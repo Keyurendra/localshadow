@@ -201,6 +201,11 @@ func AgentScanCmdFlags() []cli.Flag {
 			TakesFile: true,
 		},
 		&cli.StringFlag{
+			Name:  "macos-feed-url",
+			Usage: "MacAdmins SOFA macOS vulnerability feed URL",
+			Value: "https://sofafeed.macadmins.io/v1/macos_data_feed.json",
+		},
+		&cli.StringFlag{
 			Name:      "clamav-db-directory",
 			Usage:     "Path to ClamAV database directory",
 			Value:     "/var/lib/clamav",

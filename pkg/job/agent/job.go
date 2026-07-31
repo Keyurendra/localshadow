@@ -165,6 +165,8 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		ClusterID:                        j.clusterID,
 		ClusterName:                      j.clusterName,
 		VulnScanDBDir:                    j.vulnDBDirectory,
+		MacOSVulnScan:                    true,
+		MacOSFeedURL:                     j.macOSFeedURL,
 		CRISockets:                       j.criSockets,
 		UseExternalTrivy:                 false,
 		MalwareScan:                      j.malwareScanEnabled,

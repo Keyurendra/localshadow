@@ -32,8 +32,12 @@ func FindRootFS() (string, error) {
 func DetectOS(mountPoint string) string {
 	linuxProb := detectLinuxRootFS(mountPoint)
 	winProb := detectWindowsRootFS(mountPoint)
-	if linuxProb < .5 && winProb < .5 {
+	macProb := detectMacOSRootFS(mountPoint)
+	if linuxProb < .5 && winProb < .5 && macProb < .5 {
 		return "unknown"
+	}
+	if macProb > linuxProb && macProb > winProb {
+		return "macos"
 	}
 	if linuxProb > winProb {
 		return "linux"
@@ -51,6 +55,17 @@ func detectWindowsRootFS(mountPoint string) float64 {
 	return detectRootFS(mountPoint, []string{
 		"Windows", "Program Files", "Users",
 	})
+}
+
+func detectMacOSRootFS(mountPoint string) float64 {
+	_, err := os.Stat(filepath.Join(
+		mountPoint,
+		"System/Library/CoreServices/SystemVersion.plist",
+	))
+	if err != nil {
+		return 0
+	}
+	return 1
 }
 
 func detectRootFS(mountPoint string, markers []string) float64 {

@@ -35,6 +35,7 @@ var scheduleCmd = &cli.Command{
 
 		opts := []agent.OptFunc{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
+			agent.WithMacOSFeedURL(c.String("macos-feed-url")),
 			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
 			agent.WithCRISockets(c.StringSlice("cri-sockets")...),
 			agent.WithContainerImageScanRemoteFallback(c.Bool("container-image-scan-remote-fallback")),

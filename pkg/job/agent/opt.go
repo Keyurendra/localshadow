@@ -11,6 +11,7 @@ type OptFunc func(*opts)
 
 type opts struct {
 	vulnDBDirectory                  string
+	macOSFeedURL                     string
 	vulnScanEnabled                  bool
 	containerVulnScanEnabled         bool
 	containerImageScanRemoteFallback bool
@@ -71,6 +72,12 @@ func WithClusterName(clusterName string) OptFunc {
 func WithVulnDBDirectory(dir string) OptFunc {
 	return func(o *opts) {
 		o.vulnDBDirectory = dir
+	}
+}
+
+func WithMacOSFeedURL(url string) OptFunc {
+	return func(o *opts) {
+		o.macOSFeedURL = url
 	}
 }
 

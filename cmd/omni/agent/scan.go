@@ -36,6 +36,7 @@ var scanCmd = &cli.Command{
 
 		opts := []agent.OptFunc{
 			agent.WithVulnDBDirectory(c.String("vuln-db-directory")),
+			agent.WithMacOSFeedURL(c.String("macos-feed-url")),
 			agent.WithClamAVDBDirectory(c.String("clamav-db-directory")),
 			agent.WithMalwareScanTargetDirectory(c.String("malware-scan-target-directory")),
 			agent.WithCRISockets(c.StringSlice("cri-sockets")...),

@@ -26,12 +26,15 @@ require (
 	github.com/google/go-containerregistry v0.21.0
 	github.com/google/uuid v1.6.0
 	github.com/h2non/filetype v1.1.3
+	github.com/hashicorp/go-version v1.8.0
 	github.com/jaypipes/ghw v0.19.1
 	github.com/kubernetes-csi/external-snapshotter/client/v8 v8.2.0
 	github.com/lmittmann/tint v1.1.2
+	github.com/mikeschinkel/go-sofafeed v1.0.1
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/openshift/api v0.0.0-20251208101024-c2a41ea924bd
+	github.com/package-url/packageurl-go v0.1.4
 	github.com/prometheus/client_golang v1.23.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/stretchr/testify v1.11.1
@@ -40,6 +43,7 @@ require (
 	golang.org/x/sys v0.41.0
 	google.golang.org/api v0.260.0
 	google.golang.org/grpc v1.78.0
+	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9
 	k8s.io/api v0.35.1
 	k8s.io/apimachinery v0.35.1
 	k8s.io/client-go v0.35.0
@@ -236,7 +240,6 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.8 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
-	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/hcl/v2 v2.24.0 // indirect
 	github.com/huandu/xstrings v1.5.0 // indirect
@@ -316,7 +319,6 @@ require (
 	github.com/openvex/go-vex v0.2.7 // indirect
 	github.com/owenrumney/go-sarif/v2 v2.3.3 // indirect
 	github.com/owenrumney/squealer v1.2.12 // indirect
-	github.com/package-url/packageurl-go v0.1.4 // indirect
 	github.com/pandatix/go-cvss v0.6.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
@@ -434,7 +436,6 @@ require (
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	helm.sh/helm/v3 v3.20.0 // indirect
-	howett.net/plist v1.0.2-0.20250314012144-ee69052608d9 // indirect
 	k8s.io/apiextensions-apiserver v0.35.0 // indirect
 	k8s.io/apiserver v0.35.0 // indirect
 	k8s.io/cli-runtime v0.35.0 // indirect

@@ -9,6 +9,7 @@ import (
 
 	"github.com/accuknox/omniscan/pkg/scanner"
 	"github.com/accuknox/omniscan/pkg/scanner/clamav"
+	"github.com/accuknox/omniscan/pkg/scanner/macos"
 	trivyScanner "github.com/accuknox/omniscan/pkg/scanner/trivy"
 	"github.com/accuknox/omniscan/pkg/scanner/trivy/container"
 	"github.com/accuknox/omniscan/pkg/scanner/trivy/rootfs"
@@ -19,6 +20,8 @@ type RunConfig struct {
 	Logger                           *slog.Logger
 	VulnScan                         bool
 	VulnScanDBDir                    string
+	MacOSVulnScan                    bool
+	MacOSFeedURL                     string
 	CRISockets                       []string
 	ContainerImageScanRemoteFallback bool
 	UseExternalTrivy                 bool
@@ -103,7 +106,9 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 			)
 		result.MalwareScanError = err
 		if err == nil && finding != nil {
-			trackedPub(ctx, finding)
+			if err := trackedPub(ctx, finding); err != nil {
+				return &result, nil
+			}
 		}
 	}
 
@@ -133,7 +138,37 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 		)
 		result.VulnScanError = err
 		if err == nil && finding != nil {
-			trackedPub(ctx, finding)
+			if err := trackedPub(ctx, finding); err != nil {
+				return &result, nil
+			}
+		}
+		return &result, nil
+	}
+
+	if os == "macos" && r.VulnScan && r.MacOSVulnScan {
+		r.Logger.LogAttrs(
+			ctx,
+			slog.LevelInfo,
+			"running macOS vulnerability scan",
+			slog.String("mount_point", mount),
+			slog.String("target_vm_uri", vmURI),
+		)
+		var opts []macos.OptFunc
+		if r.MacOSFeedURL != "" {
+			opts = append(opts, macos.WithFeedURL(r.MacOSFeedURL))
+		}
+		finding, err := macos.NewScanner(opts...).Scan(
+			ctx,
+			mount,
+			vmURI,
+			platform,
+			os,
+		)
+		result.VulnScanError = err
+		if err == nil && finding != nil {
+			if err := trackedPub(ctx, finding); err != nil {
+				return &result, nil
+			}
 		}
 		return &result, nil
 	}
@@ -179,7 +214,7 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 	}
 
 	// linux vuln scan
-	if r.VulnScan {
+	if os == "linux" && r.VulnScan {
 		r.Logger.LogAttrs(
 			ctx,
 			slog.LevelInfo,
@@ -211,7 +246,9 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 		)
 		result.VulnScanError = err
 		if err == nil && finding != nil {
-			trackedPub(ctx, finding)
+			if err := trackedPub(ctx, finding); err != nil {
+				return &result, nil
+			}
 		}
 	}
 
