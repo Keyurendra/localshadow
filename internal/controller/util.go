@@ -1,18 +1,9 @@
 package controller
 
 import (
-	"strings"
-
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 )
-
-func truncName(name string) string {
-	if len(name) > 63 {
-		name = name[:63]
-	}
-	return strings.TrimSuffix(name, "-")
-}
 
 func isJobFinished(job *batchv1.Job) bool {
 	return isJobCompleted(job) || isJobFailed(job)

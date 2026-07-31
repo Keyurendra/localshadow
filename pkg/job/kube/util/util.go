@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -11,6 +12,15 @@ import (
 	"github.com/accuknox/omniscan/api/v1alpha1"
 	omniClientset "github.com/accuknox/omniscan/pkg/generated/clientset/versioned"
 )
+
+// JobName keeps workload and RBAC resource names within the DNS label limit.
+func JobName(scanName, typ, hash string) string {
+	name := scanName + "-" + typ + "-" + hash
+	if len(name) > 63 {
+		name = name[:63]
+	}
+	return strings.TrimSuffix(name, "-")
+}
 
 func NewOmniClient() (omniClientset.Interface, error) {
 	cfg, err := ctrl.GetConfig()

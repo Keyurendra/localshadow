@@ -37,7 +37,7 @@ import (
 )
 
 // SetupScanWebhookWithManager registers the webhook for Scan in the manager.
-func SetupScanWebhookWithManager(mgr ctrl.Manager) error {
+func SetupScanWebhookWithManager(mgr ctrl.Manager, image string) error {
 	kubevirtClient, err := kubevirt.NewForConfig(mgr.GetConfig())
 	if err != nil {
 		return fmt.Errorf("creating kubevirt client: %w", err)
@@ -49,7 +49,7 @@ func SetupScanWebhookWithManager(mgr ctrl.Manager) error {
 		}).
 		WithDefaulter(&ScanCustomDefaulter{
 			DefaultSkipMalwareScan: util.Ptr(true),
-			DefaultImage:           "public.ecr.aws/k9v9d5v2/omni:latest",
+			DefaultImage:           image,
 		}).
 		Complete()
 }

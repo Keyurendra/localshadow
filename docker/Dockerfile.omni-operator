@@ -1,5 +1,7 @@
 FROM golang:1.25-bookworm AS builder
 
+ARG VERSION=latest
+
 ENV GOPRIVATE=github.com/accuknox/*
 
 WORKDIR /app
@@ -11,7 +13,9 @@ RUN --mount=type=secret,id=gh_token \
 
 COPY . .
 RUN CGO_ENABLED=0 GOEXPERIMENT=jsonv2 \
-    go build -trimpath -ldflags="-s -w" -o omni ./cmd/omni
+    go build -trimpath \
+    -ldflags="-s -w -X main.version=${VERSION}" \
+    -o omni ./cmd/omni
 
 FROM gcr.io/distroless/static-debian12:nonroot
 

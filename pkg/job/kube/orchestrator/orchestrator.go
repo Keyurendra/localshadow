@@ -54,10 +54,7 @@ func (j Job) Run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("calculating hash of Scan spec")
 	}
-	jobName := scan.Name + "-orch-" + hash
-	if len(jobName) > 63 {
-		jobName = jobName[:63]
-	}
+	jobName := kubeUtil.JobName(scan.Name, "orch", hash)
 
 	j.logger.LogAttrs(ctx, slog.LevelInfo, "initializing provider")
 	if err := j.prov.Init(ctx); err != nil {

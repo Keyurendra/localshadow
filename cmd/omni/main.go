@@ -67,6 +67,14 @@ var (
 	tlsOpts                                          []func(*tls.Config)
 )
 
+const omniRepo = "public.ecr.aws/k9v9d5v2/omni"
+
+var version = "latest"
+
+func omniImage(tag string) string {
+	return omniRepo + ":" + tag
+}
+
 var cmd = &cli.Command{
 	Name:                  "omni",
 	Usage:                 "Multi-platform VM Scanner",
@@ -332,11 +340,14 @@ var operatorCmd = &cli.Command{
 
 		// nolint:goconst
 		if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-			if err := webhookv1alpha1.SetupScanWebhookWithManager(mgr); err != nil {
+			image := omniImage(version)
+			err := webhookv1alpha1.SetupScanWebhookWithManager(mgr, image)
+			if err != nil {
 				setupLog.Error(err, "unable to create webhook", "webhook", "Scan")
 				os.Exit(1)
 			}
-			if err := webhookv1alpha1.SetupScheduleWebhookWithManager(mgr); err != nil {
+			err = webhookv1alpha1.SetupScheduleWebhookWithManager(mgr, image)
+			if err != nil {
 				setupLog.Error(err, "unable to create webhook", "webhook", "Schedule")
 				os.Exit(1)
 			}

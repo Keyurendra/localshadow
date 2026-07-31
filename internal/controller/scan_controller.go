@@ -42,6 +42,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/accuknox/omniscan/api/v1alpha1"
+	kubeUtil "github.com/accuknox/omniscan/pkg/job/kube/util"
 	"github.com/accuknox/omniscan/pkg/util"
 )
 
@@ -148,12 +149,12 @@ func (r *ScanReconciler) handleDeletion(ctx context.Context, scan *v1alpha1.Scan
 		return ctrl.Result{}, fmt.Errorf("compute scan hash: %w", err)
 	}
 
-	orchJobName := truncName(fmt.Sprintf("%s-orch-%s", scan.Name, hash))
+	orchJobName := kubeUtil.JobName(scan.Name, "orch", hash)
 	if err := r.cleanupJob(ctx, scan.Namespace, orchJobName); err != nil {
 		return ctrl.Result{}, fmt.Errorf("cleanup orch job: %w", err)
 	}
 
-	scanJobName := truncName(fmt.Sprintf("%s-scan-%s", scan.Name, hash))
+	scanJobName := kubeUtil.JobName(scan.Name, "scan", hash)
 	if err := r.cleanupJob(ctx, scan.Namespace, scanJobName); err != nil {
 		return ctrl.Result{}, fmt.Errorf("cleanup scan job: %w", err)
 	}
@@ -426,7 +427,7 @@ func (r *ScanReconciler) buildJobSpec(scan *v1alpha1.Scan, hash string, parent *
 
 // buildOrchJobSpec creates spec for the orchestration job that prepares snapshot and PVC.
 func (r *ScanReconciler) buildOrchJobSpec(scan *v1alpha1.Scan, hash string) (string, jobSpec) {
-	name := truncName(fmt.Sprintf("%s-orch-%s", scan.Name, hash))
+	name := kubeUtil.JobName(scan.Name, "orch", hash)
 	return name, jobSpec{
 		ctrName: "orchestration",
 		command: []string{"omni"},
@@ -440,7 +441,7 @@ func (r *ScanReconciler) buildOrchJobSpec(scan *v1alpha1.Scan, hash string) (str
 
 // buildScanJobSpec creates spec for the scan job that performs the actual scanning.
 func (r *ScanReconciler) buildScanJobSpec(scan *v1alpha1.Scan, hash string, parent *batchv1.Job) (string, jobSpec) {
-	name := truncName(fmt.Sprintf("%s-scan-%s", scan.Name, hash))
+	name := kubeUtil.JobName(scan.Name, "scan", hash)
 	annotations := map[string]string{
 		annotationSnapshot: parent.Annotations[annotationSnapshot],
 		annotationPVC:      parent.Annotations[annotationPVC],
@@ -616,7 +617,7 @@ func (r *ScanReconciler) ensureSvcAcct(ctx context.Context, scan *v1alpha1.Scan,
 		mid = "scan"
 	}
 
-	name := truncName(scan.Name + "-" + mid + "-" + hash)
+	name := kubeUtil.JobName(scan.Name, mid, hash)
 
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
@@ -664,7 +665,7 @@ func (r *ScanReconciler) ensureRole(ctx context.Context, scan *v1alpha1.Scan, ty
 		mid = "scan"
 	}
 
-	name := truncName(scan.Name + "-" + mid + "-" + hash)
+	name := kubeUtil.JobName(scan.Name, mid, hash)
 
 	rules := []rbacv1.PolicyRule{
 		{

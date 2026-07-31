@@ -40,7 +40,7 @@ import (
 )
 
 // SetupScheduleWebhookWithManager registers the webhook for Schedule in the manager.
-func SetupScheduleWebhookWithManager(mgr ctrl.Manager) error {
+func SetupScheduleWebhookWithManager(mgr ctrl.Manager, image string) error {
 	return ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.Schedule{}).
 		WithValidator(&ScheduleCustomValidator{
 			KubeClient: mgr.GetAPIReader(),
@@ -50,7 +50,7 @@ func SetupScheduleWebhookWithManager(mgr ctrl.Manager) error {
 			DefaultSchedule:          "@daily",
 			DefaultScansHistoryLimit: util.Ptr(int32(3)),
 			DefaultSkipMalwareScan:   util.Ptr(true),
-			DefaultImage:             "public.ecr.aws/k9v9d5v2/omni:latest",
+			DefaultImage:             image,
 		}).
 		Complete()
 }
