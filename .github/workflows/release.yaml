@@ -7,7 +7,7 @@ on:
       - 'README.md'
       - '**/*.md'
     branches:
-      - main-container-scan
+      - main
     tags:
       - 'v*'
 
@@ -83,7 +83,7 @@ jobs:
           args: release --clean
 
       - name: Build and Push Blobs to S3 under `latest`
-        if: github.ref == 'refs/heads/main-container-scan'
+        if: github.ref == 'refs/heads/main'
         shell: bash
         run: |-
           mkdir -p ./build/main
