@@ -61,6 +61,7 @@ func (s s) externalScan(ctx context.Context, mountpoint, vmURI, platform, osType
 		"--quiet",
 		"--format=json",
 		"--scanners=vuln",
+		"--offline-scan",
 		"--skip-db-update",
 		"--skip-java-db-update",
 		"--timeout="+s.timeout.String(),
@@ -115,6 +116,7 @@ func (s s) embeddedScan(ctx context.Context, mountpoint, vmURI, platform, osType
 		ScanOptions: flag.ScanOptions{
 			Scanners:          []types.Scanner{types.VulnerabilityScanner},
 			DisableTelemetry:  true,
+			OfflineScan:       true,
 			Target:            mountpoint,
 			DetectionPriority: flanalTypes.PriorityPrecise,
 			Parallel:          0,

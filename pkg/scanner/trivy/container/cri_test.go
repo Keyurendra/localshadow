@@ -139,7 +139,6 @@ func TestResolveCRIRefUsesRepoTagWhenDigestMissing(t *testing.T) {
 }
 
 type fakeImageServiceClient struct {
-	runtimeapi.UnimplementedImageServiceServer
 	resp *runtimeapi.ImageStatusResponse
 	err  error
 }
@@ -149,6 +148,10 @@ func (f fakeImageServiceClient) ImageFsInfo(context.Context, *runtimeapi.ImageFs
 }
 
 func (f fakeImageServiceClient) ListImages(context.Context, *runtimeapi.ListImagesRequest, ...grpc.CallOption) (*runtimeapi.ListImagesResponse, error) {
+	return nil, nil
+}
+
+func (f fakeImageServiceClient) StreamImages(context.Context, *runtimeapi.StreamImagesRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[runtimeapi.StreamImagesResponse], error) {
 	return nil, nil
 }
 

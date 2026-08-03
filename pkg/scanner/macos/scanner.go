@@ -11,9 +11,12 @@ import (
 	"sort"
 	"time"
 
-	"github.com/aquasecurity/trivy-db/pkg/types"
+	dbTypes "github.com/aquasecurity/trivy-db/pkg/types"
+	"github.com/aquasecurity/trivy/pkg/cache"
+	"github.com/aquasecurity/trivy/pkg/commands/artifact"
 	"github.com/aquasecurity/trivy/pkg/dependency"
 	ftypes "github.com/aquasecurity/trivy/pkg/fanal/types"
+	"github.com/aquasecurity/trivy/pkg/flag"
 	trivyTypes "github.com/aquasecurity/trivy/pkg/types"
 	"github.com/hashicorp/go-version"
 	"github.com/mikeschinkel/go-sofafeed/feeds/v1feed"
@@ -88,12 +91,18 @@ func (s s) Scan(ctx context.Context, mount, vmURI, platform, osType string) (sca
 		return nil, err
 	}
 
+	report, err := s.scanFS(ctx, mount)
+	if err != nil {
+		return nil, err
+	}
+
 	return &trivy.Result{
-		SchemaVersion: 2,
-		CreatedAt:     time.Now().UTC(),
-		ArtifactName:  mount,
+		SchemaVersion: report.SchemaVersion,
+		CreatedAt:     report.CreatedAt,
+		ArtifactName:  report.ArtifactName,
 		ArtifactType:  "rootfs",
 		Metadata: trivy.Metadata{
+			Size: report.Metadata.Size,
 			OS: &ftypes.OS{
 				Family: ftypes.OSType("macos"),
 				Name:   osv.ProductVersion,
@@ -104,7 +113,7 @@ func (s s) Scan(ctx context.Context, mount, vmURI, platform, osType string) (sca
 				OS:       osType,
 			},
 		},
-		Results: trivyTypes.Results{
+		Results: append(trivyTypes.Results{
 			{
 				Target: fmt.Sprintf(
 					"%s %s (%s)",
@@ -117,8 +126,89 @@ func (s s) Scan(ctx context.Context, mount, vmURI, platform, osType string) (sca
 				Packages:        []ftypes.Package{pkg},
 				Vulnerabilities: vulns,
 			},
-		},
+		}, report.Results...),
 	}, nil
+}
+
+func (s s) scanFS(ctx context.Context, mount string) (trivyTypes.Report, error) {
+	cacheDir := s.cacheDir
+	if cacheDir == "" {
+		var err error
+		cacheDir, err = os.UserCacheDir()
+		if err != nil {
+			return trivyTypes.Report{}, fmt.Errorf(
+				"getting user cache directory: %w",
+				err,
+			)
+		}
+	}
+
+	opts := flag.Options{
+		GlobalOptions: flag.GlobalOptions{
+			Timeout:  12 * time.Hour,
+			CacheDir: cacheDir,
+			Quiet:    true,
+		},
+		CacheOptions: flag.CacheOptions{
+			CacheBackend: string(cache.TypeMemory),
+		},
+		ScanOptions: flag.ScanOptions{
+			Scanners: trivyTypes.Scanners{
+				trivyTypes.VulnerabilityScanner,
+			},
+			DisableTelemetry:  true,
+			OfflineScan:       true,
+			Target:            mount,
+			DetectionPriority: ftypes.PriorityPrecise,
+		},
+		VulnerabilityOptions: flag.VulnerabilityOptions{
+			VulnSeveritySources: []dbTypes.SourceID{"auto"},
+		},
+		DBOptions: flag.DBOptions{
+			SkipDBUpdate:     true,
+			SkipJavaDBUpdate: true,
+		},
+		PackageOptions: flag.PackageOptions{
+			PkgTypes: []string{trivyTypes.PkgTypeLibrary},
+			PkgRelationships: []ftypes.Relationship{
+				ftypes.RelationshipUnknown,
+				ftypes.RelationshipRoot,
+				ftypes.RelationshipWorkspace,
+				ftypes.RelationshipDirect,
+				ftypes.RelationshipIndirect,
+			},
+		},
+		ReportOptions: flag.ReportOptions{
+			Format:      trivyTypes.FormatJSON,
+			ListAllPkgs: true,
+			Severities: []dbTypes.Severity{
+				dbTypes.SeverityUnknown,
+				dbTypes.SeverityLow,
+				dbTypes.SeverityMedium,
+				dbTypes.SeverityHigh,
+				dbTypes.SeverityCritical,
+			},
+		},
+	}
+
+	runner, err := artifact.NewRunner(ctx, opts, artifact.TargetFilesystem)
+	if err != nil {
+		return trivyTypes.Report{}, fmt.Errorf(
+			"initializing filesystem scanner: %w",
+			err,
+		)
+	}
+	defer runner.Close(ctx)
+
+	report, err := runner.ScanFilesystem(ctx, opts)
+	if err != nil {
+		return trivyTypes.Report{}, fmt.Errorf(
+			"scanning filesystem %q: %w",
+			mount,
+			err,
+		)
+	}
+	return report, nil
 }
 
 func readSystemVersion(root string) (systemVersion, error) {
@@ -262,8 +352,8 @@ func findVulnerabilities(feed v1feed.Feed, installed, feedURL string, pkgID ftyp
 			InstalledVersion: installed,
 			FixedVersion:     f.version.Original(),
 			PrimaryURL:       f.url,
-			DataSource: &types.DataSource{
-				ID:   types.SourceID("apple-sofa"),
+			DataSource: &dbTypes.DataSource{
+				ID:   dbTypes.SourceID("apple-sofa"),
 				Name: "Apple security releases via MacAdmins SOFA",
 				URL:  feedURL,
 			},

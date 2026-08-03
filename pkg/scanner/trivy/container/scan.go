@@ -106,6 +106,7 @@ func (s *s) scanOpts(target string) flag.Options {
 		ScanOptions: flag.ScanOptions{
 			Scanners:          []types.Scanner{types.VulnerabilityScanner},
 			DisableTelemetry:  true,
+			OfflineScan:       true,
 			Target:            target,
 			DetectionPriority: flanalTypes.PriorityPrecise,
 			Parallel:          0,

@@ -10,8 +10,9 @@ const defaultFeedURL = "https://sofafeed.macadmins.io/v1/macos_data_feed.json"
 type OptFunc func(*opts)
 
 type opts struct {
-	feedURL string
-	client  *http.Client
+	feedURL  string
+	client   *http.Client
+	cacheDir string
 }
 
 func WithFeedURL(url string) OptFunc {
@@ -26,6 +27,12 @@ func WithHTTPClient(client *http.Client) OptFunc {
 			return
 		}
 		o.client = client
+	}
+}
+
+func WithCacheDirectory(dir string) OptFunc {
+	return func(o *opts) {
+		o.cacheDir = dir
 	}
 }
 

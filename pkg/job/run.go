@@ -157,6 +157,9 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 		if r.MacOSFeedURL != "" {
 			opts = append(opts, macos.WithFeedURL(r.MacOSFeedURL))
 		}
+		if r.VulnScanDBDir != "" {
+			opts = append(opts, macos.WithCacheDirectory(r.VulnScanDBDir))
+		}
 		finding, err := macos.NewScanner(opts...).Scan(
 			ctx,
 			mount,

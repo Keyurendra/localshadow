@@ -42,12 +42,12 @@ func SetupScanWebhookWithManager(mgr ctrl.Manager, image string) error {
 	if err != nil {
 		return fmt.Errorf("creating kubevirt client: %w", err)
 	}
-	return ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.Scan{}).
-		WithValidator(&ScanCustomValidator{
+	return ctrl.NewWebhookManagedBy(mgr, &v1alpha1.Scan{}).
+		WithCustomValidator(&ScanCustomValidator{
 			KubeClient:     mgr.GetAPIReader(),
 			KubevirtClient: kubevirtClient,
 		}).
-		WithDefaulter(&ScanCustomDefaulter{
+		WithCustomDefaulter(&ScanCustomDefaulter{
 			DefaultSkipMalwareScan: util.Ptr(true),
 			DefaultImage:           image,
 		}).

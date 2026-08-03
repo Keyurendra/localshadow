@@ -41,11 +41,11 @@ import (
 
 // SetupScheduleWebhookWithManager registers the webhook for Schedule in the manager.
 func SetupScheduleWebhookWithManager(mgr ctrl.Manager, image string) error {
-	return ctrl.NewWebhookManagedBy(mgr).For(&v1alpha1.Schedule{}).
-		WithValidator(&ScheduleCustomValidator{
+	return ctrl.NewWebhookManagedBy(mgr, &v1alpha1.Schedule{}).
+		WithCustomValidator(&ScheduleCustomValidator{
 			KubeClient: mgr.GetAPIReader(),
 		}).
-		WithDefaulter(&ScheduleCustomDefaulter{
+		WithCustomDefaulter(&ScheduleCustomDefaulter{
 			DefaultConcurrency:       3,
 			DefaultSchedule:          "@daily",
 			DefaultScansHistoryLimit: util.Ptr(int32(3)),
