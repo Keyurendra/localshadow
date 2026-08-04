@@ -97,7 +97,7 @@
               gofumpt
               gopls
               terraform-ls
-              terraform
+              opentofu
               kubebuilder
               kubevirt
               kubernetes-code-generator
