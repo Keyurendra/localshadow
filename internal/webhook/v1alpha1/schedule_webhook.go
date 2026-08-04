@@ -26,13 +26,11 @@ import (
 	"github.com/robfig/cron/v3"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/accuknox/omniscan/api/v1alpha1"
@@ -42,10 +40,10 @@ import (
 // SetupScheduleWebhookWithManager registers the webhook for Schedule in the manager.
 func SetupScheduleWebhookWithManager(mgr ctrl.Manager, image string) error {
 	return ctrl.NewWebhookManagedBy(mgr, &v1alpha1.Schedule{}).
-		WithCustomValidator(&ScheduleCustomValidator{
+		WithValidator(&ScheduleCustomValidator{
 			KubeClient: mgr.GetAPIReader(),
 		}).
-		WithCustomDefaulter(&ScheduleCustomDefaulter{
+		WithDefaulter(&ScheduleCustomDefaulter{
 			DefaultConcurrency:       3,
 			DefaultSchedule:          "@daily",
 			DefaultScansHistoryLimit: util.Ptr(int32(3)),
@@ -71,15 +69,11 @@ type ScheduleCustomDefaulter struct {
 	DefaultImage             string
 }
 
-var _ webhook.CustomDefaulter = &ScheduleCustomDefaulter{}
+var _ admission.Defaulter[*v1alpha1.Schedule] = &ScheduleCustomDefaulter{}
 
-// Default implements webhook.CustomDefaulter so a webhook will be registered for the Kind Schedule.
-func (d *ScheduleCustomDefaulter) Default(_ context.Context, obj runtime.Object) error {
-	schedule, ok := obj.(*v1alpha1.Schedule)
-	if !ok {
-		return fmt.Errorf("expected an Schedule object but got %T", obj)
-	}
-
+// Default implements admission.Defaulter so a webhook will be registered
+// for the Kind Schedule.
+func (d *ScheduleCustomDefaulter) Default(_ context.Context, schedule *v1alpha1.Schedule) error {
 	if schedule.Spec.Concurrency == 0 {
 		schedule.Spec.Concurrency = d.DefaultConcurrency
 	}
@@ -117,14 +111,11 @@ type ScheduleCustomValidator struct {
 	KubeClient client.Reader
 }
 
-var _ webhook.CustomValidator = &ScheduleCustomValidator{}
+var _ admission.Validator[*v1alpha1.Schedule] = &ScheduleCustomValidator{}
 
-// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Schedule.
-func (v *ScheduleCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	schedule, ok := obj.(*v1alpha1.Schedule)
-	if !ok {
-		return nil, fmt.Errorf("expected a Schedule object but got %T", obj)
-	}
+// ValidateCreate implements admission.Validator so a webhook will be
+// registered for the type Schedule.
+func (v *ScheduleCustomValidator) ValidateCreate(ctx context.Context, schedule *v1alpha1.Schedule) (admission.Warnings, error) {
 	allErrs := v.validateResource(ctx, schedule)
 	if len(allErrs) > 0 {
 		return nil, apierrors.NewInvalid(
@@ -136,18 +127,9 @@ func (v *ScheduleCustomValidator) ValidateCreate(ctx context.Context, obj runtim
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Schedule.
-func (v *ScheduleCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	oldSchedule, ok := oldObj.(*v1alpha1.Schedule)
-	if !ok {
-		return nil, fmt.Errorf("expected a Schedule object for the oldObj but got %T", oldObj)
-	}
-
-	newSchedule, ok := newObj.(*v1alpha1.Schedule)
-	if !ok {
-		return nil, fmt.Errorf("expected a Schedule object for the newObj but got %T", newObj)
-	}
-
+// ValidateUpdate implements admission.Validator so a webhook will be
+// registered for the type Schedule.
+func (v *ScheduleCustomValidator) ValidateUpdate(ctx context.Context, oldSchedule, newSchedule *v1alpha1.Schedule) (admission.Warnings, error) {
 	allErrs := v.validateResource(ctx, newSchedule)
 	if newSchedule.Spec.CronJobNamespace != oldSchedule.Spec.CronJobNamespace {
 		allErrs = append(allErrs, field.Forbidden(
@@ -167,8 +149,9 @@ func (v *ScheduleCustomValidator) ValidateUpdate(ctx context.Context, oldObj, ne
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Schedule.
-func (v *ScheduleCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+// ValidateDelete implements admission.Validator so a webhook will be
+// registered for the type Schedule.
+func (v *ScheduleCustomValidator) ValidateDelete(ctx context.Context, schedule *v1alpha1.Schedule) (admission.Warnings, error) {
 	return nil, nil
 }
 

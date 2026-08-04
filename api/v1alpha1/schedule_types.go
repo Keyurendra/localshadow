@@ -221,10 +221,6 @@ type ScheduleList struct {
 	Items           []Schedule `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&Schedule{}, &ScheduleList{})
-}
-
 // Hash returns an 8-character hash of the Schedule spec.
 func (s Schedule) Hash() (string, error) {
 	byts, err := json.Marshal(s.Spec)

@@ -274,7 +274,6 @@ type ScanList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&Scan{}, &ScanList{})
 }
 
 // Hash returns an 8-character hash of the Scan spec.

@@ -23,13 +23,11 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"kubevirt.io/client-go/kubevirt"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/accuknox/omniscan/api/v1alpha1"
@@ -43,11 +41,11 @@ func SetupScanWebhookWithManager(mgr ctrl.Manager, image string) error {
 		return fmt.Errorf("creating kubevirt client: %w", err)
 	}
 	return ctrl.NewWebhookManagedBy(mgr, &v1alpha1.Scan{}).
-		WithCustomValidator(&ScanCustomValidator{
+		WithValidator(&ScanCustomValidator{
 			KubeClient:     mgr.GetAPIReader(),
 			KubevirtClient: kubevirtClient,
 		}).
-		WithCustomDefaulter(&ScanCustomDefaulter{
+		WithDefaulter(&ScanCustomDefaulter{
 			DefaultSkipMalwareScan: util.Ptr(true),
 			DefaultImage:           image,
 		}).
@@ -66,14 +64,11 @@ type ScanCustomDefaulter struct {
 	DefaultImage           string
 }
 
-var _ webhook.CustomDefaulter = &ScanCustomDefaulter{}
+var _ admission.Defaulter[*v1alpha1.Scan] = &ScanCustomDefaulter{}
 
-// Default implements webhook.CustomDefaulter so a webhook will be registered for the Kind Scan.
-func (d *ScanCustomDefaulter) Default(_ context.Context, obj runtime.Object) error {
-	scan, ok := obj.(*v1alpha1.Scan)
-	if !ok {
-		return fmt.Errorf("expected an Scan object but got %T", obj)
-	}
+// Default implements admission.Defaulter so a webhook will be registered
+// for the Kind Scan.
+func (d *ScanCustomDefaulter) Default(_ context.Context, scan *v1alpha1.Scan) error {
 	if scan.Spec.Image == "" {
 		scan.Spec.Image = d.DefaultImage
 	}
@@ -98,15 +93,11 @@ type ScanCustomValidator struct {
 	KubevirtClient kubevirt.Interface
 }
 
-var _ webhook.CustomValidator = &ScanCustomValidator{}
+var _ admission.Validator[*v1alpha1.Scan] = &ScanCustomValidator{}
 
-// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type Scan.
-func (v *ScanCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	scan, ok := obj.(*v1alpha1.Scan)
-	if !ok {
-		return nil, fmt.Errorf("expected a Scan object but got %T", obj)
-	}
-
+// ValidateCreate implements admission.Validator so a webhook will be
+// registered for the type Scan.
+func (v *ScanCustomValidator) ValidateCreate(ctx context.Context, scan *v1alpha1.Scan) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	if err := v.validateVM(ctx, scan); err != nil {
@@ -129,18 +120,9 @@ func (v *ScanCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Ob
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type Scan.
-func (v *ScanCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	oldScan, ok := oldObj.(*v1alpha1.Scan)
-	if !ok {
-		return nil, fmt.Errorf("expected a Scan object for the oldObj but got %T", oldObj)
-	}
-
-	newScan, ok := newObj.(*v1alpha1.Scan)
-	if !ok {
-		return nil, fmt.Errorf("expected a Scan object for the newObj but got %T", newObj)
-	}
-
+// ValidateUpdate implements admission.Validator so a webhook will be
+// registered for the type Scan.
+func (v *ScanCustomValidator) ValidateUpdate(_ context.Context, oldScan, newScan *v1alpha1.Scan) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	if newScan.Spec.ClusterName != oldScan.Spec.ClusterName {
@@ -210,8 +192,9 @@ func (v *ScanCustomValidator) ValidateUpdate(_ context.Context, oldObj, newObj r
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type Scan.
-func (v *ScanCustomValidator) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+// ValidateDelete implements admission.Validator so a webhook will be
+// registered for the type Scan.
+func (v *ScanCustomValidator) ValidateDelete(ctx context.Context, scan *v1alpha1.Scan) (admission.Warnings, error) {
 	return nil, nil
 }
 
