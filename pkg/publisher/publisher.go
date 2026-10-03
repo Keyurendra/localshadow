@@ -3,7 +3,7 @@ package publisher
 import (
 	"context"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
 )
 
 type Publisher interface {

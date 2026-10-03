@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/entropy"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/entropy"
 )
 
 func TestCalculate(t *testing.T) {

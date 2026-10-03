@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"sync"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
 )
 
 type s struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/accuknox/omniscan/pkg/job"
+	"github.com/Keyurendra/shadowtest/pkg/job"
 )
 
 type queue struct {

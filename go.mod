@@ -1,4 +1,4 @@
-module github.com/accuknox/omniscan
+module github.com/Keyurendra/shadowtest
 
 go 1.26.5
 

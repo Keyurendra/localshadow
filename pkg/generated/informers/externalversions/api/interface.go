@@ -18,8 +18,8 @@ limitations under the License.
 package api
 
 import (
-	v1alpha1 "github.com/accuknox/omniscan/pkg/generated/informers/externalversions/api/v1alpha1"
-	internalinterfaces "github.com/accuknox/omniscan/pkg/generated/informers/externalversions/internalinterfaces"
+	v1alpha1 "github.com/Keyurendra/shadowtest/pkg/generated/informers/externalversions/api/v1alpha1"
+	internalinterfaces "github.com/Keyurendra/shadowtest/pkg/generated/informers/externalversions/internalinterfaces"
 )
 
 // Interface provides access to each of this group's versions.

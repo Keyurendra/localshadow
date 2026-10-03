@@ -15,13 +15,13 @@ import (
 	"github.com/go-co-op/gocron/v2"
 	"github.com/jaypipes/ghw"
 
-	"github.com/accuknox/omniscan/pkg/job"
-	"github.com/accuknox/omniscan/pkg/metric"
-	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/publisher"
-	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/job"
+	"github.com/Keyurendra/shadowtest/pkg/metric"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
+	"github.com/Keyurendra/shadowtest/pkg/publisher"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 type Job struct {

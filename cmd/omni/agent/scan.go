@@ -7,10 +7,10 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	cmdUtil "github.com/accuknox/omniscan/cmd/omni/util"
-	"github.com/accuknox/omniscan/pkg/job/agent"
-	"github.com/accuknox/omniscan/pkg/publisher/file"
-	"github.com/accuknox/omniscan/pkg/util"
+	cmdUtil "github.com/Keyurendra/shadowtest/cmd/omni/util"
+	"github.com/Keyurendra/shadowtest/pkg/job/agent"
+	"github.com/Keyurendra/shadowtest/pkg/publisher/file"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 var scanCmd = &cli.Command{
@@ -42,6 +42,7 @@ var scanCmd = &cli.Command{
 			agent.WithCRISockets(c.StringSlice("cri-sockets")...),
 			agent.WithContainerImageScanRemoteFallback(c.Bool("container-image-scan-remote-fallback")),
 			agent.WithOverrideHostname(c.String("override-hostname")),
+			agent.WithAIAgentCatalogPath(c.String("ai-agent-catalog-path")),
 			agent.WithPlatform(c.String("platform")),
 			agent.WithVMURIPrefix(c.String("vm-uri-prefix")),
 		}

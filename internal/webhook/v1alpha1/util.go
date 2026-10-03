@@ -12,7 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
 )
 
 func validateArtifactToken(ctx context.Context, c client.Reader, tkn v1alpha1.ArtifactAPIToken, ns string) *field.Error {

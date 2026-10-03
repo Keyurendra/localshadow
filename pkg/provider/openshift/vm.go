@@ -7,7 +7,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 func (p Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {

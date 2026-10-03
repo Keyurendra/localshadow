@@ -9,7 +9,7 @@ import (
 	compute "cloud.google.com/go/compute/apiv1"
 	"cloud.google.com/go/compute/metadata"
 
-	"github.com/accuknox/omniscan/pkg/provider"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
 )
 
 type Provider struct {

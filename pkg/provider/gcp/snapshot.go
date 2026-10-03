@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/api/iterator"
 
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 func (p Provider) ListSnapshots(ctx context.Context) ([]resource.Snapshot, error) {

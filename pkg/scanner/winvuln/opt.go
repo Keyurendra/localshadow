@@ -1,3 +1,5 @@
+//go:build windows
+
 package winvuln
 
 type OptFunc func(*opts)

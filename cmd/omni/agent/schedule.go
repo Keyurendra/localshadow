@@ -6,10 +6,10 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	cmdUtil "github.com/accuknox/omniscan/cmd/omni/util"
-	"github.com/accuknox/omniscan/pkg/job/agent"
-	"github.com/accuknox/omniscan/pkg/publisher/file"
-	"github.com/accuknox/omniscan/pkg/util"
+	cmdUtil "github.com/Keyurendra/shadowtest/cmd/omni/util"
+	"github.com/Keyurendra/shadowtest/pkg/job/agent"
+	"github.com/Keyurendra/shadowtest/pkg/publisher/file"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 var scheduleCmd = &cli.Command{

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/parser"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/parser"
 )
 
 const log = `

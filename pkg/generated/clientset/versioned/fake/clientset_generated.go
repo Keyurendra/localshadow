@@ -18,9 +18,9 @@ limitations under the License.
 package fake
 
 import (
-	clientset "github.com/accuknox/omniscan/pkg/generated/clientset/versioned"
-	apiv1alpha1 "github.com/accuknox/omniscan/pkg/generated/clientset/versioned/typed/api/v1alpha1"
-	fakeapiv1alpha1 "github.com/accuknox/omniscan/pkg/generated/clientset/versioned/typed/api/v1alpha1/fake"
+	clientset "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned"
+	apiv1alpha1 "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned/typed/api/v1alpha1"
+	fakeapiv1alpha1 "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned/typed/api/v1alpha1/fake"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"

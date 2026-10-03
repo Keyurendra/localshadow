@@ -3,7 +3,7 @@ package cloud
 import (
 	"sync"
 
-	"github.com/accuknox/omniscan/pkg/job"
+	"github.com/Keyurendra/shadowtest/pkg/job"
 )
 
 type summary struct {

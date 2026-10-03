@@ -14,8 +14,8 @@ import (
 	"github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/types"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/trivy"
 )
 
 type s struct {

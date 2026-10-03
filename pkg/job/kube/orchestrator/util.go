@@ -9,7 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 func addSnapshotAnnotation(ctx context.Context, jobName, snapURI string, kube kubernetes.Interface) error {

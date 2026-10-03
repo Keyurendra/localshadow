@@ -5,8 +5,8 @@ import (
 
 	"github.com/avast/retry-go/v4"
 
-	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 type Retry struct {

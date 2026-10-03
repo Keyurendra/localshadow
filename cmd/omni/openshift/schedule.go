@@ -8,10 +8,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	omniClientset "github.com/accuknox/omniscan/pkg/generated/clientset/versioned"
-	"github.com/accuknox/omniscan/pkg/job/kube/scheduler"
-	"github.com/accuknox/omniscan/pkg/provider/openshift"
-	"github.com/accuknox/omniscan/pkg/provider/retry"
+	omniClientset "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned"
+	"github.com/Keyurendra/shadowtest/pkg/job/kube/scheduler"
+	"github.com/Keyurendra/shadowtest/pkg/provider/openshift"
+	"github.com/Keyurendra/shadowtest/pkg/provider/retry"
 )
 
 var scheduleCmd = &cli.Command{

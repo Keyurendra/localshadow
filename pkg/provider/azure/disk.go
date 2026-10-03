@@ -8,8 +8,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v7"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {

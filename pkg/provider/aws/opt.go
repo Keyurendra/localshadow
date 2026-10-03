@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 type OptFunc func(*opts) error

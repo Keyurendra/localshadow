@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 func (p *Provider) ListVMs(ctx context.Context) ([]resource.VM, error) {

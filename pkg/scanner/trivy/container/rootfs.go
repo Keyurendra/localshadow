@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy/container/agentless"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/trivy/container/agentless"
 )
 
 func (s *s) scanAgentless(ctx context.Context, mountpoint, vmURI, platform, osType string, pub scanner.Publish) error {

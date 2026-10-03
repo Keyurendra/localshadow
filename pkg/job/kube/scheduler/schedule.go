@@ -17,12 +17,12 @@ import (
 	"k8s.io/client-go/tools/cache"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	omniClientset "github.com/accuknox/omniscan/pkg/generated/clientset/versioned"
-	omniinformers "github.com/accuknox/omniscan/pkg/generated/informers/externalversions"
-	kubeUtil "github.com/accuknox/omniscan/pkg/job/kube/util"
-	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	omniClientset "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned"
+	omniinformers "github.com/Keyurendra/shadowtest/pkg/generated/informers/externalversions"
+	kubeUtil "github.com/Keyurendra/shadowtest/pkg/job/kube/util"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 const (

@@ -1,3 +1,5 @@
+//go:build windows
+
 package winvuln
 
 import "github.com/accuknox/accuknox-windows-scanner/pkg/types"

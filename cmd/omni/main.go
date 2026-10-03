@@ -21,21 +21,22 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/accuknox/omniscan/cmd/omni/agent"
-	"github.com/accuknox/omniscan/cmd/omni/aws"
-	"github.com/accuknox/omniscan/cmd/omni/azure"
-	"github.com/accuknox/omniscan/cmd/omni/db"
-	"github.com/accuknox/omniscan/cmd/omni/gcp"
-	"github.com/accuknox/omniscan/cmd/omni/openshift"
-	"github.com/accuknox/omniscan/internal/controller"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/cmd/omni/agent"
+	"github.com/Keyurendra/shadowtest/cmd/omni/aws"
+	"github.com/Keyurendra/shadowtest/cmd/omni/azure"
+	"github.com/Keyurendra/shadowtest/cmd/omni/db"
+	"github.com/Keyurendra/shadowtest/cmd/omni/gcp"
+	"github.com/Keyurendra/shadowtest/cmd/omni/openshift"
+	"github.com/Keyurendra/shadowtest/internal/controller"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 
 	// import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	_ "modernc.org/sqlite"
 
-	omniv1alpha1 "github.com/accuknox/omniscan/api/v1alpha1"
-	webhookv1alpha1 "github.com/accuknox/omniscan/internal/webhook/v1alpha1"
+	omniv1alpha1 "github.com/Keyurendra/shadowtest/api/v1alpha1"
+	webhookv1alpha1 "github.com/Keyurendra/shadowtest/internal/webhook/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 

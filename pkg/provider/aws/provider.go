@@ -11,8 +11,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 
-	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 type Provider struct {

@@ -3,7 +3,7 @@ package provider
 import (
 	"context"
 
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 type Provider interface {

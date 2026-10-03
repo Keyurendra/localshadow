@@ -8,9 +8,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	kubeUtil "github.com/accuknox/omniscan/pkg/job/kube/util"
-	"github.com/accuknox/omniscan/pkg/provider"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	kubeUtil "github.com/Keyurendra/shadowtest/pkg/job/kube/util"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
 )
 
 type Job struct {

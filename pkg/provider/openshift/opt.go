@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 
-	omniv1alpha1 "github.com/accuknox/omniscan/api/v1alpha1"
+	omniv1alpha1 "github.com/Keyurendra/shadowtest/api/v1alpha1"
 )
 
 type OptFunc func(*opts) error

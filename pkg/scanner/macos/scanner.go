@@ -23,8 +23,8 @@ import (
 	"github.com/package-url/packageurl-go"
 	"howett.net/plist"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/trivy"
 )
 
 const systemVersionPath = "System/Library/CoreServices/SystemVersion.plist"

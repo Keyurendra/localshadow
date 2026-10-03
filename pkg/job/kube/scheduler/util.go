@@ -6,7 +6,7 @@ import (
 
 	"github.com/robfig/cron/v3"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
 )
 
 func nsFromVMUri(vmURI string) string {

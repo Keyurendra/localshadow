@@ -12,9 +12,9 @@ import (
 	"kubevirt.io/client-go/kubevirt"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	omniClientset "github.com/accuknox/omniscan/pkg/generated/clientset/versioned"
-	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/util"
+	omniClientset "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 type Provider struct {

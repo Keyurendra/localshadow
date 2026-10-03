@@ -8,8 +8,8 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"github.com/accuknox/omniscan/pkg/publisher"
-	"github.com/accuknox/omniscan/pkg/publisher/cspm"
+	"github.com/Keyurendra/shadowtest/pkg/publisher"
+	"github.com/Keyurendra/shadowtest/pkg/publisher/cspm"
 )
 
 func CloudScanCmdFlags() []cli.Flag {
@@ -126,6 +126,10 @@ func AgentScanCmdFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:  "override-hostname",
 			Usage: "Override system hostname",
+		},
+		&cli.StringFlag{
+			Name:  "ai-agent-catalog-path",
+			Usage: "Path to AI-agent detection catalog",
 		},
 		&cli.StringFlag{
 			Name:  "platform",

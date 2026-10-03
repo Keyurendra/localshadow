@@ -37,8 +37,8 @@ import (
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 const (

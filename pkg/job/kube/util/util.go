@@ -9,8 +9,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	omniClientset "github.com/accuknox/omniscan/pkg/generated/clientset/versioned"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	omniClientset "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned"
 )
 
 // JobName keeps workload and RBAC resource names within the DNS label limit.

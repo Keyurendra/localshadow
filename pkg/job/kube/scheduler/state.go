@@ -6,8 +6,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 // state tracks the state of all scans in a schedule run.

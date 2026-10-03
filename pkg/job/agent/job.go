@@ -11,10 +11,10 @@ import (
 
 	"github.com/go-co-op/gocron/v2"
 
-	"github.com/accuknox/omniscan/pkg/job"
-	"github.com/accuknox/omniscan/pkg/publisher"
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/job"
+	"github.com/Keyurendra/shadowtest/pkg/publisher"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 type Job struct {
@@ -165,6 +165,7 @@ func (j Job) scanMountPoint(ctx context.Context, mountpoint, vmURI string) (*job
 		ClusterID:                        j.clusterID,
 		ClusterName:                      j.clusterName,
 		VulnScanDBDir:                    j.vulnDBDirectory,
+		AIAgentCatalogPath:               j.aiAgentCatalogPath,
 		MacOSVulnScan:                    true,
 		MacOSFeedURL:                     j.macOSFeedURL,
 		CRISockets:                       j.criSockets,

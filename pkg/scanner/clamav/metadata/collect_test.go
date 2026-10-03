@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/metadata"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/metadata"
 )
 
 func TestELF(t *testing.T) {

@@ -30,8 +30,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 // SetupScanWebhookWithManager registers the webhook for Scan in the manager.

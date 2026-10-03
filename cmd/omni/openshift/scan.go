@@ -9,12 +9,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/accuknox/omniscan/cmd/omni/util"
-	omniClientset "github.com/accuknox/omniscan/pkg/generated/clientset/versioned"
-	"github.com/accuknox/omniscan/pkg/job/kube/scanner"
-	"github.com/accuknox/omniscan/pkg/provider/openshift"
-	"github.com/accuknox/omniscan/pkg/provider/retry"
-	"github.com/accuknox/omniscan/pkg/publisher/file"
+	"github.com/Keyurendra/shadowtest/cmd/omni/util"
+	omniClientset "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned"
+	"github.com/Keyurendra/shadowtest/pkg/job/kube/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/provider/openshift"
+	"github.com/Keyurendra/shadowtest/pkg/provider/retry"
+	"github.com/Keyurendra/shadowtest/pkg/publisher/file"
 )
 
 var scanCmd = &cli.Command{

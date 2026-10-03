@@ -18,8 +18,8 @@ import (
 
 	"github.com/avast/retry-go/v4"
 
-	"github.com/accuknox/omniscan/pkg/publisher"
-	"github.com/accuknox/omniscan/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/publisher"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
 )
 
 type Config struct {

@@ -41,9 +41,9 @@ import (
 	ctrlutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	kubeUtil "github.com/accuknox/omniscan/pkg/job/kube/util"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	kubeUtil "github.com/Keyurendra/shadowtest/pkg/job/kube/util"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 const (

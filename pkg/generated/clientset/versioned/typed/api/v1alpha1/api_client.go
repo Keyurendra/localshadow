@@ -20,8 +20,8 @@ package v1alpha1
 import (
 	http "net/http"
 
-	apiv1alpha1 "github.com/accuknox/omniscan/api/v1alpha1"
-	scheme "github.com/accuknox/omniscan/pkg/generated/clientset/versioned/scheme"
+	apiv1alpha1 "github.com/Keyurendra/shadowtest/api/v1alpha1"
+	scheme "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned/scheme"
 	rest "k8s.io/client-go/rest"
 )
 

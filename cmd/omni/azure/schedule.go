@@ -6,12 +6,12 @@ import (
 
 	"github.com/urfave/cli/v3"
 
-	"github.com/accuknox/omniscan/cmd/omni/util"
-	"github.com/accuknox/omniscan/pkg/job/cloud"
-	"github.com/accuknox/omniscan/pkg/provider/azure"
-	"github.com/accuknox/omniscan/pkg/provider/retry"
-	"github.com/accuknox/omniscan/pkg/publisher/file"
-	"github.com/accuknox/omniscan/pkg/resource"
+	"github.com/Keyurendra/shadowtest/cmd/omni/util"
+	"github.com/Keyurendra/shadowtest/pkg/job/cloud"
+	"github.com/Keyurendra/shadowtest/pkg/provider/azure"
+	"github.com/Keyurendra/shadowtest/pkg/provider/retry"
+	"github.com/Keyurendra/shadowtest/pkg/publisher/file"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
 )
 
 var scheduleCmd = &cli.Command{

@@ -10,11 +10,11 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/entropy"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/hash"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/metadata"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/parser"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/entropy"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/hash"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/metadata"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/parser"
 )
 
 type s struct {

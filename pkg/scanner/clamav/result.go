@@ -1,9 +1,9 @@
 package clamav
 
 import (
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/hash"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/metadata"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav/parser"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/hash"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/metadata"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav/parser"
 )
 
 type Result struct {

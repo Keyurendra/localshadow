@@ -14,8 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	awstime "github.com/aws/smithy-go/time"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 func (p *Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {

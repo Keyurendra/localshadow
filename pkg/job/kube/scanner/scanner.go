@@ -8,13 +8,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/accuknox/omniscan/api/v1alpha1"
-	"github.com/accuknox/omniscan/pkg/job"
-	kubeUtil "github.com/accuknox/omniscan/pkg/job/kube/util"
-	"github.com/accuknox/omniscan/pkg/provider"
-	"github.com/accuknox/omniscan/pkg/publisher"
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/api/v1alpha1"
+	"github.com/Keyurendra/shadowtest/pkg/job"
+	kubeUtil "github.com/Keyurendra/shadowtest/pkg/job/kube/util"
+	"github.com/Keyurendra/shadowtest/pkg/provider"
+	"github.com/Keyurendra/shadowtest/pkg/publisher"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 type Job struct {

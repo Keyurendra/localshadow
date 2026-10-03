@@ -1,3 +1,5 @@
+//go:build windows
+
 package winvuln
 
 import (
@@ -9,7 +11,7 @@ import (
 
 	winsc "github.com/accuknox/accuknox-windows-scanner/pkg/scanner"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
 )
 
 const (

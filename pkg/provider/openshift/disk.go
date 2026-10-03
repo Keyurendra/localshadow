@@ -9,8 +9,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 
-	"github.com/accuknox/omniscan/pkg/resource"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/resource"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 func (p Provider) AttachDisk(ctx context.Context, diskURI, vmURI string) (string, error) {

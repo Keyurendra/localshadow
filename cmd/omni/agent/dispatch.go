@@ -16,8 +16,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	"github.com/accuknox/omniscan/pkg/config"
-	"github.com/accuknox/omniscan/pkg/util"
+	"github.com/Keyurendra/shadowtest/pkg/config"
+	"github.com/Keyurendra/shadowtest/pkg/util"
 )
 
 const (

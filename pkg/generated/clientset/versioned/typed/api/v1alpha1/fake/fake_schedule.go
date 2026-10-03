@@ -18,8 +18,8 @@ limitations under the License.
 package fake
 
 import (
-	v1alpha1 "github.com/accuknox/omniscan/api/v1alpha1"
-	apiv1alpha1 "github.com/accuknox/omniscan/pkg/generated/clientset/versioned/typed/api/v1alpha1"
+	v1alpha1 "github.com/Keyurendra/shadowtest/api/v1alpha1"
+	apiv1alpha1 "github.com/Keyurendra/shadowtest/pkg/generated/clientset/versioned/typed/api/v1alpha1"
 	gentype "k8s.io/client-go/gentype"
 )
 

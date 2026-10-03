@@ -13,9 +13,9 @@ import (
 	"github.com/aquasecurity/trivy/pkg/flag"
 	"github.com/aquasecurity/trivy/pkg/types"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy/container/agentless"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/trivy"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/trivy/container/agentless"
 )
 
 func (s *s) scanOne(ctx context.Context, imageRef, runtime, runtimeHost string, namespaces []string, vmURI, platform, osType string) (scanner.Findings, error) {

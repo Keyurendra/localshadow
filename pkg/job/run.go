@@ -7,19 +7,21 @@ import (
 	"log/slog"
 	"path/filepath"
 
-	"github.com/accuknox/omniscan/pkg/scanner"
-	"github.com/accuknox/omniscan/pkg/scanner/clamav"
-	"github.com/accuknox/omniscan/pkg/scanner/macos"
-	trivyScanner "github.com/accuknox/omniscan/pkg/scanner/trivy"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy/container"
-	"github.com/accuknox/omniscan/pkg/scanner/trivy/rootfs"
-	"github.com/accuknox/omniscan/pkg/scanner/winvuln"
+	"github.com/Keyurendra/shadowtest/pkg/scanner"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/aiagent"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/clamav"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/macos"
+	trivyScanner "github.com/Keyurendra/shadowtest/pkg/scanner/trivy"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/trivy/container"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/trivy/rootfs"
+	"github.com/Keyurendra/shadowtest/pkg/scanner/winvuln"
 )
 
 type RunConfig struct {
 	Logger                           *slog.Logger
 	VulnScan                         bool
 	VulnScanDBDir                    string
+	AIAgentCatalogPath               string
 	MacOSVulnScan                    bool
 	MacOSFeedURL                     string
 	CRISockets                       []string
@@ -251,6 +253,25 @@ func (r Run) ScanMountPoint(ctx context.Context, os, mount, vmURI, platform stri
 		if err == nil && finding != nil {
 			if err := trackedPub(ctx, finding); err != nil {
 				return &result, nil
+			}
+
+			if trivyResult, ok := finding.(*trivyScanner.Result); ok &&
+				r.AIAgentCatalogPath != "" {
+
+				catalog, err := aiagent.LoadCatalog(r.AIAgentCatalogPath)
+				if err != nil {
+					return &result, fmt.Errorf("loading AI-agent catalog: %w", err)
+				}
+
+				packages := aiagent.PackageSignalsFromTrivyResults(trivyResult.Results)
+				roots := aiagent.DiscoverRoots(mount, os)
+				aiResults := aiagent.Detect(catalog, roots, packages)
+
+				for _, aiResult := range aiResults {
+					if err := trackedPub(ctx, aiResult); err != nil {
+						return &result, nil
+					}
+				}
 			}
 		}
 	}
